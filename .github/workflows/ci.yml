@@ -43,6 +43,7 @@ jobs:
       - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # v2.87.31
         with:
           tool: ${{ steps.tools.outputs.cargo-deny }},${{ steps.tools.outputs.zizmor }}
+          fallback: none # Only installs that the pinned manifests verify.
       - name: Install reuse
         env:
           VERSION: ${{ steps.tools.outputs.reuse }}
