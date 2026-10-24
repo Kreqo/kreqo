@@ -3,9 +3,11 @@
 
 //! Kreqo's project tasks, run as `cargo xtask` (ARCH-06).
 
+mod attributes;
 mod check;
 mod crates;
 mod deny;
+mod git;
 mod hooks;
 mod tools;
 

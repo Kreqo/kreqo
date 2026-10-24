@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 //! The `crates` step: every crate in the workspace belongs to a project (T2),
-//! carries its project's license (LEGAL-01), inherits the workspace lints
-//! (QA-01 as reworded) and has no `allow` attribute (QA-01).
+//! carries its project's license (LEGAL-01) and inherits the workspace lints
+//! (QA-01), and every Rust file passes the attribute checks (QA-01, SEC-01).
 
+use std::collections::BTreeSet;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -12,6 +13,8 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result, bail};
 use cargo_metadata::{MetadataCommand, Package};
 use serde::Deserialize;
+
+use crate::attributes;
 
 /// A project's metadata, from the `project.toml` in its folder (T2).
 #[derive(Deserialize)]
@@ -95,9 +98,17 @@ pub fn check(root: &Path) -> Result<()> {
         .context("couldn't read the workspace's metadata")?;
     let workspace_root = metadata.workspace_root.as_std_path();
     let mut problems = Vec::new();
+    let mut crate_roots = BTreeSet::new();
     for package in metadata.workspace_packages() {
         problems.extend(check_package(workspace_root, package)?);
+        crate_roots.extend(
+            package
+                .targets
+                .iter()
+                .map(|target| target.src_path.clone().into_std_path_buf()),
+        );
     }
+    problems.extend(attributes::check(workspace_root, &crate_roots)?);
     if problems.is_empty() {
         return Ok(());
     }
@@ -141,15 +152,6 @@ fn check_package(workspace_root: &Path, package: &Package) -> Result<Vec<String>
             "{name}: its Cargo.toml lacks `[lints] workspace = true` (QA-01)"
         ));
     }
-    if let Some(crate_folder) = manifest.parent() {
-        for (path, line) in allow_attributes(crate_folder)? {
-            let path = path.strip_prefix(workspace_root).unwrap_or(&path);
-            problems.push(format!(
-                "{name}: {}:{line} has an `allow` attribute; suppress with `#[expect(lint, reason = \"…\")]` (QA-01)",
-                path.display()
-            ));
-        }
-    }
     Ok(problems)
 }
 
@@ -183,56 +185,6 @@ fn inherits_workspace_lints(manifest: &str) -> Result<bool> {
         .and_then(|lints| lints.get("workspace"))
         .and_then(toml::Value::as_bool)
         == Some(true))
-}
-
-/// The lines of a crate's Rust files that hold an `allow` attribute, as
-/// (file, line number). Clippy's `allow_attributes` backs this up for outer
-/// attributes, but it skips inner ones such as `#![allow(…)]`, and those
-/// under a `cfg_attr` whose condition doesn't hold.
-fn allow_attributes(crate_folder: &Path) -> Result<Vec<(PathBuf, usize)>> {
-    let mut found = Vec::new();
-    for path in rust_files(crate_folder)? {
-        let text = fs::read_to_string(&path)
-            .with_context(|| format!("couldn't read {}", path.display()))?;
-        for (index, line) in text.lines().enumerate() {
-            if is_allow_attribute(line) {
-                found.push((path.clone(), index + 1));
-            }
-        }
-    }
-    Ok(found)
-}
-
-/// Whether a line is an attribute that uses `allow(`, inner or outer.
-fn is_allow_attribute(line: &str) -> bool {
-    let line = line.trim_start();
-    (line.starts_with("#[") || line.starts_with("#!["))
-        && line
-            .match_indices("allow(")
-            .any(|(index, _)| !line[..index].ends_with(|c: char| c.is_alphanumeric() || c == '_'))
-}
-
-/// The Rust files in a folder and its subfolders, leaving out build output.
-fn rust_files(folder: &Path) -> Result<Vec<PathBuf>> {
-    let mut files = Vec::new();
-    let mut folders = vec![folder.to_path_buf()];
-    while let Some(folder) = folders.pop() {
-        let entries =
-            fs::read_dir(&folder).with_context(|| format!("couldn't list {}", folder.display()))?;
-        for entry in entries {
-            let entry = entry.with_context(|| format!("couldn't list {}", folder.display()))?;
-            let path = entry.path();
-            if entry.file_type()?.is_dir() {
-                if entry.file_name() != "target" {
-                    folders.push(path);
-                }
-            } else if path.extension().is_some_and(|extension| extension == "rs") {
-                files.push(path);
-            }
-        }
-    }
-    files.sort();
-    Ok(files)
 }
 
 #[cfg(test)]
@@ -269,16 +221,5 @@ mod tests {
             "[lints.rust]\nunsafe_code = \"deny\"\n"
         )?);
         Ok(())
-    }
-
-    #[test]
-    fn finds_allow_attributes() {
-        assert!(is_allow_attribute("#![allow(dead_code, reason = \"x\")]"));
-        assert!(is_allow_attribute("    #[allow(unused)]"));
-        assert!(is_allow_attribute("#[cfg_attr(test, allow(dead_code))]"));
-        assert!(!is_allow_attribute("#[expect(dead_code, reason = \"x\")]"));
-        assert!(!is_allow_attribute("#[disallow(dead_code)]"));
-        assert!(!is_allow_attribute("// #[allow(dead_code)]"));
-        assert!(!is_allow_attribute("let allowed = allow(1);"));
     }
 }

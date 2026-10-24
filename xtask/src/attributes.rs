@@ -1,0 +1,236 @@
+// SPDX-FileCopyrightText: Kreqo contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! Attribute checks over every Rust file in the repository: no `allow`
+//! attribute, inner or outer (QA-01), and `expect(unsafe_code)` only in a
+//! crate root's `#![expect(unsafe_code, reason = "ADR-NNNN")]` that names an
+//! existing ADR (SEC-01). Clippy's `allow_attributes` skips inner attributes
+//! and any `cfg_attr` whose condition doesn't hold, so these checks read
+//! each file as tokens: comments and strings never match, and an attribute
+//! that rustfmt wraps over several lines stays whole.
+
+use std::collections::BTreeSet;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::str::FromStr;
+
+use anyhow::{Context, Result};
+use proc_macro2::{Delimiter, TokenStream, TokenTree};
+
+use crate::git;
+
+/// An attribute in a Rust file.
+struct Attribute {
+    /// Whether it's `#![…]` rather than `#[…]`.
+    inner: bool,
+    line: usize,
+    /// What its brackets hold.
+    tokens: TokenStream,
+}
+
+/// Checks every Rust file that git tracks or would track, and returns its
+/// problems. `crate_roots` are the files rustc starts each crate from.
+pub fn check(root: &Path, crate_roots: &BTreeSet<PathBuf>) -> Result<Vec<String>> {
+    let mut problems = Vec::new();
+    for relative in git::files(root, &[":(glob)**/*.rs"])? {
+        let path = root.join(&relative);
+        let text = fs::read_to_string(&path)
+            .with_context(|| format!("couldn't read {}", relative.display()))?;
+        let stream = match TokenStream::from_str(&text) {
+            Ok(stream) => stream,
+            Err(error) => {
+                problems.push(format!(
+                    "{}: couldn't read its tokens, so its attributes go unchecked: {error}",
+                    relative.display()
+                ));
+                continue;
+            }
+        };
+        let is_crate_root = crate_roots.contains(&path);
+        for attribute in attributes(stream) {
+            let place = format!("{}:{}", relative.display(), attribute.line);
+            if !arguments_of(&attribute.tokens, "allow").is_empty() {
+                problems.push(format!(
+                    "{place}: an `allow` attribute; suppress with `#[expect(lint, reason = \"…\")]` (QA-01)"
+                ));
+            }
+            for arguments in arguments_of(&attribute.tokens, "expect") {
+                if !mentions(&arguments, "unsafe_code") {
+                    continue;
+                }
+                if !(attribute.inner && is_crate_root) {
+                    problems.push(format!(
+                        "{place}: `expect(unsafe_code)` belongs only in a crate root's `#![expect(unsafe_code, reason = \"ADR-NNNN\")]` (SEC-01)"
+                    ));
+                } else if !adr_number(&arguments).is_some_and(|number| adr_exists(root, &number)) {
+                    problems.push(format!(
+                        "{place}: its reason names no ADR in docs/adr/ (SEC-01)"
+                    ));
+                }
+            }
+        }
+    }
+    Ok(problems)
+}
+
+/// Every attribute in a token stream, nested ones included.
+fn attributes(stream: TokenStream) -> Vec<Attribute> {
+    let mut found = Vec::new();
+    collect_attributes(stream, &mut found);
+    found
+}
+
+fn collect_attributes(stream: TokenStream, found: &mut Vec<Attribute>) {
+    let tokens: Vec<TokenTree> = stream.into_iter().collect();
+    let mut index = 0;
+    while let Some(token) = tokens.get(index) {
+        match token {
+            TokenTree::Punct(hash) if hash.as_char() == '#' => {
+                let inner = matches!(tokens.get(index + 1), Some(TokenTree::Punct(bang)) if bang.as_char() == '!');
+                let after = index + 1 + usize::from(inner);
+                match tokens.get(after) {
+                    Some(TokenTree::Group(group)) if group.delimiter() == Delimiter::Bracket => {
+                        found.push(Attribute {
+                            inner,
+                            line: hash.span().start().line,
+                            tokens: group.stream(),
+                        });
+                        index = after + 1;
+                    }
+                    _ => index += 1,
+                }
+            }
+            TokenTree::Group(group) => {
+                collect_attributes(group.stream(), found);
+                index += 1;
+            }
+            _ => index += 1,
+        }
+    }
+}
+
+/// The arguments of every `name(…)` in an attribute, at any depth, so that
+/// `cfg_attr(…, allow(…))` counts too.
+fn arguments_of(tokens: &TokenStream, name: &str) -> Vec<TokenStream> {
+    let mut found = Vec::new();
+    let mut after_name = false;
+    for token in tokens.clone() {
+        if let TokenTree::Group(group) = &token {
+            if after_name && group.delimiter() == Delimiter::Parenthesis {
+                found.push(group.stream());
+            }
+            found.extend(arguments_of(&group.stream(), name));
+        }
+        after_name = matches!(&token, TokenTree::Ident(ident) if ident == name);
+    }
+    found
+}
+
+/// Whether the identifier appears anywhere in the tokens.
+fn mentions(tokens: &TokenStream, name: &str) -> bool {
+    tokens.clone().into_iter().any(|token| match token {
+        TokenTree::Ident(ident) => ident == name,
+        TokenTree::Group(group) => mentions(&group.stream(), name),
+        _ => false,
+    })
+}
+
+/// The four digits of the first `ADR-NNNN` in a `reason = "…"`.
+fn adr_number(arguments: &TokenStream) -> Option<String> {
+    let tokens: Vec<TokenTree> = arguments.clone().into_iter().collect();
+    let reason = tokens.windows(3).find_map(|window| match window {
+        [
+            TokenTree::Ident(key),
+            TokenTree::Punct(equals),
+            TokenTree::Literal(value),
+        ] if key == "reason" && equals.as_char() == '=' => Some(value.to_string()),
+        _ => None,
+    })?;
+    reason.match_indices("ADR-").find_map(|(index, _)| {
+        let digits = reason.get(index + 4..index + 8)?;
+        digits
+            .chars()
+            .all(|c| c.is_ascii_digit())
+            .then(|| digits.to_owned())
+    })
+}
+
+/// Whether docs/adr/ holds the ADR with this number (DOC-04).
+fn adr_exists(root: &Path, number: &str) -> bool {
+    let prefix = format!("{number}-");
+    fs::read_dir(root.join("docs").join("adr")).is_ok_and(|entries| {
+        entries.flatten().any(|entry| {
+            let name = entry.file_name();
+            let name = name.to_string_lossy();
+            name.starts_with(&prefix) && name.ends_with(".md")
+        })
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The lines of the attributes in `text` that use `name(…)`.
+    fn lines_using(text: &str, name: &str) -> Result<Vec<usize>> {
+        let stream = TokenStream::from_str(text).map_err(|error| anyhow::anyhow!("{error}"))?;
+        Ok(attributes(stream)
+            .into_iter()
+            .filter(|attribute| !arguments_of(&attribute.tokens, name).is_empty())
+            .map(|attribute| attribute.line)
+            .collect())
+    }
+
+    #[test]
+    fn finds_allow_attributes_however_written() -> Result<()> {
+        let text = r##"//! Docs that mention allow(x) and #[allow(dead_code)].
+#![cfg_attr(
+    not(target_os = "redox"),
+    allow(dead_code, reason = "long enough that rustfmt wraps this attribute")
+)]
+#[expect(clippy::needless_return, reason = "allow(x) in a string")]
+#[doc = "allow(dead_code)"]
+fn f() {
+    let _ = "#[allow(dead_code)]";
+}
+mod m {
+    #![allow(unused)]
+}
+#[disallow(dead_code)]
+fn g() {}
+"##;
+        assert_eq!(lines_using(text, "allow")?, [2, 12]);
+        Ok(())
+    }
+
+    #[test]
+    fn tells_inner_attributes_from_outer_ones() -> Result<()> {
+        let stream =
+            TokenStream::from_str("#![expect(unsafe_code)]\n#[expect(unsafe_code)]\nfn f() {}\n")
+                .map_err(|error| anyhow::anyhow!("{error}"))?;
+        let inner: Vec<bool> = attributes(stream)
+            .iter()
+            .map(|attribute| attribute.inner)
+            .collect();
+        assert_eq!(inner, [true, false]);
+        Ok(())
+    }
+
+    #[test]
+    fn reads_the_adr_number_from_the_reason() -> Result<()> {
+        let arguments =
+            |text: &str| TokenStream::from_str(text).map_err(|error| anyhow::anyhow!("{error}"));
+        assert_eq!(
+            adr_number(&arguments(
+                r#"unsafe_code, reason = "ADR-0007: FFI to libfoo""#
+            )?),
+            Some("0007".to_owned())
+        );
+        assert_eq!(
+            adr_number(&arguments(r#"unsafe_code, reason = "faster""#)?),
+            None
+        );
+        assert_eq!(adr_number(&arguments("unsafe_code")?), None);
+        Ok(())
+    }
+}

@@ -385,6 +385,7 @@ dependencies = [
  "anyhow",
  "cargo_metadata",
  "clap",
+ "proc-macro2",
  "serde",
  "toml",
 ]
