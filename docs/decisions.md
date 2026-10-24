@@ -16,7 +16,8 @@ The setup brief stays outside the repository, so the parts of its plan that sess
 - When a rule's literal text is impractical, sessions build what meets its intent and propose a wording change with before and after. Rule text is never edited silently, and nothing deviates from a rule without a deviation record (DOC-06). Rule changes go to Dara in batches; the conventions stay 0.1.0 (draft), and IDs are never reused.
 - New projects come only from `cargo xtask new` once it exists (M8), never from copying another project.
 - Until the tooling exists, the default branch is protected by hand: pull requests only, squash merges only, no force pushes. Until M7 builds the AI review, a separate session runs `/code-review` on each pull request, and its report goes on the pull request, labeled with the model. Dara merges every pull request and signs off explicitly on changes from the sign-off list.
-- A fresh clone installs the secret-scanning pre-commit hook with `cargo xtask hooks` (SEC-03). Sessions with several repositories skip this repository's hooks, so they run it themselves; CI, not hooks, is what enforces.
+- A fresh clone installs the secret-scanning pre-commit hook with `cargo xtask hooks` (SEC-03). Sessions with several repositories skip this repository's hooks, so they run it themselves; CI, not hooks, is what enforces. Nobody commits with `--no-verify`: when the hook can't build xtask, fix or stash that change instead.
+- Until M4 adds the pull request template, a description gives the sections CI-12 lists. Its GOV-03 block says how AI was used and what it produced, names Dara's decisions in this log as the human creative input, and leaves what the human verified to Dara.
 - Everything is in American English, and rule text says "the forge", not GitHub.
 
 ## 2026-10-24: setup
@@ -158,3 +159,41 @@ The text it replaced:
 - **QA-01, rationale:** A verbatim block diffed by CI keeps lints identical across crates, and `expect` reports suppressions that no longer fire.
 - **QA-01, verification:** CI: rustfmt, Clippy, lint-block diff, `allow` grep
 - **SEC-01, verification:** CI: lint block (QA-01) with `undocumented_unsafe_blocks`; `expect` reason resolved to an ADR; Miri job
+
+## 2026-10-24: the review of PR #1
+
+Answers to the design questions that the independent review of PR #1 raised. Its findings and how each was handled are in the pull request.
+
+### The attribute checks read Rust files as tokens
+
+xtask depends directly on proc-macro2, already in the lockfile through clap and serde, and reads every Rust file that git tracks or would track as tokens. Comments and strings never match, and an attribute that rustfmt wraps stays whole. The same pass checks SEC-01's crate-root `#![expect(unsafe_code, reason = "ADR-NNNN")]`, which must name an existing ADR.
+
+- **Rules:** QA-01, SEC-01, ARCH-05.
+
+### The secret scan has no escape hatches
+
+Betterleaks runs with its built-in rules only, whatever config the scanned tree holds, and ignores inline `betterleaks:allow` comments. A scanner config or ignore file anywhere in the tree fails the scan, until a revoked secret first needs one; CI-01 rules out removing it from history. Binary files, files marked `-diff` and merge commits are scanned too. The hook still blocks commits while xtask doesn't build, and nobody commits with `--no-verify`.
+
+- **Rules:** SEC-03, CI-01.
+
+### Suppressions expire within 90 days
+
+A cargo-deny suppression's reason ends with a real date at most 90 days ahead, so that every suppression comes back for review at least once a quarter.
+
+- **Rules:** SEC-02.
+
+### zizmor runs its online audits in CI
+
+CI hands zizmor the job's read-only token, so it also checks that each pinned SHA is a real commit of its action, matches its version comment and has no known vulnerability. Without a token, as on a laptop, it stays offline.
+
+- **Rules:** CI-07, CI-09.
+
+### What the review left for later
+
+- **Scheduled workflows lapse:** GitHub stops a public repository's scheduled workflows after 60 days without activity, which would end SEC-02's daily scan unnoticed. A Periodic check, like the one for interaction limits, will catch it.
+- **LIFE-01:** the conventions version and the README badge, in M5.
+- **LEGAL-08:** checking `reuse lint`'s licenses against the allowed list, in M5.
+- **The views:** "enforced by tooling" follows `who = "tool"`, not whether a check exists; M3's coverage report settles it.
+- **QA-01's copy check:** with the first nested workspace or repository outside the monorepo.
+- **CI-02's semver check:** with the first library release.
+- **reuse's dependencies:** pinning them by hash, with the dependency bot in M5.
