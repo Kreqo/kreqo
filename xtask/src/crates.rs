@@ -14,7 +14,7 @@ use anyhow::{Context, Result, bail};
 use cargo_metadata::{MetadataCommand, Package};
 use serde::Deserialize;
 
-use crate::attributes;
+use crate::{attributes, git};
 
 /// A project's metadata, from the `project.toml` in its folder (T2).
 #[derive(Deserialize)]
@@ -98,14 +98,33 @@ pub fn check(root: &Path) -> Result<()> {
         .context("couldn't read the workspace's metadata")?;
     let workspace_root = metadata.workspace_root.as_std_path();
     let mut problems = Vec::new();
+    let mut manifests = BTreeSet::from([workspace_root.join("Cargo.toml")]);
     let mut crate_roots = BTreeSet::new();
     for package in metadata.workspace_packages() {
         problems.extend(check_package(workspace_root, package)?);
+        manifests.insert(package.manifest_path.clone().into_std_path_buf());
         crate_roots.extend(
             package
                 .targets
                 .iter()
                 .map(|target| target.src_path.clone().into_std_path_buf()),
+        );
+    }
+    // A crate outside the members would escape every check, so until nested
+    // workspaces are supported (QA-01's copy of the lint table), none may
+    // exist.
+    for manifest in git::files(workspace_root, &[":(glob)**/Cargo.toml"])? {
+        if !manifests.contains(&workspace_root.join(&manifest)) {
+            problems.push(format!(
+                "{}: a crate outside the workspace's members, which no check covers; add it to `members` in the root Cargo.toml (QA-01, T2)",
+                manifest.display()
+            ));
+        }
+    }
+    if workspace_root.join("project.toml").exists() {
+        problems.push(
+            "project.toml: a project at the repository root would claim every crate (T2)"
+                .to_owned(),
         );
     }
     problems.extend(attributes::check(workspace_root, &crate_roots)?);
@@ -156,14 +175,14 @@ fn check_package(workspace_root: &Path, package: &Package) -> Result<Vec<String>
 }
 
 /// The project a crate belongs to: the nearest `project.toml` from the
-/// crate's folder up to the workspace root.
+/// crate's folder up to, but not including, the workspace root.
 fn find_project(workspace_root: &Path, manifest: &Path) -> Result<Option<(PathBuf, Project)>> {
     let Some(crate_folder) = manifest.parent() else {
         return Ok(None);
     };
     for folder in crate_folder
         .ancestors()
-        .take_while(|folder| folder.starts_with(workspace_root))
+        .take_while(|folder| folder.starts_with(workspace_root) && *folder != workspace_root)
     {
         let path = folder.join("project.toml");
         if path.is_file() {

@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: Kreqo contributors
 # SPDX-License-Identifier: MIT OR Apache-2.0
 
-# Build output never enters the repository (QA-14).
-/target/
+# Build output never enters the repository, a nested workspace's included
+# (QA-14).
+target/
