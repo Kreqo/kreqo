@@ -22,6 +22,8 @@ pub enum Step {
     Clippy,
     /// The workspace's tests (CI-04).
     Test,
+    /// The API docs, with rustdoc's warnings denied (CI-02).
+    Docs,
     /// Each crate's project, license and lints (T2, LEGAL-01, QA-01).
     Crates,
     /// cargo-deny: advisories, bans, licenses and sources (SEC-02, PRIV-09, LEGAL-03).
@@ -40,6 +42,7 @@ impl Step {
             Self::Fmt => "fmt",
             Self::Clippy => "clippy",
             Self::Test => "test",
+            Self::Docs => "docs",
             Self::Crates => "crates",
             Self::Deny => "deny",
             Self::Reuse => "reuse",
@@ -92,6 +95,18 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
             ],
         ),
         Step::Test => cargo(root, &["test", "--workspace", "--all-features", "--locked"]),
+        Step::Docs => run_command(
+            root,
+            cargo_command()
+                .args([
+                    "doc",
+                    "--workspace",
+                    "--no-deps",
+                    "--all-features",
+                    "--locked",
+                ])
+                .env("RUSTDOCFLAGS", "--deny warnings"),
+        ),
         Step::Crates => crates::check(root),
         Step::Deny => {
             tools::require(root, &tools::CARGO_DENY)?;
@@ -134,10 +149,14 @@ fn both(first: Result<()>, second: Result<()>) -> Result<()> {
     }
 }
 
-/// Runs the cargo that runs xtask, so every step uses the pinned toolchain.
+/// Runs the cargo that runs xtask with these arguments.
 fn cargo(root: &Path, args: &[&str]) -> Result<()> {
-    let cargo = std::env::var_os("CARGO").unwrap_or_else(|| OsString::from("cargo"));
-    run_command(root, Command::new(cargo).args(args))
+    run_command(root, cargo_command().args(args))
+}
+
+/// The cargo that runs xtask, so every step uses the pinned toolchain.
+fn cargo_command() -> Command {
+    Command::new(std::env::var_os("CARGO").unwrap_or_else(|| OsString::from("cargo")))
 }
 
 /// Runs a command from the workspace root and fails unless it succeeds.

@@ -63,7 +63,7 @@ jobs:
       - name: Check
         env:
           GH_TOKEN: ${{ github.token }} # zizmor's online audits; read-only
-        run: cargo xtask check fmt crates deny reuse secrets workflows
+        run: cargo xtask check fmt docs crates deny reuse secrets workflows
 
   build:
     name: build (${{ matrix.os }})
