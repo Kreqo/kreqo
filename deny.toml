@@ -32,11 +32,13 @@ deny = [
   { crate = "sentry-core", reason = "PRIV-09: crash-reporting SDK" },
   { crate = "posthog-rs", reason = "PRIV-09: analytics SDK" },
   { crate = "segment", reason = "PRIV-09: analytics SDK" },
+  { crate = "analytics", reason = "PRIV-09: Segment's analytics SDK" },
   { crate = "rudderanalytics", reason = "PRIV-09: analytics SDK" },
   { crate = "bugsnag", reason = "PRIV-09: crash-reporting SDK" },
   { crate = "rollbar", reason = "PRIV-09: crash-reporting SDK" },
   { crate = "honeybadger", reason = "PRIV-09: crash-reporting SDK" },
   { crate = "mixpanel", reason = "PRIV-09: analytics SDK" },
+  { crate = "mixpanel-rs", reason = "PRIV-09: analytics SDK" },
   { crate = "amplitude", reason = "PRIV-09: analytics SDK" },
 ]
 skip = []
