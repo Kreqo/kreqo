@@ -60,6 +60,8 @@ jobs:
           tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP/bin" betterleaks
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
       - name: Check
+        env:
+          GH_TOKEN: ${{ github.token }} # zizmor's online audits; read-only
         run: cargo xtask check fmt crates deny reuse secrets workflows
 
   build:

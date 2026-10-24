@@ -30,7 +30,7 @@ pub enum Step {
     Reuse,
     /// Betterleaks over the git history (SEC-03).
     Secrets,
-    /// zizmor over the workflows (CI-07, CI-08, CI-09).
+    /// zizmor over the workflows, online when GH_TOKEN is set (CI-07, CI-08, CI-09).
     Workflows,
 }
 
@@ -111,7 +111,16 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
         Step::Secrets => secrets::scan_history(root),
         Step::Workflows => {
             tools::require(root, &tools::ZIZMOR)?;
-            run_command(root, Command::new("zizmor").args(["--offline", "."]))
+            // A workflow zizmor can't parse fails rather than going unaudited.
+            let mut zizmor = Command::new("zizmor");
+            zizmor.arg("--strict-collection");
+            // The online audits, such as whether a pinned SHA is a real commit
+            // of its action, need a token: CI passes the job's own, read-only
+            // one. Without a token, zizmor stays offline.
+            if std::env::var_os("GH_TOKEN").is_none() {
+                zizmor.arg("--offline");
+            }
+            run_command(root, zizmor.arg("."))
         }
     }
 }
