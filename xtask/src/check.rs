@@ -95,8 +95,11 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
         Step::Crates => crates::check(root),
         Step::Deny => {
             tools::require(root, &tools::CARGO_DENY)?;
-            deny::check_suppressions(root)?;
-            cargo(root, &["deny", "--locked", "check"])
+            deny::check_policy(root)?;
+            cargo(
+                root,
+                &["deny", "--locked", "--config", "deny.toml", "check"],
+            )
         }
         Step::Reuse => {
             tools::require(root, &tools::REUSE)?;
