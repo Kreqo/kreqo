@@ -63,6 +63,8 @@ allow = [
 unused-allowed-license = "allow"
 exceptions = []
 
+# ARCH-13, ahead of its first-release trigger: crates come from crates.io
+# only, never from git or another registry.
 [sources]
 unknown-registry = "deny"
 unknown-git = "deny"

@@ -18,7 +18,8 @@ repository = "https://github.com/Kreqo/kreqo"
 unsafe_code = "deny" # SEC-01
 
 [workspace.lints.clippy]
-# QA-01: suppressions use #[expect(lint, reason = "…")], never a bare #[allow].
+# QA-01: suppressions use #[expect(lint, reason = "…")], never an allow
+# attribute. Clippy skips inner ones, so `cargo xtask check crates` finds those.
 allow_attributes = "deny"
 allow_attributes_without_reason = "deny"
 # SEC-01: every unsafe block and unsafe function documents its safety.

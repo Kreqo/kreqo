@@ -26,7 +26,7 @@ pub enum Step {
     Docs,
     /// Each crate's project, license and lints (T2, LEGAL-01, QA-01).
     Crates,
-    /// cargo-deny: advisories, bans, licenses and sources (SEC-02, PRIV-09, LEGAL-03).
+    /// cargo-deny: advisories, bans, licenses and sources (SEC-02, PRIV-09, LEGAL-03, ARCH-13).
     Deny,
     /// reuse lint (LEGAL-02).
     Reuse,

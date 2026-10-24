@@ -7,7 +7,7 @@ Generated for this state: maintainers = 1; every other fact is false.
 
 Of 316 rules, 136 apply now. Tooling enforces 52 and AI review checks 46; both are listed in CHECKED.md. The 34 below need you, and 4 are options. The other 180 wait for a trigger (LATER.md).
 
-Read the principles, the open decisions and the first section now, about 1270 words. Read each later section when its moment comes.
+Read the principles, the open decisions and the first section now, about 1234 words. Read each later section when its moment comes.
 
 ## Principles
 
@@ -37,7 +37,6 @@ When a case isn't covered, decide by these.
 | UX-15 | Capitalization style per element type, and when an ellipsis is used | — |
 | BRAND-01 | Accent colors: muted shared chroma, uneven chroma under a cap, or Display P3 with sRGB fallback | — |
 | PERF-01 | Default budgets per app category | — |
-| LEGAL-08 | CC BY 4.0 or CC BY-SA 4.0 for documentation, art, icons and media | — |
 
 ## When you set up accounts, the forge and suite-wide choices
 
@@ -63,8 +62,7 @@ When a case isn't covered, decide by these.
 *Why:* The forge holds the source, the review record and the release tags; its compromise is everyone's. · *Enforced by forge settings.*
 
 **LEGAL-08** · MUST · Default licenses unless an ADR says otherwise (LEGAL-01): user documentation, art, icons and media CC BY 4.0 or CC BY-SA 4.0, one chosen by ADR; CC0-1.0 for small reusable assets, generated files and trivial data; translations take their source file's license; build and CI scripts take the code license; third-party data keeps its license. NonCommercial or NoDerivatives terms appear nowhere. Code licenses follow LEGAL-01.\
-*Why:* Non-code artifacts without a declared license cannot be redistributed, and NC or ND terms are store anti-features. · *Enforced by CI.*\
-*Open decision:* CC BY 4.0 or CC BY-SA 4.0 for documentation, art, icons and media. Leaning: none yet.
+*Why:* Non-code artifacts without a declared license cannot be redistributed, and NC or ND terms are store anti-features. · *Enforced by CI.*
 
 **LIFE-02** · MUST · An asset register lists the domains, DNS, trademarks, signing keys, registry names (crates.io, plus the GitHub accounts its login requires), Flathub IDs, store and developer accounts, the forge organization, and hosted services. Each has at least two holders, or a recovery path held by a second person, with credentials in escrow (sealed, or a lockbox, with a will for legal rights such as DNS). Nothing sits only in one personal account. The register is reviewed before each release, and losing any one person stops issues, merges or releases for at most a week. The escrow is tested by first release.\
 *Why:* A solo project dies with its founder's password unless someone else can get in. · *Checked before each release.*
