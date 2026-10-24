@@ -9,6 +9,7 @@ mod crates;
 mod deny;
 mod git;
 mod hooks;
+mod secrets;
 mod tools;
 
 use std::path::{Path, PathBuf};

@@ -11,8 +11,7 @@ use std::process::Command;
 
 use anyhow::{Context, Result, bail};
 
-use crate::check::run_command;
-use crate::tools;
+use crate::secrets;
 
 /// The pre-commit hook: a shim, so that the logic stays in Rust (ARCH-06).
 const PRE_COMMIT: &str =
@@ -71,16 +70,5 @@ fn make_executable(_path: &Path) -> Result<()> {
 
 /// Scans the staged changes for secrets, as the pre-commit hook does.
 pub fn pre_commit(root: &Path) -> Result<()> {
-    tools::require(root, &tools::BETTERLEAKS)?;
-    run_command(
-        root,
-        Command::new("betterleaks").args([
-            "git",
-            ".",
-            "--pre-commit",
-            "--staged",
-            "--no-banner",
-            "--redact",
-        ]),
-    )
+    secrets::scan_staged(root)
 }

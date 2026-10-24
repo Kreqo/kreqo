@@ -11,7 +11,7 @@ use std::process::Command;
 use anyhow::{Context, Result, bail};
 use clap::ValueEnum;
 
-use crate::{crates, deny, tools};
+use crate::{crates, deny, secrets, tools};
 
 /// A step of `cargo xtask check`.
 #[derive(Clone, Copy, ValueEnum)]
@@ -108,13 +108,7 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
             tools::require(root, &tools::REUSE)?;
             run_command(root, Command::new("reuse").arg("lint"))
         }
-        Step::Secrets => {
-            tools::require(root, &tools::BETTERLEAKS)?;
-            run_command(
-                root,
-                Command::new("betterleaks").args(["git", ".", "--no-banner", "--redact"]),
-            )
-        }
+        Step::Secrets => secrets::scan_history(root),
         Step::Workflows => {
             tools::require(root, &tools::ZIZMOR)?;
             run_command(root, Command::new("zizmor").args(["--offline", "."]))
