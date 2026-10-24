@@ -6,8 +6,8 @@
 //! because a single unknown key, such as `[graph] exclude`, can hide a
 //! vulnerability, a banned SDK or a license failure. Every suppression gives
 //! its reason and an expiry date: cargo-deny 0.20 has no expiry of its own,
-//! so a reason ends with `until YYYY-MM-DD`, and the suppression fails once
-//! that day passes.
+//! so a reason ends with `until YYYY-MM-DD`, a real date at most 90 days
+//! ahead, and the suppression fails once that day passes.
 
 use std::fs;
 use std::path::Path;
@@ -68,13 +68,17 @@ const EXCEPTION_FILES: [&str; 3] = [
     ".cargo/deny.exceptions.toml",
 ];
 
+/// How many days ahead an expiry date may be, so that every suppression
+/// comes back for review at least once a quarter (docs/decisions.md).
+const MAX_SUPPRESSION_DAYS: u64 = 90;
+
 /// Fails if deny.toml strays from the written policy, if a suppression
 /// lacks a reason or an expiry date, or if an exceptions file exists.
 pub fn check_policy(root: &Path) -> Result<()> {
     let path = root.join("deny.toml");
     let text =
         fs::read_to_string(&path).with_context(|| format!("couldn't read {}", path.display()))?;
-    let mut problems = policy_problems(&text, &today()?)
+    let mut problems = policy_problems(&text, today()?)
         .with_context(|| format!("couldn't parse {}", path.display()))?;
     for file in EXCEPTION_FILES {
         if root.join(file).exists() {
@@ -92,8 +96,9 @@ pub fn check_policy(root: &Path) -> Result<()> {
     bail!("{} problem(s) with SEC-02's written policy", problems.len())
 }
 
-/// The ways a deny.toml strays from the policy on a given day.
-fn policy_problems(text: &str, today: &str) -> Result<Vec<String>> {
+/// The ways a deny.toml strays from the policy on a given day, counted from
+/// 1970-01-01.
+fn policy_problems(text: &str, today: u64) -> Result<Vec<String>> {
     let config: Table = text.parse()?;
     let mut problems = Vec::new();
     for (table_name, table) in &config {
@@ -120,7 +125,7 @@ fn check_setting(
     name: &str,
     value: &Value,
     setting: &Setting,
-    today: &str,
+    today: u64,
     problems: &mut Vec<String>,
 ) {
     match setting {
@@ -183,45 +188,82 @@ fn check_keys(name: &str, entry: &Value, keys: &[&str], problems: &mut Vec<Strin
     }
 }
 
-/// Fails a suppression whose reason is missing, gives no expiry date, or has
-/// expired.
-fn check_reason(name: &str, entry: &Value, today: &str, problems: &mut Vec<String>) {
+/// Fails a suppression whose reason is missing, doesn't end with a real
+/// expiry date, has expired, or runs past the limit.
+fn check_reason(name: &str, entry: &Value, today: u64, problems: &mut Vec<String>) {
+    if !entry.is_table() {
+        return;
+    }
     let reason = entry
         .get("reason")
         .and_then(Value::as_str)
         .unwrap_or_default();
-    if entry.is_table() && reason.trim().is_empty() {
+    if reason.trim().is_empty() {
         problems.push(format!("{name} gives no reason"));
         return;
     }
-    match expiry(reason) {
-        None if entry.is_table() => problems.push(format!(
+    let Some(date) = expiry(reason) else {
+        problems.push(format!(
             "{name} gives no expiry date; end its reason with `until YYYY-MM-DD`"
+        ));
+        return;
+    };
+    match day_of(date) {
+        None => problems.push(format!("{name} gives an impossible date, {date}")),
+        Some(day) if day < today => problems.push(format!("{name} expired after {date}")),
+        Some(day) if day > today + MAX_SUPPRESSION_DAYS => problems.push(format!(
+            "{name} runs past {MAX_SUPPRESSION_DAYS} days from today; give a nearer date"
         )),
-        Some(date) if date < today => problems.push(format!("{name} expired after {date}")),
-        _ => {}
+        Some(_) => {}
     }
 }
 
-/// The date in a reason's `until YYYY-MM-DD`, if it has one.
+/// The date that ends a reason as `until YYYY-MM-DD`, if one does.
 fn expiry(reason: &str) -> Option<&str> {
-    let (_, rest) = reason.rsplit_once("until ")?;
-    let date = rest.get(..10)?;
-    let is_date = date.char_indices().all(|(position, c)| match position {
-        4 | 7 => c == '-',
-        _ => c.is_ascii_digit(),
-    });
+    let (_, date) = reason.trim_end().rsplit_once("until ")?;
+    let is_date = date.len() == 10
+        && date.char_indices().all(|(position, c)| match position {
+            4 | 7 => c == '-',
+            _ => c.is_ascii_digit(),
+        });
     is_date.then_some(date)
 }
 
-/// Today's date in UTC, as YYYY-MM-DD.
-fn today() -> Result<String> {
+/// The day counted from 1970-01-01 of a YYYY-MM-DD date from 1970 on, or
+/// None for a date that doesn't exist, such as 2027-02-30.
+fn day_of(date: &str) -> Option<u64> {
+    let mut parts = date.split('-').map(str::parse::<u64>);
+    let (Some(Ok(year)), Some(Ok(month)), Some(Ok(day))) =
+        (parts.next(), parts.next(), parts.next())
+    else {
+        return None;
+    };
+    if year < 1970 || !(1..=12).contains(&month) || !(1..=31).contains(&day) {
+        return None;
+    }
+    let days = days_from_civil(year, month, day);
+    (civil_from_days(days) == (year, month, day)).then_some(days)
+}
+
+/// Today in UTC, counted in days from 1970-01-01.
+fn today() -> Result<u64> {
     let seconds = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .context("the clock is set before 1970")?
         .as_secs();
-    let (year, month, day) = civil_from_days(seconds / 86_400);
-    Ok(format!("{year:04}-{month:02}-{day:02}"))
+    Ok(seconds / 86_400)
+}
+
+/// The day counted from 1970-01-01 of a proleptic Gregorian date from 1970
+/// on, after Howard Hinnant's `days_from_civil`.
+fn days_from_civil(year: u64, month: u64, day: u64) -> u64 {
+    let year = if month <= 2 { year - 1 } else { year };
+    let era = year / 400;
+    let year_of_era = year - era * 400;
+    let shifted_month = if month > 2 { month - 3 } else { month + 9 };
+    let day_of_year = (153 * shifted_month + 2) / 5 + day - 1;
+    let day_of_era = year_of_era * 365 + year_of_era / 4 - year_of_era / 100 + day_of_year;
+    era * 146_097 + day_of_era - 719_468
 }
 
 /// The proleptic Gregorian date of a day counted from 1970-01-01, after
@@ -248,10 +290,13 @@ fn civil_from_days(days: u64) -> (u64, u64, u64) {
 mod tests {
     use super::*;
 
+    /// 2026-10-24, as the day the tests run on.
+    const TODAY: u64 = 20_750;
+
     #[test]
     fn accepts_the_committed_policy() -> Result<()> {
         let text = include_str!("../../deny.toml");
-        assert_eq!(policy_problems(text, "2026-10-24")?, Vec::<String>::new());
+        assert_eq!(policy_problems(text, TODAY)?, Vec::<String>::new());
         Ok(())
     }
 
@@ -276,7 +321,7 @@ mod tests {
         "#;
         // Tables and keys come out in alphabetical order.
         assert_eq!(
-            policy_problems(text, "2026-10-24")?,
+            policy_problems(text, TODAY)?,
             [
                 "`advisories.yanked` must be \"deny\"",
                 "bans.deny[0] sets `wrappers`, which the policy doesn't allow",
@@ -293,20 +338,28 @@ mod tests {
         let text = r#"
             [advisories]
             ignore = [
-              { id = "RUSTSEC-0000-0000", reason = "not reachable from our code; until 2027-01-31" },
+              { id = "RUSTSEC-0000-0000", reason = "not reachable from our code; until 2026-12-31" },
               { id = "RUSTSEC-0000-0001", reason = "no fix upstream yet" },
               "RUSTSEC-0000-0002",
+              { id = "RUSTSEC-0000-0003", reason = "until 2026-12-31, then revisit" },
             ]
 
             [bans]
-            skip = [{ crate = "windows-sys@0.52.0", reason = "until 2026-10-01" }]
+            skip = [
+              { crate = "windows-sys@0.52.0", reason = "until 2026-10-01" },
+              { crate = "windows-sys@0.59.0", reason = "until 2027-02-30" },
+              { crate = "windows-sys@0.60.0", reason = "until 2027-06-30" },
+            ]
         "#;
         assert_eq!(
-            policy_problems(text, "2026-10-24")?,
+            policy_problems(text, TODAY)?,
             [
                 "advisories.ignore[1] gives no expiry date; end its reason with `until YYYY-MM-DD`",
                 "advisories.ignore[2] must be a table with a reason",
+                "advisories.ignore[3] gives no expiry date; end its reason with `until YYYY-MM-DD`",
                 "bans.skip[0] expired after 2026-10-01",
+                "bans.skip[1] gives an impossible date, 2027-02-30",
+                "bans.skip[2] runs past 90 days from today; give a nearer date",
             ]
         );
         Ok(())
@@ -319,13 +372,21 @@ mod tests {
             Some("2027-01-31")
         );
         assert_eq!(expiry("until 2027-1-31"), None);
+        assert_eq!(expiry("until 2027-01-31, then revisit"), None);
         assert_eq!(expiry("no date"), None);
+        assert_eq!(day_of("2026-10-24"), Some(TODAY));
+        assert_eq!(day_of("2028-02-29"), Some(TODAY + 493));
+        assert_eq!(day_of("2027-02-29"), None);
+        assert_eq!(day_of("1969-12-31"), None);
     }
 
     #[test]
-    fn converts_days_to_dates() {
+    fn converts_between_days_and_dates() {
         assert_eq!(civil_from_days(0), (1970, 1, 1));
         assert_eq!(civil_from_days(11_017), (2000, 3, 1));
         assert_eq!(civil_from_days(19_723), (2024, 1, 1));
+        assert_eq!(days_from_civil(1970, 1, 1), 0);
+        assert_eq!(days_from_civil(2024, 1, 1), 19_723);
+        assert_eq!(civil_from_days(TODAY), (2026, 10, 24));
     }
 }
