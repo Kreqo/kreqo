@@ -14,7 +14,7 @@ mod tools;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, ensure};
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -66,10 +66,21 @@ fn run() -> Result<bool> {
     }
 }
 
-/// The workspace root, which holds this crate's folder.
+/// The workspace root, which holds this crate's folder. `cargo run` sets
+/// CARGO_MANIFEST_DIR when it runs xtask; the value compiled in is only a
+/// fallback, because a build shared between checkouts would otherwise check
+/// the checkout it was compiled in.
 fn workspace_root() -> Result<PathBuf> {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
+    let manifest_dir = std::env::var_os("CARGO_MANIFEST_DIR")
+        .map_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")), PathBuf::from);
+    let root = manifest_dir
         .parent()
         .map(Path::to_path_buf)
-        .context("xtask's folder has no parent")
+        .context("xtask's folder has no parent")?;
+    ensure!(
+        root.join("Cargo.toml").is_file(),
+        "{} isn't a workspace root; run cargo xtask from the repository",
+        root.display()
+    );
+    Ok(root)
 }
