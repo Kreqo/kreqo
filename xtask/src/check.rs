@@ -95,11 +95,14 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
         Step::Crates => crates::check(root),
         Step::Deny => {
             tools::require(root, &tools::CARGO_DENY)?;
-            deny::check_policy(root)?;
-            cargo(
+            // Both run, so that a problem in deny.toml, such as an expired
+            // suppression, never hides a newly published advisory.
+            let policy = deny::check_policy(root);
+            let scan = cargo(
                 root,
                 &["deny", "--locked", "--config", "deny.toml", "check"],
-            )
+            );
+            both(policy, scan)
         }
         Step::Reuse => {
             tools::require(root, &tools::REUSE)?;
@@ -116,6 +119,15 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
             tools::require(root, &tools::ZIZMOR)?;
             run_command(root, Command::new("zizmor").args(["--offline", "."]))
         }
+    }
+}
+
+/// Fails if either part failed, naming both failures when both did.
+fn both(first: Result<()>, second: Result<()>) -> Result<()> {
+    match (first, second) {
+        (Err(first), Err(second)) => bail!("{first:#}; {second:#}"),
+        (Err(error), Ok(())) | (Ok(()), Err(error)) => Err(error),
+        (Ok(()), Ok(())) => Ok(()),
     }
 }
 
