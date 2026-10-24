@@ -121,13 +121,13 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
         }
         Step::Reuse => {
             tools::require(root, &tools::REUSE)?;
-            run_command(root, Command::new("reuse").arg("lint"))
+            run_command(root, tools::REUSE.command().arg("lint"))
         }
         Step::Secrets => secrets::scan_history(root),
         Step::Workflows => {
             tools::require(root, &tools::ZIZMOR)?;
             // A workflow zizmor can't parse fails rather than going unaudited.
-            let mut zizmor = Command::new("zizmor");
+            let mut zizmor = tools::ZIZMOR.command();
             zizmor.arg("--strict-collection");
             // The online audits, such as whether a pinned SHA is a real commit
             // of its action, need a token: CI passes the job's own, read-only
@@ -184,4 +184,29 @@ fn show(command: &Command) -> String {
         .map(|part| part.to_string_lossy())
         .collect::<Vec<_>>()
         .join(" ")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// CI's `cargo xtask check` lines, together, run every step, so that a
+    /// new step can't run only locally.
+    #[test]
+    fn ci_runs_every_step() {
+        let workflow = include_str!("../../.github/workflows/ci.yml");
+        let mut in_ci: Vec<&str> = workflow
+            .lines()
+            .filter_map(|line| line.trim().strip_prefix("run: cargo xtask check "))
+            .flat_map(str::split_whitespace)
+            .collect();
+        in_ci.sort_unstable();
+        in_ci.dedup();
+        let mut every: Vec<&str> = Step::value_variants()
+            .iter()
+            .map(|step| step.name())
+            .collect();
+        every.sort_unstable();
+        assert_eq!(in_ci, every);
+    }
 }

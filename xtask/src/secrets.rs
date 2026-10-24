@@ -83,7 +83,7 @@ pub fn scan_staged(root: &Path) -> Result<()> {
 
 /// Betterleaks, held to its built-in rules.
 fn betterleaks() -> Command {
-    let mut command = Command::new("betterleaks");
+    let mut command = tools::BETTERLEAKS.command();
     command
         .env("BETTERLEAKS_CONFIG_TOML", BUILT_IN_RULES)
         .env_remove("BETTERLEAKS_CONFIG")
