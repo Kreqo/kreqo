@@ -1,0 +1,248 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Versioning and releases (REL): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "REL-01"
+level = "MUST"
+statement = "Every public interface follows Semantic Versioning: crate APIs, CLI flags, file formats, the sync protocol, the plugin API, design tokens (names and meanings) and component APIs. *Breaking* for crate APIs follows the [Cargo SemVer chapter](https://doc.rust-lang.org/cargo/reference/semver.html); a possibly-breaking change needs a maintainer decision recorded in the PR. Token diffs appear in the changelog. Apps also follow a time-based cadence (REL-10)."
+rationale = "User themes override tokens (UX-14), so a renamed token breaks a theme as a renamed function breaks a crate."
+verification = "cargo-semver-checks; token diff job"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-02"
+level = "MUST"
+statement = "cargo-semver-checks runs on every pull request to a library crate."
+rationale = "Tooling catches an accidental API break before it reaches a release."
+verification = "cargo-semver-checks"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-03"
+level = "MUST"
+statement = "Pull-request titles follow Conventional Commits and become the subjects of the squash commits on the default branch (CI-13); CI lints them. Subjects describe the change as users would see it, fixes reference their issue, and performance claims cite measurements. Changelogs are generated in the Keep a Changelog format; the generated changelog feeds the curated release notes (REL-13) and never replaces them."
+rationale = "Tooling needs the type prefix; users need a subject that says what changed for them."
+verification = "CI: pull-request title lint; git-cliff"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-04"
+level = "MUST"
+statement = "Each crate declares its MSRV, which follows a stated window (for example latest stable minus two). Workspaces use resolver 3. An MSRV job checks publishable crates with the committed lockfile, and each changelog release section states its MSRV. Raising the MSRV is a minor version bump."
+rationale = "Cargo treats an MSRV bump as a minor change, and resolver 3 keeps resolution inside the MSRV."
+verification = "MSRV job with `--locked`"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-05"
+level = "MUST"
+statement = "Each release goes through a release pull request built from the template's checklist; every Release-check item links its evidence, and CI refuses to tag while one is unticked. The release generates a compliance summary listing each applicable rule as met (with evidence), deviation (with an ADR link) or not applicable (with a reason)."
+rationale = "An unenforced checklist is a form; a gate with linked evidence is a record."
+verification = "Release checklist: evidence links; compliance summary generated"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-06"
+level = "SHOULD"
+statement = "Releases are automated from the protected default branch. Release jobs run behind a manual approval gate on dedicated runners (CI-10), and crates are published only under REL-17."
+rationale = "A manual gate stops a compromised workflow from publishing on its own."
+verification = "Release workflow: approval gate present"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-07"
+level = "MUST"
+statement = "Deprecated features live for at least one minor release, with a migration path, before removal. Formats, the sync protocol and the plugin API follow the longer period in REL-16."
+rationale = "A stated minimum lets users plan upgrades instead of discovering removals."
+verification = "Review checklist: deprecation period and migration path"
+check = "Review"
+trigger = "one-point-oh"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-08"
+level = "SHOULD"
+statement = "Apps ship stable, beta and nightly channels. Nightlies ship only through the organization's own channels (its own Flatpak repository and direct downloads); Flathub beta carries betas only (PLAT-06)."
+rationale = "Flathub forbids nightly or daily builds in its stable and beta repositories."
+verification = "Release checklist: channel map"
+check = "Release"
+trigger = "one-point-oh"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-09"
+level = "MUST"
+statement = "Each project publishes a support policy and table, updated every release: which versions get fixes, for how long, and when security updates end. The current release is supported until the next release's first patch, and only the latest patch of a series is supported. LTS is deferred until 1.0. SECURITY.md links the table."
+rationale = "Users and reporters need to know which version to run and which versions get security fixes."
+verification = "Release checklist: support table updated"
+check = "Release"
+trigger = "first-release"
+who = "you"
+moments = ["release"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-10"
+level = "MUST"
+statement = "Each app publishes a time-based target cadence (for example two releases a year) and an app version scheme. Target dates may slip. A release branch is cut before each release, followed by release candidates at least weekly, with a stated target date. Crates release when ready. Details: release-process document."
+rationale = "A rhythm gives users and translators dates to plan around; dates that slip avoid crunch."
+verification = "Release checklist: calendar and release-candidate log"
+check = "Release"
+trigger = "first-release"
+who = "you"
+moments = ["release"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-11"
+level = "MUST"
+statement = "Each app cycle publishes its freezes, and the README shows the current state. In order: dependency freeze; feature, UI and public-interface freeze (fixes only); string and user-docs freeze at least 14 days before release, with string changes announced to translators from the feature freeze on; code freeze when the release PR opens (release blockers only). Crates get a 14-day string freeze before tagging and no feature freeze. Once two maintainers exist, lifting a freeze needs two maintainer approvals (a localization coordinator for strings); until then the REL-05 release PR is the code freeze and exceptions are recorded on it. Risky changes land early in the cycle. Details: release-process document."
+rationale = "Freezes give translators and testers a stable target before each release."
+verification = "Release checklist: freeze dates and recorded exceptions"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-12"
+level = "MUST"
+statement = "Regressions from the current cycle, crashes affecting many users and any data loss block a release; when in doubt, flag a blocker."
+rationale = "A release that loses data or regresses costs more trust than a late one."
+verification = "Release checklist: blocker query empty"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-13"
+level = "MUST"
+statement = "Every release has curated, plain-language notes for users, shipped in the AppStream release entry and kept separate from the generated changelog (REL-03), which is an input, never the notes. They cover what changed and the upgrade impact; a compatibility section (breaking changes, migrations, dropped platforms); every fixed vulnerability with its advisory or CVE ID; and any change to data collection or contacted servers. A cumulative compatibility page is kept."
+rationale = "Users decide whether to upgrade from the notes; a commit list doesn't tell them."
+verification = "Release checklist: notes reviewed; AppStream release entry present"
+check = "Release"
+trigger = "first-release"
+who = "you"
+moments = ["release"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-14"
+level = "MUST"
+statement = "A PR that breaks a public interface adds a migration-guide fragment: what changed, why, how to migrate, a before/after example and searchable names. A PR with a user-visible feature adds a release-note fragment. CI validates fragments, and a deprecation attribute never replaces one."
+rationale = "Users search migration guides while fixing compiler errors, so the author writes the entry while it's fresh."
+verification = "Fragment validation job"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-15"
+level = "SHOULD"
+statement = "Fixes land on the default branch first and are cherry-picked with `-x` to supported branches only for regressions, crashes, data loss, security or platform breakage, or as low-risk high-value fixes. New API, compatibility breaks and string changes that break translations are never backported. Details: release-process document."
+rationale = "Default branch first loses no fix; the short list keeps stable branches stable."
+verification = "Review checklist: backport reason named"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-16"
+level = "MUST"
+statement = "Breaking changes to formats, the sync protocol and the plugin API are batched into announced major releases, tracked publicly at least one cycle ahead and approved by RFC with a compatibility section, and each ships an automatic migrator. Deprecated items carry `#[deprecated(since, note)]` plus a doc line naming the replacement, and are removed only in a major release."
+rationale = "Batched, announced breaks give plugin and format consumers one migration per cycle, not many."
+verification = "Review checklist: RFC compatibility section; migrator present"
+check = "Review"
+trigger = "one-point-oh"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-17"
+level = "MUST"
+statement = "Crates are published only by the release pipeline, from runners that never run PR code (CI-10), through crates.io Trusted Publishing in trusted-only mode where the forge supports it, otherwise with scoped, expiring tokens held under SEC-16. Crates are owned by an organization crates.io team plus at least two humans, never a single personal account. `cargo publish --dry-run --locked` runs on every PR."
+rationale = "A workstation publish can't be reproduced or audited, and a single owner account is a single point of loss."
+verification = "Settings audit: crate owners; publish workflow"
+check = "Settings"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-18"
+level = "SHOULD"
+statement = "Unfinished features and new public interfaces ship only behind an explicit opt-in (an `unstable-*` Cargo feature, an experimental marker or a prefixed name) until accepted. Experimental items are exempt from REL-01 and REL-07 until they graduate and are never exposed in stable builds."
+rationale = "An opt-in lets an interface change freely before anyone depends on it."
+verification = "Feature-gate check in CI"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-19"
+level = "SHOULD"
+statement = "Release PRs are prepared with release-plz and git-cliff, which both work against more than one forge and are tested against the forge in use. cargo-dist is not mandated, because it supports a single forge. Details: release-process document."
+rationale = "Hand-prepared release PRs drift; tools that run on more than one forge keep the process portable."
+verification = "Release workflow: release-plz run"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REL-20"
+level = "SHOULD"
+statement = "Published library crates either test their declared lower dependency bounds (cargo-minimal-versions) or raise those bounds to the versions in the tested lockfile. The latest compatible versions are also tested on a schedule."
+rationale = "A lower bound nobody tests breaks downstream resolution without warning."
+verification = "cargo-minimal-versions job or bound check; scheduled latest-versions job"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"

@@ -1,0 +1,105 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Extensibility (EXT): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "EXT-01"
+level = "MUST"
+statement = "Plugins are sandboxed: no file, network or data access without a permission the user granted."
+rationale = "A sandbox enforces the permissions the user granted; an unsandboxed add-on can read everything the app can."
+verification = "Review checklist: no host capability reachable without a granted permission"
+check = "Review"
+trigger = "one-point-oh"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "EXT-02"
+level = "MUST"
+statement = "Plugin APIs are versioned like any public interface (REL-01)."
+rationale = "A versioned API lets a plugin detect what it runs against and keeps N and N−1 interoperating (DATA-12)."
+verification = "cargo-semver-checks on plugin API crates; versioned component interface"
+check = "CI"
+trigger = "one-point-oh"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "EXT-03"
+level = "SHOULD"
+statement = "Apps that accept plugins run them as WebAssembly components (WASI 0.3 or later)."
+rationale = "Component isolation and capability-based WASI give EXT-01 its sandbox without a custom runtime."
+verification = "Review checklist: plugin host is a component runtime"
+check = "Review"
+trigger = "one-point-oh"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "EXT-04"
+level = "SHOULD"
+statement = "The plugin boundary is designed before 1.0, even if plugins ship later."
+rationale = "A boundary added after 1.0 either breaks the public API (REL-01) or exposes internals."
+verification = "Review checklist: boundary ADR accepted before the 1.0 release"
+check = "Review"
+trigger = "one-point-oh"
+who = "you"
+moments = ["plugins"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "EXT-05"
+level = "MUST"
+statement = "The official plugin directory lists only plugins whose OSI-licensed source builds reproducibly, with CC0 or CC BY/BY-SA assets. It accepts no obfuscated or binary-only code, remote code, self-updating, ads, paywalls, donation prompts or client-side telemetry. Plugins declare named network services, accounts, payments and server-side data use up front, send data only on an explicit user action, and honor the app's global online switch. A human reviews every listing; reported violations get a public fix window, then removal."
+rationale = "A listing is an endorsement; reproducible source and human review are what back it."
+verification = "Release checklist: listing review record and reproducible build log per listed plugin"
+check = "Release"
+trigger = "one-point-oh"
+who = "you"
+moments = ["plugins"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "EXT-06"
+level = "MUST"
+statement = "Before the plugin boundary is designed (EXT-04), an ADR decides how plugins are distributed and permitted on each Tier 1 platform. That includes iOS, where downloaded code may not change app functionality and every data or permission share with a plugin needs the user's consent."
+rationale = "App Store guidelines 2.5.2 and 4.7 constrain the boundary; a design that ignores them fails store review."
+verification = "Review checklist: distribution ADR accepted and linked from the boundary ADR"
+check = "Review"
+trigger = "plugin-design"
+who = "you"
+moments = ["plugins"]
+open = { question = "Plugin distribution and permissions per Tier 1 platform", leaning = "" }
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "EXT-07"
+level = "SHOULD"
+statement = "Plugins localize through the suite's localization system and reuse suite strings and translation contexts."
+rationale = "Shared strings and contexts keep one vocabulary and spare translators duplicate work."
+verification = "Review checklist: plugin strings use the suite catalog and contexts"
+check = "Review"
+trigger = "one-point-oh"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "EXT-08"
+level = "SHOULD"
+statement = "Content the organization hosts for sharing (decks, themes, plugins) declares a license, is original or openly licensed, discloses AI generation and third-party network use, and falls under the code of conduct."
+rationale = "Hosted content carries the organization's name; license and disclosure are what let others reuse it safely."
+verification = "Review checklist: submission requires license, origin, AI and network disclosures"
+check = "Review"
+trigger = "sharing"
+who = "ai"
+added = "0.1.0"
+status = "active"

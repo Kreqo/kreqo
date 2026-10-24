@@ -1,0 +1,153 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Internationalization (I18N): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "I18N-01"
+level = "MUST"
+statement = "No user-facing string is hard-coded; all go through the localization system (Fluent proposed, confirmed by ADR)."
+rationale = "A hard-coded string cannot be translated, and each one found later is a retrofit."
+verification = "CI: pseudo-localized build (I18N-03); string lint"
+check = "CI"
+trigger = "always"
+who = "you"
+moments = ["setup"]
+open = { question = "Localization format: Fluent, gettext or MessageFormat 2", leaning = "Fluent" }
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "I18N-02"
+level = "MUST"
+statement = "Dates, numbers, plurals, units and sorting use ICU4X with the user's locale."
+rationale = "Hand-written formatting gets plurals, sorting and calendars wrong outside English."
+verification = "Review checklist: formatting through ICU4X only"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "I18N-03"
+level = "MUST"
+statement = "CI runs a pseudo-localized build to catch hard-coded strings and truncation, expanding strings by 50% (I18N-11)."
+rationale = "A pseudo-locale makes untranslated and clipped text visible without waiting for translators."
+verification = "CI: pseudo-locale build and screenshot check"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "I18N-04"
+level = "MUST"
+statement = "Layouts support right-to-left scripts."
+rationale = "Mirrored layouts cannot be bolted on; every component must handle direction."
+verification = "CI: right-to-left snapshot tests (QA-06)"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "I18N-05"
+level = "MUST"
+statement = "Text input supports input methods (IME) and complex scripts."
+rationale = "Without IME support, users of Chinese, Japanese, Korean and other scripts cannot type."
+verification = "Release checklist: IME and complex-script input test log"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "I18N-06"
+level = "MUST"
+statement = "Regional defaults (first day of the week, units, calendar) follow the user's region, not their language."
+rationale = "One language spans regions with different weeks, units and calendars."
+verification = "Review checklist: defaults derived from region"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "I18N-07"
+level = "SHOULD"
+statement = "Strings carry context comments for translators."
+rationale = "Translators see strings out of context; a comment prevents misreading short labels."
+verification = "Review checklist: comments on new strings"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "I18N-08"
+level = "MUST"
+statement = "Translations are managed on Weblate (proposed), which commits them back to the repository. Translation files change only through the translation platform; direct pull requests to them are not accepted, and sync is automated."
+rationale = "Edits outside the platform conflict with its commits and are overwritten or lost."
+verification = "CI: changes to translation files rejected unless from the platform's account"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+open = { question = "Translation platform; test its Fluent support first", leaning = "Weblate" }
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "I18N-09"
+level = "MUST"
+statement = "French is a release-blocking locale. Every release ships all user-facing strings, store listings, in-app help, documentation and bundled content in French, with nothing available only in another language. French ships as generic `fr`, with `fr-CA` overrides where Quebec usage differs. CI blocks a release below 100%."
+rationale = "The Charter of the French Language (s. 52.1) binds the organization's Quebec establishment and requires equivalent French."
+verification = "CI: `fr` at 100% before tagging; Release checklist: French documentation and bundled content"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "I18N-10"
+level = "MUST"
+statement = "Product, app and glossary terms are Fluent terms, never literal text inside messages. \"Kreqo\" is never translated, and an app's plain word is translated only as BRAND-02 allows; a transliteration may be added. The glossary (UX-06) is mirrored to Weblate's glossary with terminology flags, and its consistency check is on."
+rationale = "A term defined once stays consistent in every message and language, and Weblate flags deviations."
+verification = "CI: Fluent term lint; Weblate consistency check"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "I18N-11"
+level = "SHOULD"
+statement = "Sentences are never built from fragments or across several controls. Layouts tolerate text 50% longer than English, and the pseudo-localized build (I18N-03) expands strings to match. Access keys are translated together with their labels."
+rationale = "Word order differs between languages, and translations run longer than English."
+verification = "CI: pseudo-locale expansion at 50%; Review checklist: no concatenated strings"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "I18N-12"
+level = "MUST"
+statement = "Shipped translations are reviewed by a human; machine suggestions are never released unreviewed, and the English source is always complete. Each language has a named coordinator or team who reviews new translators' suggestions and keeps a per-language glossary seeded from the suite glossary. The first shipped languages are chosen by ADR."
+rationale = "Unreviewed machine output ships errors to users who cannot tell them from the source."
+verification = "Release checklist: coordinator sign-off per shipped language"
+check = "Release"
+trigger = "first-release"
+who = "you"
+moments = ["release"]
+added = "0.1.0"
+status = "active"

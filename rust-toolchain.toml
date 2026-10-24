@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# The pinned toolchain for every build (CI-16), raised only by a deliberate
+# pull request that fixes the new lints.
+[toolchain]
+channel = "1.99.1"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

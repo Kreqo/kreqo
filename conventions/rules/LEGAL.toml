@@ -1,0 +1,237 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Licensing and compliance (LEGAL): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "LEGAL-01"
+level = "MUST"
+statement = "Licenses follow three groups. An app's own crates (its core and UI shell) are GPL-3.0-or-later; servers and hosted services are AGPL-3.0-or-later; file formats, protocols, algorithms, shared libraries, tools, and the plugin interface and SDK are MIT OR Apache-2.0. Before the first outside contribution, the GPL and AGPL texts carry additional permissions under their section 7, drafted with legal counsel: distribution through app stores whose terms add restrictions, linking the UI toolkit under its non-GPL license, and combining an app with OSI-licensed plugins that use only the published plugin interface (EXT-05). Any other license needs an ADR."
+rationale = "Under a DCO without a CLA, contributors keep their copyright, so licenses and their exceptions can never change later."
+verification = "CI: each crate's license field matches its group; Review checklist: group of a new crate"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule.reminder]]
+trigger = "open-to-contributions"
+note = "Draft the section 7 additional permissions with counsel before the first outside contribution."
+
+[[rule]]
+id = "LEGAL-02"
+level = "MUST"
+statement = "Every file carries an SPDX license header, following the REUSE specification."
+rationale = "Per-file headers let any file be reused or audited without reading the repository."
+verification = "`reuse lint`"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LEGAL-03"
+level = "MUST"
+statement = "Dependency licenses are compatible with the project's license, enforced by cargo-deny."
+rationale = "An incompatible dependency makes a release undistributable."
+verification = "cargo-deny `licenses`"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LEGAL-04"
+level = "MUST"
+statement = "The trademark policy lists uses allowed without asking (*made with Kreqo*, plugins and decks *for Kreqo*, tutorials, non-profit events), offers a community badge, reserves the logo, and defines an extension namespace such as `kreqo-ext-`. Third-party product names never begin with Kreqo, forks rebrand, the plugin directory refuses listings that misuse the marks, and the marks pass to the next maintainers if the project is abandoned."
+rationale = "Listed permitted uses stop the community asking for every badge or tutorial."
+verification = "Release checklist: trademark policy published"
+check = "Release"
+trigger = "first-release"
+who = "you"
+moments = ["legal"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LEGAL-05"
+level = "MUST"
+statement = "Personal data handling complies with Quebec's Act respecting the protection of personal information in the private sector as modernized by Law 25, with PIPEDA (or its successor once in force) for interprovincial and international flows and the GDPR for EU users. Hosted services offered to people in the EU designate an EU representative (GDPR Art. 27) before launch, unless an ADR documents why the exemption applies."
+rationale = "Law 25 reaches any enterprise handling Quebec residents' data; a sync service is not occasional processing under the GDPR."
+verification = "Release checklist: privacy notice names the laws; EU representative recorded before hosted service"
+check = "Release"
+trigger = "first-release"
+who = "you"
+moments = ["legal"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LEGAL-06"
+level = "MUST"
+statement = "Products offered in the EU meet the European Accessibility Act through A11Y-04. The Act binds only listed products and consumer services, such as e-commerce by enterprises above microenterprise size; A11Y-04 applies everywhere regardless."
+rationale = "One EN 301 549 test pass serves the EU and Canada, which adopted it unchanged."
+verification = "Release checklist: A11Y-04 audit"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LEGAL-07"
+level = "MUST"
+statement = "An ADR decides each product's Cyber Resilience Act role: none, manufacturer or steward. As manufacturer, the organization reports under Article 14 from the first commercial release, meets the essential requirements from 11 December 2027 or first placing on the market if later, and mandates an EU authorized representative. As steward, the non-profit adopts a cybersecurity policy. Either way it sets up vulnerability reporting."
+rationale = "Monetizing open source makes the maker a manufacturer; a steward has light duties and no fines."
+verification = "Release checklist: CRA ADR linked"
+check = "Release"
+trigger = "commercial"
+who = "you"
+moments = ["legal"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LEGAL-08"
+level = "MUST"
+statement = "Default licenses unless an ADR says otherwise (LEGAL-01): user documentation, art, icons and media CC BY 4.0 or CC BY-SA 4.0, one chosen by ADR; CC0-1.0 for small reusable assets, generated files and trivial data; translations take their source file's license; build and CI scripts take the code license; third-party data keeps its license. NonCommercial or NoDerivatives terms appear nowhere. Code licenses follow LEGAL-01."
+rationale = "Non-code artifacts without a declared license cannot be redistributed, and NC or ND terms are store anti-features."
+verification = "`reuse lint` with the allowed-license list"
+check = "CI"
+trigger = "always"
+who = "you"
+moments = ["setup"]
+open = { question = "CC BY 4.0 or CC BY-SA 4.0 for documentation, art, icons and media", leaning = "" }
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LEGAL-09"
+level = "MUST NOT"
+statement = "An AI system is named as author or co-author in copyright notices, AUTHORS files or copyright registrations. Commit trailers (GOV-03) are not author fields."
+rationale = "Whether an AI can be an author is before Canadian courts; a notice naming one invites the dispute."
+verification = "Review checklist: no AI in notices or AUTHORS"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LEGAL-10"
+level = "MUST"
+statement = "Before the first release containing cryptography, an export-control ADR per app records its status under the Canadian Export Control List (software in the public domain), the US EAR (publicly available, standard cryptography only) and each store's answers (Apple's encryption flag and the French declaration). Source is public before or with every binary."
+rationale = "Every download is an export transfer; public source using standard cryptography needs no permit."
+verification = "Release checklist: export ADR linked"
+check = "Release"
+trigger = "first-release"
+who = "you"
+moments = ["legal"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LEGAL-11"
+level = "MUST"
+statement = "Code copied from elsewhere, including AI output that reproduces it, keeps its license and attribution and is compatible with the target artifact; Anki is AGPL-3.0-or-later, so its code never enters permissive crates. Contributors never copy from, or consult, source-available or proprietary implementations of formats the suite imports; interoperability is built from public specifications and sample files."
+rationale = "A copied snippet carries its license into the crate, and a tainted import breaks clean-room interoperability."
+verification = "Review checklist: provenance of new code (GOV-17)"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LEGAL-12"
+level = "MUST"
+statement = "A Canadian trademark application for the word mark KREQO (downloadable software and online services) is filed before the first release and extended through the Madrid Protocol to the EU and US before commercial use. App names, \"Kreqo\" plus a plain word (BRAND-02), are covered by that mark."
+rationale = "Canada has required no proof of use since 2019, so anyone can file first."
+verification = "Release checklist: CIPO application number; Madrid extension before commercial use"
+check = "Release"
+trigger = "first-release"
+who = "you"
+moments = ["legal"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LEGAL-13"
+level = "MUST"
+statement = "The license FAQ states that user content (notes, decks, recordings) belongs to the user and is not covered by the app license."
+rationale = "Users read a copyleft app license as reaching their own files unless told otherwise."
+verification = "Release checklist: license FAQ published"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LEGAL-14"
+level = "MUST"
+statement = "Every asset is committed in, or next to, its preferred modifiable form (SVG or design source for icons and logos, token sources for generated styles), with instructions to regenerate it. Binary assets (fonts, images, test fixtures) live in a declared directory with provenance notes."
+rationale = "A fork can modify only what ships in editable form, and provenance proves the license."
+verification = "Review checklist: source form and provenance for every new asset"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LEGAL-15"
+level = "SHOULD"
+statement = "The organization never asserts patents against free software, licenses any patents it holds royalty-free, and joins the Open Invention Network once incorporated."
+rationale = "A patent pledge removes the one claim a permissive license does not already settle."
+verification = "Review checklist: pledge in the governance documents"
+check = "Review"
+trigger = "commercial"
+who = "you"
+moments = ["legal"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LEGAL-16"
+level = "MUST"
+statement = "Standard-form terms (sync service, subscriptions, enterprise licenses) are presented in French first, with other languages on no less favorable terms."
+rationale = "The Charter of the French Language requires French-first standard-form contracts from a Quebec establishment."
+verification = "Release checklist: French terms shown first"
+check = "Release"
+trigger = "commercial"
+who = "you"
+moments = ["legal"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LEGAL-17"
+level = "SHOULD"
+statement = "CONTRIBUTING states that, by signing off, contributors waive their moral rights of integrity and association in favor of the project and all licensees, as far as the law allows; attribution comes from history and an AUTHORS file. The clause is adopted only after legal review confirms a sign-off can carry a waiver. Details: CONTRIBUTING.md."
+rationale = "Moral rights cannot be assigned, only waived, and integrity claims grow once a company commercializes the commons."
+verification = "Review checklist: clause in CONTRIBUTING after legal review"
+check = "Review"
+trigger = "open-to-contributions"
+who = "you"
+moments = ["contributors"]
+added = "0.1.0"
+status = "active"
+history = ["2026-10-23 solo-first edit: waits for the trigger 'open-to-contributions' (was 'first-release')."]
+
+[[rule]]
+id = "LEGAL-18"
+level = "MUST"
+statement = "When the organization first serves the public from Ontario or has staff there, it adopts AODA customer-service policies and training."
+rationale = "Ontario's customer-service standard binds organizations serving the public from Ontario, not elsewhere."
+verification = "Review checklist: AODA policy on file"
+check = "Review"
+trigger = "incorporation"
+who = "you"
+moments = ["legal"]
+added = "0.1.0"
+status = "active"

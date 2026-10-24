@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Facts about Kreqo today. Change a fact, run compile.py, and the views follow.
+
+maintainers = 1  # People with merge rights, you included
+open_to_contributions = false  # You accept issues, discussions or pull requests from outside
+preparing_first_release = false  # You've started preparing the first public release
+released = false  # A public release exists
+preparing_1_0 = false  # You've started preparing 1.0
+plugin_design = false  # You've started designing the plugin boundary
+android_release = false  # You're preparing the first Android release
+app_store_release = false  # You're preparing the first App Store release
+sync = false  # You're preparing to ship sync
+e2ee_stable = false  # You're about to call end-to-end encrypted sync stable
+sharing_service = false  # You're preparing a sharing service (decks, themes, plugins)
+ai_feature = false  # You're adding the first AI feature
+telemetry = false  # You're adding any telemetry
+email_list = false  # You're starting an email list
+hosted_service = false  # You're about to run a server holding other people's data
+accepting_funds = false  # You're about to accept donations, grants or sponsorship
+commercial = false  # You're about to sell anything
+organization_exists = false  # The legal organization exists
+incorporation_or_hiring = false  # You're incorporating or hiring

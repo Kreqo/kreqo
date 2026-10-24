@@ -1,0 +1,212 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Architecture (ARCH): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "ARCH-01"
+level = "MUST"
+statement = "All logic is written in Rust. Other languages appear only where a platform, format or tool requires them (shaders, markup and styles, translations, design tokens, interface definitions, CI and packaging files, mobile glue) and never hold business logic."
+rationale = "One language keeps the core under one toolchain, one lint set and one test suite."
+verification = "Review checklist: no business logic outside Rust"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "ARCH-02"
+level = "MUST"
+statement = "Domain logic lives in UI-independent crates; UI crates contain presentation only."
+rationale = "Logic with no toolkit dependency is testable headless and reachable by API and CLI (ARCH-11)."
+verification = "Review checklist: core crates have no UI dependency; UI crates hold no domain logic"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "ARCH-03"
+level = "MUST"
+statement = "The UI toolkit is chosen by ADR and stays behind the shell, so replacing it never touches the core."
+rationale = "The toolkit choice stays reversible only while no core crate depends on it."
+verification = "Review checklist: toolkit types absent from core crates; ADR linked"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["new-app"]
+open = { question = "Which UI toolkit: Slint or Dioxus", leaning = "Slint" }
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "ARCH-04"
+level = "MUST"
+statement = "Each concept (type, rule, constant) is defined once and imported everywhere else."
+rationale = "Duplicated definitions drift: a change lands in one copy and not the other."
+verification = "Review checklist: no duplicated type, rule or constant"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "ARCH-05"
+level = "MUST"
+statement = "New capabilities follow the dependency ladder: a maintained, vetted, license-compatible crate; else a contribution to a close one; else a focused crate of our own; else a mature C library behind a safe Rust API. The last two need an ADR."
+rationale = "A vetted crate carries maintenance the project would otherwise own; the ADR records why a step was skipped."
+verification = "Review checklist: ladder step named; ADR linked for an own crate or C library"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["dependency"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "ARCH-06"
+level = "MUST"
+statement = "Project scripts and build tasks are written in Rust (cargo xtask), not shell. CI workflow files, packaging manifests and Nix flakes (PLAT-04) are outside this rule and follow ARCH-01."
+rationale = "Rust tasks run on every Tier 1 platform without a shell and get the workspace lints and tests."
+verification = "Review checklist: new automation lives in the xtask crate"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "ARCH-07"
+level = "SHOULD"
+statement = "Shared code moves into its own crate on its third use, not before. UI patterns follow UX-02 instead."
+rationale = "Two uses rarely show the right abstraction; extracting earlier adds speculative generality."
+verification = "Review checklist: extraction justified by three call sites, or by UX-02 for a UI pattern"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "ARCH-08"
+level = "SHOULD"
+statement = "Crates are small and single-purpose, with optional functionality behind Cargo features."
+rationale = "Small crates compile and test in isolation and keep optional dependencies out of default builds."
+verification = "Review checklist: one purpose per crate; optional code behind a feature"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "ARCH-09"
+level = "SHOULD"
+statement = "Configuration, UI descriptions and content specs are declarative where the domain allows."
+rationale = "Declarative specs can be validated, diffed and translated by tools; code cannot."
+verification = "Review checklist: new config or spec is data, not code"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "ARCH-10"
+level = "SHOULD"
+statement = "Declarative specs compile to their output ahead of time. Runtime code generation needs an ADR and never ships on iOS."
+rationale = "Ahead-of-time output is checked at build time, and App Store guideline 2.5.2 forbids downloaded code that changes functionality."
+verification = "Review checklist: ADR linked for any runtime code generation; iOS build excludes it"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "ARCH-11"
+level = "MUST"
+statement = "Every user-facing capability is available through the public API and the CLI, without a UI."
+rationale = "A capability reachable without a UI is scriptable, testable headless and usable by plugins."
+verification = "CI: capability inventory cross-checked against API and CLI tests"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "ARCH-12"
+level = "MAY"
+statement = "A project defines a domain-specific language only when an app needs one, with a versioned grammar."
+rationale = "A versioned grammar lets files written today parse under a later release (DATA-02)."
+verification = "Review checklist: grammar versioned and documented"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "ARCH-13"
+level = "MUST"
+statement = "Stable releases depend only on published, non-pre-release crate versions. Git and unknown-registry dependencies are denied. Unstable dependencies sit behind optional, non-default features."
+rationale = "A git or pre-release dependency can vanish or change under a tagged release and breaks packagers' rebuilds."
+verification = "cargo-deny `sources`; release build with default features only"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "ARCH-14"
+level = "SHOULD"
+statement = "Shared crates declare a dependency tier, and each tier depends only on lower tiers."
+rationale = "Tiers keep the dependency graph acyclic and tell users what a crate pulls in."
+verification = "CI: tier check over the workspace dependency graph (cargo xtask)"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "ARCH-15"
+level = "SHOULD"
+statement = "Code stays plain enough to review in a web diff. New proc-macros, heavy generic or trait machinery, or async in core crates need an ADR. Changes match the surrounding style and never add a second way to do what the codebase already does one way."
+rationale = "Reviewers catch mistakes only in code they can read without an IDE."
+verification = "Review checklist: no new macro, generic machinery or core async without an ADR; one way per thing"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "ARCH-16"
+level = "SHOULD"
+statement = "Niche features start as plugins or separate crates and move into an app or shared crate only after real use and an ADR."
+rationale = "A feature merged on evidence of use is maintained because it is needed, not because it was merged."
+verification = "Review checklist: ADR with usage evidence for every promotion"
+check = "Review"
+trigger = "one-point-oh"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "ARCH-17"
+level = "SHOULD"
+statement = "Code promoted into a shared crate first meets the library bar: docs (DOC-02), tests, the workspace lints, a compatible license, and minimal `unsafe` and dependencies."
+rationale = "A shared crate is a public interface that every app and third party inherits."
+verification = "Review checklist: library bar items ticked on the promotion PR"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"

@@ -1,0 +1,68 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# AI features in the apps (AIF): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "AIF-01"
+level = "MUST"
+statement = "AI features are optional, off by default and run on the device by default. Models are downloaded only at the user's request, from a named source with checksum and license shown, and are declared in the PRIV-07 manifest. Only models whose license and training-data provenance are documented and compatible are used."
+rationale = "A model download is a network flow and a license; both need consent and a record."
+verification = "Review checklist: manifest entry; CI: default settings test"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["ai-feature"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "AIF-02"
+level = "MUST"
+statement = "Sending user content to a remote model needs a per-feature opt-in that names the provider and what is sent. Users choose the provider, including a local runtime or their own endpoint, and nothing goes to a default third party."
+rationale = "Users must know who reads their notes before anyone does."
+verification = "Review checklist: consent screen reviewed; PRIV-07 manifest"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["ai-feature"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "AIF-03"
+level = "MUST"
+statement = "User content is never used to train or fine-tune models, by Kreqo or by any integrated provider, and never read by humans for model evaluation; integrations use only providers that contractually exclude training."
+rationale = "Training on user content is the breach of trust users fear most from AI features."
+verification = "Review checklist: provider terms on file for each integration"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["ai-feature"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "AIF-04"
+level = "MUST"
+statement = "One suite-wide switch blocks all current and future AI features, with their prompts and promotion, and stays set across updates."
+rationale = "Users who want no AI shouldn't have to find each new feature."
+verification = "CI: settings test that the switch disables every AI entry point"
+check = "Review"
+trigger = "ai-feature"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "AIF-05"
+level = "SHOULD"
+statement = "AI output is labeled as AI-generated and never changes user content without explicit acceptance; generated cards, for example, enter a review queue."
+rationale = "In a learning app, a wrong card silently accepted harms retention."
+verification = "Review checklist: acceptance step for generated content"
+check = "Review"
+trigger = "ai-feature"
+who = "ai"
+added = "0.1.0"
+status = "active"

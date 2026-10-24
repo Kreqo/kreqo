@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# Project metadata (T2), checked by `cargo xtask check crates`.
+kind = "tool"
+stage = "incubating"          # LIFE-01
+license = "MIT OR Apache-2.0" # LEGAL-01: tools

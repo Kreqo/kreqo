@@ -1,0 +1,178 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Privacy (PRIV): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "PRIV-01"
+level = "MUST"
+statement = "Telemetry and analytics are off by default and run only after explicit opt-in. Telemetry means any measurement that leaves the device: analytics, attribution, experiments, usage pings, diagnostics. Data kept only on the device and visible to the user is not telemetry."
+rationale = "A definition that covers attribution and experiments closes the loophole Firefox's PPA relied on."
+verification = "Review checklist: no measurement leaves the device without opt-in; PRIV-07 manifest entry"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PRIV-02"
+level = "MUST NOT"
+statement = "Logs, crash reports, bug reports and diagnostic bundles contain secrets, or note, card or file content, titles or paths, unless the user adds them in the preview (PRIV-04)."
+rationale = "A title or file path identifies what a user is working on as surely as its content."
+verification = "Review checklist: redaction of content, titles and paths in logs and bundles"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PRIV-03"
+level = "MUST"
+statement = "Apps contact only servers the user chose. A chosen server means the user turned on the feature or started the action, and the host is named in the UI and in the privacy notice. Nothing is contacted because the app launched. On-demand downloads (dictionaries, models, fonts, the plugin directory) follow the same rule, and lookups send the minimum, not library contents."
+rationale = "A connection on launch is an F-Droid anti-feature; a named host is what the user actually consented to."
+verification = "Review checklist: every host in the PRIV-07 manifest with its triggering action; nothing on launch"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PRIV-04"
+level = "MUST"
+statement = "Crash reports stay local until the user previews and approves what is sent; reporting a bug takes one action. If a standing option to send every crash report automatically is ever offered, it is opt-in, revocable in one step from settings, and still sends no user content (PRIV-02)."
+rationale = "The preview is the only way a user knows what a report holds; a standing consent needs an equally easy exit."
+verification = "Review checklist: preview before send; one-step revocation of any standing consent"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PRIV-05"
+level = "MUST"
+statement = "The privacy notice is generated from the PRIV-07 manifest, versioned and dated in the repository with a changelog, and published in English and French. It claims no more than actual practice and covers what is collected, every server contacted, retention, deletion, how to withdraw consent, and the person in charge of privacy (the founder until an entity exists) with contact details. Every app and store listing links it, even when nothing is collected. Changes that widen collection are announced at least 30 days ahead. No terms grant the organization a license over user content beyond running a service the user chose."
+rationale = "Law 25 requires a named person in charge of privacy with published contact details, and store review requires a linked notice."
+verification = "Release checklist: notice generated from the manifest, dated, in both languages, linked from each listing"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PRIV-06"
+level = "MUST"
+statement = "Every privacy-affecting setting ships at its most protective value. Sharing, sync, public profiles and diagnostics stay off until the user turns them on, and no update switches on a new data flow."
+rationale = "Law 25 (s. 9.1) requires the highest level of privacy by default for public-facing settings."
+verification = "Review checklist: new settings default to their protective value; no data flow enabled by an update"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PRIV-07"
+level = "MUST"
+statement = "Each app keeps a machine-readable data manifest of every endpoint and data flow: data sent, purpose, sensitivity category, default state, retention and review link (PRIV-08). CI fails when code, or an integration test run in a network sandbox, contacts an undeclared host; this gate applies from first release. The privacy notice (PRIV-05) and the store privacy labels (Apple privacy details, Play Data safety, Microsoft privacy URL) are generated from it."
+rationale = "A manifest that generates the notice and labels, as Glean's metrics.yaml does, keeps them from drifting from the code."
+verification = "CI: manifest schema check; network-sandbox integration test fails on an undeclared host"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PRIV-08"
+level = "MUST"
+statement = "Any new or changed data collection, network call, hosted service, vendor or transfer of personal information outside Canada needs a public privacy review from an ADR template. It answers: purpose, alternatives considered, fields and sensitivity, retention or expiry, default state and opt-out, third parties, and where data is processed. Someone other than the author approves it, and it is re-checked yearly. The template doubles as the privacy impact assessment Law 25 requires before an information-system project and before data leaves Quebec."
+rationale = "Law 25 (s. 3.3) requires an impact assessment before any information-system project that handles personal information."
+verification = "Review checklist: privacy review ADR approved by a second person; yearly re-check dated"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["data-flow"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PRIV-09"
+level = "MUST NOT"
+statement = "An app includes a third-party analytics, advertising, attribution, tracking or crash-reporting SDK. Permit, by ADR: an open-source client for a self-hostable, organization-run endpoint, sending only after the user's PRIV-04 approval."
+rationale = "F-Droid lists tracking SDKs as anti-features, and Audacity's analytics pull request showed what users make of them."
+verification = "CI: cargo-deny ban list"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PRIV-10"
+level = "MUST"
+statement = "Organization-run services keep raw logs, IP addresses included, for at most 30 days, and any telemetry for at most 60 days after its last update. The privacy notice states each period."
+rationale = "Data that is no longer held cannot leak or be demanded; Mozilla's Lean Data practice is to stay lean."
+verification = "Release checklist: retention configuration of each service matches the notice"
+check = "Release"
+trigger = "hosted-service"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PRIV-11"
+level = "MUST"
+statement = "Personal-information incidents are logged in a register kept at least 24 months. Affected users and regulators (the OPC, the CAI, EU authorities) are notified when the applicable risk threshold is met, and the response plan is published (SEC-15)."
+rationale = "PIPEDA requires a 24-month breach record and notification when a breach poses a real risk of significant harm."
+verification = "Release checklist: incident register exists; response plan published"
+check = "Release"
+trigger = "hosted-service"
+who = "you"
+moments = ["legal"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PRIV-12"
+level = "SHOULD"
+statement = "Hosted services publish how they handle legal requests, and a yearly transparency report as far as the law allows. Both are worded to stay accurate under secrecy duties such as those Bill C-22 would attach to some orders."
+rationale = "Bill C-22 would impose secrecy on some orders, so a report cannot promise to disclose what it may not."
+verification = "Release checklist: legal-request policy published; latest yearly report linked"
+check = "Release"
+trigger = "hosted-service"
+who = "you"
+moments = ["legal"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PRIV-13"
+level = "MUST"
+statement = "Any telemetry an app ever offers follows the KDE telemetry policy with Syncthing's mechanics: each item answers a written question and stops once answered; no unique device, installation or user IDs; data coarsened at the source, stored without IP addresses, free of user content or hints of it; one ask, no nagging, granular levels, a preview of the exact payload; consent stored per payload-schema version and re-asked when it changes; a setting as prominent as any other, needed by no feature, honoring system-wide settings; organization servers only, over TLS; the field list readable offline in the app; aggregates published; public sign-off by two maintainers other than the author."
+rationale = "KDE's policy and Syncthing's payload preview are the strictest published regimes, and a random install ID still identifies a device."
+verification = "Review checklist: telemetry design checked clause by clause; public sign-off by two maintainers"
+check = "Review"
+trigger = "telemetry"
+who = "you"
+moments = ["data-flow"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PRIV-14"
+level = "MUST"
+statement = "Email lists are express opt-in only, recording the date, wording and source of each consent. Every message, security notices included, identifies the organization with a contact address and carries a free unsubscribe honored within 10 business days. Addresses are not bought or scraped."
+rationale = "CASL covers any list that might promote something paid, profit motive or not, from the first message."
+verification = "Review checklist: consent record fields; sender identification and unsubscribe in every template"
+check = "Review"
+trigger = "email"
+who = "you"
+moments = ["data-flow"]
+added = "0.1.0"
+status = "active"

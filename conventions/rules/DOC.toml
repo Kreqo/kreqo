@@ -1,0 +1,187 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Documentation (DOC): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "DOC-01"
+level = "MUST"
+statement = "Every repository has README, CONTRIBUTING, SECURITY, CHANGELOG, LICENSE and CODE\\_OF\\_CONDUCT files, from the template."
+rationale = "The template files answer a contributor's or reporter's first questions in a known place."
+verification = "CI: required-files check"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DOC-02"
+level = "MUST"
+statement = "Public crates set `#![deny(missing_docs)]`. Runnable examples live in the crate's `examples/` folder where they help; a doc example on every item is not required."
+rationale = "`missing_docs` fails CI on any undocumented public item; an example per item proved too costly for Bevy."
+verification = "CI: `missing_docs` lint"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DOC-03"
+level = "MUST"
+statement = "Doc tests and the `examples/` directory compile and run in CI."
+rationale = "Examples that compile in CI cannot drift from the API they show."
+verification = "CI: `cargo test --doc` and `--examples`"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DOC-04"
+level = "MUST"
+statement = "ADRs live in `docs/adr/NNNN-title.md`, numbered sequentially and never reused, using the MADR 4 minimal template plus a Confirmation section. Each opens with a Y-statement (in the context of…, facing…, we decided…, to achieve…, accepting…). Status is proposed, accepted, rejected, deprecated or superseded by ADR-NNNN. An accepted ADR is never rewritten except to change its status. Deviation ADRs carry machine-readable front matter (DOC-06)."
+rationale = "ADRs are the exception mechanism (SEC-01, ARCH-10, LEGAL-01); status and supersession keep that log trustworthy."
+verification = "Review checklist: template, number, status, Y-statement"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DOC-05"
+level = "MUST"
+statement = "User documentation follows Diátaxis: tutorials, how-to guides, reference and explanation."
+rationale = "Diátaxis gives each page one job, so learning, tasks, reference and explanation do not mix."
+verification = "Review checklist: page type declared"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DOC-06"
+level = "MUST"
+statement = "An ADR that deviates from a rule declares `deviates: [RULE-ID@version]`, its scope (crates or paths), the reason, the risk and mitigation, and a review-by date. CI lists active deviations and fails when a review date has passed."
+rationale = "Machine-readable deviations let CI list every exception and expire it on its review date (MISRA compliance model)."
+verification = "CI: deviation lister and review-date check"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DOC-07"
+level = "MUST"
+statement = "ARCHITECTURE.md describes components, actors, trust boundaries and external interfaces, and a security-model page says what users can and cannot expect from the software's security."
+rationale = "Reviewers judge a change's security against written trust boundaries, and users read what is promised (OSPS-SA)."
+verification = "Release checklist: ARCHITECTURE.md and security-model page current"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DOC-08"
+level = "MUST"
+statement = "Each app's download page documents how to verify signatures, provenance and SBOM (SEC-07), including the exact expected signer identity (key fingerprint, or Sigstore identity and issuer). The page is hosted separately from the release pipeline."
+rationale = "A signer identity published away from the pipeline lets users detect a compromised release channel (SEC-15)."
+verification = "Release checklist: verification page matches the signing identity (SEC-16)"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DOC-09"
+level = "MUST"
+statement = "A user-visible change merges only with its user documentation, or with a linked docs pull request due before the release; an undocumented feature is unfinished."
+rationale = "A docs pull request linked before release is the only check that features ship documented."
+verification = "Review checklist: docs in the PR or linked and dated"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DOC-10"
+level = "SHOULD"
+statement = "User docs follow a house style: plain English and active voice, one new concept at a time, real examples, pages of about 1,000 words or fewer, never the words *simple*, *easy*, *just* or *obviously*. They describe the current release only, mark when features were added or changed, keep diagrams as SVG with text in captions, give every image alt text, and avoid flashing animation. Details: documentation style guide."
+rationale = "A shared style keeps pages scannable, translatable (I18N) and accessible (A11Y) without per-page debate."
+verification = "Review checklist: style guide; vale lint for banned words"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DOC-11"
+level = "MUST"
+statement = "Each published crate's README states its status (stable, experimental, internal, deprecated, placeholder) and maintenance commitment, and is generated from crate-level docs (cargo-rdme), with CI failing on drift. Every published crate package contains its license texts."
+rationale = "A stated status tells users what to expect, and cargo-rdme keeps README and crate docs identical."
+verification = "CI: `cargo rdme --check`; license files in the package"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DOC-12"
+level = "SHOULD"
+statement = "Work spanning several pull requests starts with a short design doc approved by the area owner, archived next to the ADRs."
+rationale = "A design doc aligns multi-PR work before code exists and keeps the reasoning next to the decisions."
+verification = "Review checklist: design doc linked for multi-PR work"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["feature"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DOC-13"
+level = "MUST"
+statement = "Agent instruction files (AGENTS.md, CLAUDE.md) only summarize human-facing docs; no rule or process exists only there."
+rationale = "A rule that lives only in an agent file is invisible to human contributors and reviewers."
+verification = "Review checklist: agent files cite the human-facing source"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DOC-14"
+level = "SHOULD"
+statement = "A public roadmap states current priorities per area and what the project will and will not do over the next year, without promised feature dates."
+rationale = "Priorities without dates tell contributors where help lands and avoid deadlines that slip."
+verification = "Review checklist: roadmap updated each release cycle"
+check = "Review"
+trigger = "first-release"
+who = "you"
+moments = ["release"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DOC-15"
+level = "SHOULD"
+statement = "docs.rs builds every crate with all features and shows feature gates; each Cargo feature is documented in the crate docs and in Cargo.toml."
+rationale = "Feature gates shown on docs.rs tell users which feature enables each item."
+verification = "CI: `cargo doc --all-features` with `doc_cfg`"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"

@@ -1,0 +1,120 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Triggers replace phase names. A rule applies once its trigger's
+# condition holds in state.toml. Conditions: a fact name, 'not fact',
+# 'fact >= N', or 'true', joined by ' or '.
+
+[[trigger]]
+id = "always"
+title = "From the first commit"
+when = "true"
+order = 0
+
+[[trigger]]
+id = "first-release"
+title = "Before the first public release"
+when = "preparing_first_release or released"
+order = 1
+
+[[trigger]]
+id = "android"
+title = "Before the first Android release"
+when = "android_release"
+order = 2
+
+[[trigger]]
+id = "app-store"
+title = "Before the first App Store release"
+when = "app_store_release"
+order = 3
+
+[[trigger]]
+id = "open-to-contributions"
+title = "Before opening to outside contributions"
+when = "open_to_contributions"
+order = 4
+
+[[trigger]]
+id = "second-maintainer"
+title = "Before a second maintainer joins"
+when = "maintainers >= 2"
+order = 5
+
+[[trigger]]
+id = "one-point-oh"
+title = "Before 1.0"
+when = "preparing_1_0"
+order = 6
+
+[[trigger]]
+id = "plugin-design"
+title = "Before the plugin boundary is designed (EXT-04)"
+when = "plugin_design"
+order = 7
+
+[[trigger]]
+id = "sync"
+title = "Before sync ships"
+when = "sync"
+order = 8
+
+[[trigger]]
+id = "e2ee"
+title = "Before end-to-end encrypted sync is called stable"
+when = "e2ee_stable"
+order = 9
+
+[[trigger]]
+id = "sharing"
+title = "Before the first sharing service"
+when = "sharing_service"
+order = 10
+
+[[trigger]]
+id = "ai-feature"
+title = "With the first AI feature"
+when = "ai_feature"
+order = 11
+
+[[trigger]]
+id = "telemetry"
+title = "Before any telemetry"
+when = "telemetry"
+order = 12
+
+[[trigger]]
+id = "email"
+title = "Before the first email list"
+when = "email_list"
+order = 13
+
+[[trigger]]
+id = "hosted-service"
+title = "Before running a hosted service"
+when = "hosted_service"
+order = 14
+
+[[trigger]]
+id = "funds"
+title = "Before accepting funds"
+when = "accepting_funds"
+order = 15
+
+[[trigger]]
+id = "commercial"
+title = "Before commercial use"
+when = "commercial"
+order = 16
+
+[[trigger]]
+id = "organization"
+title = "Once the organization exists"
+when = "organization_exists"
+order = 17
+
+[[trigger]]
+id = "incorporation"
+title = "Before incorporation or hiring"
+when = "incorporation_or_hiring"
+order = 18

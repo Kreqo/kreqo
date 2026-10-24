@@ -1,0 +1,66 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# cargo-deny's policy, run on every pull request and daily on the default
+# branch (SEC-02). One configuration serves the MIT OR Apache-2.0 license
+# group, the only one so far (LEGAL-03).
+#
+# Every suppression gives its reason and an expiry date (SEC-02): ignored
+# advisories and skipped duplicates end their `reason` with
+# `until YYYY-MM-DD`, which `cargo xtask check deny` enforces. A license
+# exception can't carry a reason in cargo-deny 0.20, so a comment above it
+# gives both, and review checks it.
+
+[graph]
+all-features = true
+
+[advisories]
+# SEC-02's written policy: an advisory that a crate is vulnerable, unsound or
+# yanked blocks merges and releases, whatever its severity. An unmaintained
+# crate blocks when the workspace depends on it directly.
+unsound = "all"
+unmaintained = "workspace"
+yanked = "deny"
+ignore = []
+
+[bans]
+multiple-versions = "deny"
+# PRIV-09: no third-party analytics, advertising, tracking or crash-reporting
+# SDK.
+deny = [
+  { crate = "sentry", reason = "PRIV-09: crash-reporting SDK" },
+  { crate = "sentry-core", reason = "PRIV-09: crash-reporting SDK" },
+  { crate = "posthog-rs", reason = "PRIV-09: analytics SDK" },
+  { crate = "segment", reason = "PRIV-09: analytics SDK" },
+  { crate = "rudderanalytics", reason = "PRIV-09: analytics SDK" },
+  { crate = "bugsnag", reason = "PRIV-09: crash-reporting SDK" },
+  { crate = "rollbar", reason = "PRIV-09: crash-reporting SDK" },
+  { crate = "honeybadger", reason = "PRIV-09: crash-reporting SDK" },
+  { crate = "mixpanel", reason = "PRIV-09: analytics SDK" },
+  { crate = "amplitude", reason = "PRIV-09: analytics SDK" },
+]
+skip = []
+skip-tree = []
+
+[licenses]
+# Licenses that the dependencies of MIT OR Apache-2.0 crates may use
+# (LEGAL-03).
+allow = [
+  "MIT",
+  "Apache-2.0",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Zlib",
+  "Unicode-3.0",
+  "CC0-1.0",
+  "Unlicense",
+  "BSL-1.0",
+  "MPL-2.0",
+]
+unused-allowed-license = "allow"
+exceptions = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
