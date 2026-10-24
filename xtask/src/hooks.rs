@@ -19,6 +19,7 @@ const PRE_COMMIT: &str =
 
 /// Installs the pre-commit hook, leaving any other hook in place.
 pub fn install(root: &Path) -> Result<()> {
+    refuse_shared_hooks_path(root)?;
     // `--git-path` honors core.hooksPath and finds the hooks of worktrees.
     let output = Command::new("git")
         .args(["rev-parse", "--git-path", "hooks"])
@@ -53,6 +54,28 @@ pub fn install(root: &Path) -> Result<()> {
     make_executable(&path)?;
     println!("Installed {}.", path.display());
     Ok(())
+}
+
+/// Fails if core.hooksPath comes from a git config that other repositories
+/// share, where the hook would make their commits run `cargo xtask`.
+fn refuse_shared_hooks_path(root: &Path) -> Result<()> {
+    let output = Command::new("git")
+        .args(["config", "--show-scope", "--get", "core.hooksPath"])
+        .current_dir(root)
+        .output()
+        .context("couldn't run git")?;
+    // git exits with 1 when the setting is absent.
+    if !output.status.success() {
+        return Ok(());
+    }
+    let printed = String::from_utf8_lossy(&output.stdout);
+    let scope = printed.split('\t').next().unwrap_or_default();
+    if matches!(scope, "local" | "worktree") {
+        return Ok(());
+    }
+    bail!(
+        "core.hooksPath is set in the {scope} git config, so the hook would land in a folder other repositories share; set a local core.hooksPath or unset it there, then run cargo xtask hooks again"
+    )
 }
 
 #[cfg(unix)]
