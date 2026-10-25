@@ -12,7 +12,7 @@ use std::process::Command;
 use anyhow::{Context, Result, bail};
 use clap::ValueEnum;
 
-use crate::{crates, deny, secrets, tools};
+use crate::{crates, deny, git, secrets, tools};
 
 /// A step of `cargo xtask check`.
 #[derive(Clone, Copy, ValueEnum)]
@@ -140,7 +140,26 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
             if std::env::var_os("GH_TOKEN").is_none() {
                 zizmor.arg("--offline");
             }
-            run_command(root, zizmor.arg("."))
+            // The files come from git, so that an ignore rule can't hide a
+            // tracked workflow from zizmor's own collection.
+            let workflows = git::files(
+                root,
+                &[
+                    ":(glob).github/workflows/*.yml",
+                    ":(glob).github/workflows/*.yaml",
+                    ":(glob)**/action.yml",
+                    ":(glob)**/action.yaml",
+                ],
+            )?;
+            if workflows.is_empty() {
+                bail!("git lists no workflow files to audit");
+            }
+            run_command(
+                root,
+                zizmor
+                    .args(["--config", ".github/zizmor.yml"])
+                    .args(&workflows),
+            )
         }
     }
 }
