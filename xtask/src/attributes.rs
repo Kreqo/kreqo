@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 //! Attribute checks over every Rust file in the repository: no `allow`
-//! attribute, inner or outer (QA-01), and `expect(unsafe_code)` only in a
-//! crate root's `#![expect(unsafe_code, reason = "ADR-NNNN")]` that names an
-//! existing ADR (SEC-01). Clippy's `allow_attributes` skips inner attributes
-//! and any `cfg_attr` whose condition doesn't hold, so these checks read
-//! each file as tokens: comments and strings never match, and an attribute
-//! that rustfmt wraps over several lines stays whole.
+//! attribute, inner or outer (QA-01); no `warn` or `expect` that lowers
+//! `warnings` or a lint the workspace table denies, since a source
+//! attribute outranks the table and Clippy's `--deny warnings` (QA-01,
+//! SEC-01); and `expect(unsafe_code)` only in a crate root's
+//! `#![expect(unsafe_code, reason = "ADR-NNNN")]` that names an existing ADR
+//! (SEC-01). Clippy's `allow_attributes` skips inner attributes and any
+//! `cfg_attr` whose condition doesn't hold, so these checks read each file
+//! as tokens: comments and strings never match, and an attribute that
+//! rustfmt wraps over several lines stays whole.
 
 use std::borrow::Cow;
 use std::collections::BTreeSet;
@@ -15,10 +18,32 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use proc_macro2::{Delimiter, Ident, TokenStream, TokenTree};
+use toml::Value;
 
 use crate::git;
+
+/// The lint groups that hold a lint the workspace table denies, as the
+/// pinned toolchain's `clippy-driver -W help` lists them, so that an
+/// `expect` of a group can't suppress such a lint. `unsafe_code` is in no
+/// group but `warnings`, which is checked on its own. A `warn` of a group
+/// needs no entry: Clippy's `--deny warnings` still fails the lint.
+const GROUPS: [(&str, &[&str]); 4] = [
+    ("clippy::allow_attributes", &["clippy::restriction"]),
+    (
+        "clippy::allow_attributes_without_reason",
+        &["clippy::restriction"],
+    ),
+    (
+        "clippy::missing_safety_doc",
+        &["clippy::all", "clippy::style"],
+    ),
+    (
+        "clippy::undocumented_unsafe_blocks",
+        &["clippy::restriction"],
+    ),
+];
 
 /// An attribute in a Rust file.
 struct Attribute {
@@ -36,6 +61,7 @@ struct Attribute {
 /// problems. `crate_roots` are the files rustc starts each crate from.
 pub fn check(root: &Path, crate_roots: &BTreeSet<PathBuf>) -> Result<Vec<String>> {
     let crate_roots: BTreeSet<PathBuf> = crate_roots.iter().map(|path| canonical(path)).collect();
+    let denied = denied_lints(root)?;
     let mut problems = Vec::new();
     for relative in git::files(root, &[":(glob)**/*.rs"])? {
         let path = root.join(&relative);
@@ -49,42 +75,166 @@ pub fn check(root: &Path, crate_roots: &BTreeSet<PathBuf>) -> Result<Vec<String>
                 continue;
             }
         };
-        let stream = match TokenStream::from_str(&without_shebang(&text)) {
+        let name = relative.display().to_string();
+        let source = Source {
+            root,
+            name: &name,
+            is_crate_root: crate_roots.contains(&canonical(&path)),
+            denied: &denied,
+        };
+        problems.extend(source.problems(&text));
+    }
+    Ok(problems)
+}
+
+/// A Rust source file, with what its checks need to know.
+struct Source<'a> {
+    root: &'a Path,
+    /// Its path from the root, as problems name it.
+    name: &'a str,
+    is_crate_root: bool,
+    /// The lints the workspace table denies.
+    denied: &'a BTreeSet<String>,
+}
+
+impl Source<'_> {
+    /// The problems with the attributes in the file's text.
+    fn problems(&self, text: &str) -> Vec<String> {
+        let stream = match TokenStream::from_str(&without_shebang(text)) {
             Ok(stream) => stream,
             Err(error) => {
-                problems.push(format!(
+                return vec![format!(
                     "{}: couldn't read its tokens, so its attributes go unchecked: {error}",
-                    relative.display()
-                ));
-                continue;
+                    self.name
+                )];
             }
         };
-        let is_crate_root = crate_roots.contains(&canonical(&path));
+        let mut problems = Vec::new();
         for attribute in attributes(stream) {
-            let place = format!("{}:{}", relative.display(), attribute.line);
-            let applied = applied(&attribute.tokens);
-            if applied.iter().any(|(name, _)| name == "allow") {
-                problems.push(format!(
-                    "{place}: an `allow` attribute; suppress with `#[expect(lint, reason = \"…\")]` (QA-01)"
-                ));
-            }
-            for (_, arguments) in applied.iter().filter(|(name, _)| name == "expect") {
-                if !mentions(arguments, "unsafe_code") {
-                    continue;
-                }
-                if !(attribute.inner && attribute.top_level && is_crate_root) {
-                    problems.push(format!(
-                        "{place}: `expect(unsafe_code)` belongs only in a crate root's `#![expect(unsafe_code, reason = \"ADR-NNNN\")]` (SEC-01)"
-                    ));
-                } else if !adr_number(arguments).is_some_and(|number| adr_exists(root, &number)) {
-                    problems.push(format!(
-                        "{place}: its reason names no ADR in docs/adr/ (SEC-01)"
-                    ));
+            let place = format!("{}:{}", self.name, attribute.line);
+            let crate_level = attribute.inner && attribute.top_level && self.is_crate_root;
+            for (name, arguments) in applied(&attribute.tokens) {
+                match name.as_str() {
+                    "allow" => problems.push(format!(
+                        "{place}: an `allow` attribute; suppress with `#[expect(lint, reason = \"…\")]` (QA-01)"
+                    )),
+                    "warn" | "expect" => {
+                        for lint in lints(&arguments) {
+                            if let Some(problem) =
+                                self.lowering(&name, &lint, &arguments, crate_level)
+                            {
+                                problems.push(format!("{place}: {problem}"));
+                            }
+                        }
+                    }
+                    _ => {}
                 }
             }
         }
+        problems
     }
-    Ok(problems)
+
+    /// What's wrong with a `warn` or `expect` of one lint, if anything.
+    fn lowering(
+        &self,
+        name: &str,
+        lint: &str,
+        arguments: &TokenStream,
+        crate_level: bool,
+    ) -> Option<String> {
+        if lint == "warnings" {
+            return Some(format!(
+                "`{name}(warnings)` would let every warning pass CI (QA-01)"
+            ));
+        }
+        if name == "expect" && lint == "unsafe_code" {
+            if !crate_level {
+                return Some(
+                    "`expect(unsafe_code)` belongs only in a crate root's `#![expect(unsafe_code, reason = \"ADR-NNNN\")]` (SEC-01)".to_owned(),
+                );
+            }
+            if !adr_number(arguments).is_some_and(|number| adr_exists(self.root, &number)) {
+                return Some("its reason names no ADR in docs/adr/ (SEC-01)".to_owned());
+            }
+            return None;
+        }
+        if self.denied.contains(lint) {
+            return Some(format!(
+                "`{name}({lint})` lowers a lint that the workspace table denies (QA-01)"
+            ));
+        }
+        if name != "expect" {
+            return None;
+        }
+        GROUPS
+            .iter()
+            .find(|(held, groups)| self.denied.contains(*held) && groups.contains(&lint))
+            .map(|(held, _)| {
+                format!(
+                    "`expect({lint})` would suppress `{held}`, which the workspace table denies (QA-01)"
+                )
+            })
+    }
+}
+
+/// The lints the root Cargo.toml's `[workspace.lints]` denies or forbids,
+/// each as an attribute names it, such as `unsafe_code` or
+/// `clippy::missing_safety_doc`.
+fn denied_lints(root: &Path) -> Result<BTreeSet<String>> {
+    let path = root.join("Cargo.toml");
+    let text =
+        fs::read_to_string(&path).with_context(|| format!("couldn't read {}", path.display()))?;
+    denied_in(&text).with_context(|| format!("couldn't parse {}", path.display()))
+}
+
+fn denied_in(manifest: &str) -> Result<BTreeSet<String>> {
+    let manifest: toml::Table = manifest.parse()?;
+    let tools = manifest
+        .get("workspace")
+        .and_then(|workspace| workspace.get("lints"))
+        .and_then(Value::as_table);
+    let mut denied = BTreeSet::new();
+    for (tool, lints) in tools.into_iter().flatten() {
+        for (lint, setting) in lints.as_table().into_iter().flatten() {
+            let level = setting
+                .as_str()
+                .or_else(|| setting.get("level").and_then(Value::as_str));
+            if matches!(level, Some("deny" | "forbid")) {
+                let lint = lint.replace('-', "_");
+                denied.insert(if tool == "rust" {
+                    lint
+                } else {
+                    format!("{tool}::{lint}")
+                });
+            }
+        }
+    }
+    Ok(denied)
+}
+
+/// The lints a lint attribute's arguments name, such as `unsafe_code` or
+/// `clippy::missing_safety_doc`, leaving out its `reason = "…"`.
+fn lints(arguments: &TokenStream) -> Vec<String> {
+    split_commas(arguments.clone())
+        .into_iter()
+        .filter_map(|part| {
+            let tokens: Vec<TokenTree> = part.into_iter().collect();
+            if let [TokenTree::Ident(key), TokenTree::Punct(equals), ..] = tokens.as_slice()
+                && unraw(key) == "reason"
+                && equals.as_char() == '='
+            {
+                return None;
+            }
+            let path: String = tokens
+                .iter()
+                .map(|token| match token {
+                    TokenTree::Ident(ident) => unraw(ident),
+                    other => other.to_string(),
+                })
+                .collect();
+            (!path.is_empty()).then_some(path)
+        })
+        .collect()
 }
 
 /// The path with `..` and links resolved, so that two names for one file
@@ -193,15 +343,6 @@ fn unraw(ident: &Ident) -> String {
     }
 }
 
-/// Whether the identifier appears anywhere in the tokens.
-fn mentions(tokens: &TokenStream, name: &str) -> bool {
-    tokens.clone().into_iter().any(|token| match token {
-        TokenTree::Ident(ident) => unraw(&ident) == name,
-        TokenTree::Group(group) => mentions(&group.stream(), name),
-        _ => false,
-    })
-}
-
 /// The four digits of the first `ADR-NNNN` in a `reason = "…"`.
 fn adr_number(arguments: &TokenStream) -> Option<String> {
     let tokens: Vec<TokenTree> = arguments.clone().into_iter().collect();
@@ -288,9 +429,130 @@ fn i() {}
             anyhow::bail!("expected one applied attribute, got {}", applied.len());
         };
         assert_eq!(name, "expect");
-        assert!(mentions(arguments, "unsafe_code"));
+        assert_eq!(lints(arguments), ["unsafe_code"]);
         assert_eq!(adr_number(arguments), Some("0001".to_owned()));
         Ok(())
+    }
+
+    /// The committed workspace table's denied lints.
+    fn denied() -> Result<BTreeSet<String>> {
+        denied_in(include_str!("../../Cargo.toml"))
+    }
+
+    #[test]
+    fn flags_lowered_lint_levels() -> Result<()> {
+        let denied = denied()?;
+        let source = Source {
+            root: Path::new("."),
+            name: "lib.rs",
+            is_crate_root: true,
+            denied: &denied,
+        };
+        let text = r##"#![warn(unsafe_code)]
+#![expect(warnings, reason = "quiet")]
+#![warn(r#warnings, clippy::undocumented_unsafe_blocks)]
+#![expect(clippy::style, reason = "a group that holds a denied lint")]
+#![expect(unsafe_code, reason = "ADR-0001, which doesn't exist")]
+#![deny(warnings)]
+#![warn(clippy::all, clippy::pedantic)]
+#[expect(clippy::needless_return, reason = "kept for clarity")]
+fn f() {}
+mod m {
+    #![expect(unsafe_code, reason = "ADR-0001")]
+}
+"##;
+        assert_eq!(
+            source.problems(text),
+            [
+                "lib.rs:1: `warn(unsafe_code)` lowers a lint that the workspace table denies (QA-01)",
+                "lib.rs:2: `expect(warnings)` would let every warning pass CI (QA-01)",
+                "lib.rs:3: `warn(warnings)` would let every warning pass CI (QA-01)",
+                "lib.rs:3: `warn(clippy::undocumented_unsafe_blocks)` lowers a lint that the workspace table denies (QA-01)",
+                "lib.rs:4: `expect(clippy::style)` would suppress `clippy::missing_safety_doc`, which the workspace table denies (QA-01)",
+                "lib.rs:5: its reason names no ADR in docs/adr/ (SEC-01)",
+                "lib.rs:11: `expect(unsafe_code)` belongs only in a crate root's `#![expect(unsafe_code, reason = \"ADR-NNNN\")]` (SEC-01)",
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn reads_the_denied_lints() -> Result<()> {
+        assert_eq!(
+            denied()?,
+            BTreeSet::from(
+                [
+                    "unsafe_code",
+                    "clippy::allow_attributes",
+                    "clippy::allow_attributes_without_reason",
+                    "clippy::undocumented_unsafe_blocks",
+                    "clippy::missing_safety_doc",
+                ]
+                .map(String::from)
+            )
+        );
+        let table = "[workspace.lints.rust]\nunsafe-code = { level = \"forbid\", priority = 1 }\nmissing_docs = \"warn\"\n";
+        assert_eq!(
+            denied_in(table)?,
+            BTreeSet::from(["unsafe_code".to_owned()])
+        );
+        Ok(())
+    }
+
+    /// Every lint group that holds a denied lint is in `GROUPS`, as the
+    /// pinned toolchain lists them, so that a toolchain update that moves a
+    /// lint into a new group fails here first (CI-16).
+    #[test]
+    fn groups_match_the_toolchain() -> Result<()> {
+        let output = std::process::Command::new("clippy-driver")
+            .args(["-W", "help"])
+            .output()
+            .context("couldn't run clippy-driver")?;
+        anyhow::ensure!(
+            output.status.success(),
+            "clippy-driver -W help failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let groups = lint_groups(&String::from_utf8(output.stdout)?);
+        anyhow::ensure!(
+            groups.iter().any(|(group, _)| group == "clippy::all"),
+            "clippy-driver -W help listed no Clippy groups"
+        );
+        for lint in denied()? {
+            let holding: Vec<&str> = groups
+                .iter()
+                .filter(|(group, members)| group != "warnings" && members.contains(&lint))
+                .map(|(group, _)| group.as_str())
+                .collect();
+            let listed = GROUPS
+                .iter()
+                .find(|(held, _)| *held == lint)
+                .map_or(&[][..], |(_, groups)| *groups);
+            assert_eq!(holding, listed, "the groups that hold `{lint}`");
+        }
+        Ok(())
+    }
+
+    /// The lint groups that `-W help` lists, sorted, each with its members,
+    /// named as attributes name them.
+    fn lint_groups(help: &str) -> Vec<(String, Vec<String>)> {
+        let name = |lint: &str| lint.trim().replace('-', "_");
+        let mut groups = Vec::new();
+        let mut in_groups = false;
+        for line in help.lines() {
+            if !line.starts_with(' ') && line.ends_with(':') {
+                in_groups = line.starts_with("Lint groups");
+                continue;
+            }
+            let Some((group, members)) = line.trim().split_once("  ") else {
+                continue;
+            };
+            if in_groups && group != "name" && !group.starts_with('-') {
+                groups.push((name(group), members.split(", ").map(name).collect()));
+            }
+        }
+        groups.sort();
+        groups
     }
 
     #[test]
