@@ -70,9 +70,10 @@ jobs:
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
       - name: Check
         run: cargo xtask check fmt docs crates deny reuse secrets tool-tests
-      # Its own step, so that the token reaches zizmor's online audits and
-      # nothing else the pull request builds (CI-08). It runs even when the
-      # Check step failed, so that one failure never hides another.
+      # Its own step, so that the Check step never sees the token (CI-08).
+      # xtask, which the pull request builds, runs zizmor with it here, and
+      # the token is read-only. It runs even when the Check step failed, so
+      # that one failure never hides another.
       - name: Audit the workflows
         if: ${{ !cancelled() }}
         env:

@@ -137,22 +137,11 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
         Step::Secrets => secrets::scan_history(root),
         Step::Workflows => {
             tools::require(root, &tools::ZIZMOR)?;
-            // A workflow zizmor can't parse fails rather than going unaudited.
-            let mut zizmor = tools::ZIZMOR.command();
-            zizmor.arg("--strict-collection");
-            // The online audits, such as whether a pinned SHA is a real commit
-            // of its action, need a token: CI passes the job's own, read-only
-            // one, to this step alone. Elsewhere, without a token, zizmor
-            // stays offline; in CI, a missing token fails the step.
             let token = std::env::var("GH_TOKEN")
                 .ok()
                 .filter(|token| !token.is_empty());
-            if token.is_none() {
-                if std::env::var("CI").is_ok_and(|ci| ci == "true") {
-                    bail!("CI runs zizmor's online audits, but GH_TOKEN is missing or empty");
-                }
-                zizmor.arg("--offline").env_remove("GH_TOKEN");
-            }
+            let in_ci = std::env::var("CI").is_ok_and(|ci| ci == "true");
+            let mut zizmor = zizmor(token, in_ci)?;
             // The files come from git, so that an ignore rule can't hide a
             // tracked one: what zizmor's own collection finds, workflows in
             // nested folders and Dependabot configs included.
@@ -194,6 +183,42 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
             )
         }
     }
+}
+
+/// Settings that zizmor reads from the environment, which could turn its
+/// online audits off, send the token to another host, or fail a run on an
+/// empty value. Only GH_TOKEN carries the token.
+const ZIZMOR_SETTINGS: [&str; 5] = [
+    "GITHUB_TOKEN",
+    "ZIZMOR_GITHUB_TOKEN",
+    "ZIZMOR_OFFLINE",
+    "ZIZMOR_NO_ONLINE_AUDITS",
+    "GH_HOST",
+];
+
+/// zizmor, failing on a workflow it can't parse rather than leaving it
+/// unaudited. The online audits, such as whether a pinned SHA is a real
+/// commit of its action, need a token: CI passes the job's own, read-only
+/// one, to the step that runs this. Without one, zizmor stays offline, and
+/// in CI, the step fails.
+fn zizmor(token: Option<String>, in_ci: bool) -> Result<Command> {
+    let mut zizmor = tools::ZIZMOR.command();
+    zizmor.arg("--strict-collection");
+    for setting in ZIZMOR_SETTINGS {
+        zizmor.env_remove(setting);
+    }
+    match token {
+        Some(token) => {
+            zizmor.env("GH_TOKEN", token);
+        }
+        None if in_ci => {
+            bail!("CI runs zizmor's online audits, but GH_TOKEN is missing or empty")
+        }
+        None => {
+            zizmor.arg("--offline").env_remove("GH_TOKEN");
+        }
+    }
+    Ok(zizmor)
 }
 
 /// External cargo commands that the steps run, which a cargo alias could
@@ -349,6 +374,8 @@ fn show(command: &Command) -> String {
 mod tests {
     use super::*;
     use crate::scratch::Scratch;
+    use std::collections::BTreeSet;
+    use std::ffi::OsStr;
 
     /// CI's `cargo xtask check` lines, together, run every step, so that a
     /// new step can't run only locally.
@@ -409,6 +436,34 @@ mod tests {
             }
         }
         jobs
+    }
+
+    #[test]
+    fn holds_zizmor_to_the_token_it_gets() -> Result<()> {
+        let removed = |command: &Command| -> BTreeSet<String> {
+            command
+                .get_envs()
+                .filter(|(_, value)| value.is_none())
+                .map(|(key, _)| key.to_string_lossy().into_owned())
+                .collect()
+        };
+        let offline_flag = |command: &Command| command.get_args().any(|arg| arg == "--offline");
+        let online = zizmor(Some("read-only".to_owned()), true)?;
+        assert_eq!(
+            removed(&online),
+            BTreeSet::from(ZIZMOR_SETTINGS.map(String::from))
+        );
+        assert!(
+            online
+                .get_envs()
+                .any(|(key, value)| key == "GH_TOKEN" && value == Some(OsStr::new("read-only")))
+        );
+        assert!(!offline_flag(&online));
+        let offline = zizmor(None, false)?;
+        assert!(offline_flag(&offline));
+        assert!(removed(&offline).contains("GH_TOKEN"));
+        assert!(zizmor(None, true).is_err());
+        Ok(())
     }
 
     #[test]
