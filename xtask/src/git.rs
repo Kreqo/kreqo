@@ -5,7 +5,6 @@
 //! commit can carry and nothing that git ignores: build output stays out,
 //! and so does the local setup material.
 
-use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -84,30 +83,28 @@ pub fn files(root: &Path, pathspecs: &[&str]) -> Result<Vec<PathBuf>> {
 
 /// Fails unless the root is the top of a git checkout. Outside git, the
 /// checks have no file list; inside an enclosing repository that ignores
-/// this folder, git would list nothing, and every check would pass.
+/// this folder, git would list nothing, and every check would pass. Git
+/// says how far up the top is, so no paths need comparing, whatever form a
+/// git prints them in.
 fn require_top_level(root: &Path) -> Result<()> {
     let output = Command::new("git")
-        .args(["rev-parse", "--show-toplevel"])
+        .args(["rev-parse", "--show-cdup"])
         .current_dir(root)
         .output()
         .context("couldn't run git")?;
     if !output.status.success() {
         bail!(
-            "{} isn't in a git checkout, so the checks have no file list",
-            root.display()
+            "{} isn't in a git checkout that git can read, so the checks have no file list: {}",
+            root.display(),
+            String::from_utf8_lossy(&output.stderr).trim()
         );
     }
-    let top = String::from_utf8(output.stdout).context("git printed a non-UTF-8 path")?;
-    let top = PathBuf::from(top.trim_end_matches(['\n', '\r']));
-    let same = match (fs::canonicalize(&top), fs::canonicalize(root)) {
-        (Ok(top), Ok(root)) => top == root,
-        _ => false,
-    };
-    if !same {
+    let up = String::from_utf8_lossy(&output.stdout);
+    let up = up.trim_end_matches(['\n', '\r']);
+    if !up.is_empty() {
         bail!(
-            "{} isn't the top of its git checkout ({}), so git's file list can't be trusted",
-            root.display(),
-            top.display()
+            "{} isn't the top of its git checkout, which is {up} from it, so git's file list can't be trusted",
+            root.display()
         );
     }
     Ok(())
@@ -116,6 +113,40 @@ fn require_top_level(root: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::scratch::Scratch;
+    use std::fs;
+
+    #[test]
+    fn trusts_git_only_at_the_top_of_a_checkout() -> Result<()> {
+        let scratch = Scratch::new()?;
+        let top = scratch.path().join("repo");
+        fs::create_dir_all(top.join("inner"))?;
+        let status = Command::new("git")
+            .args(["init", "--quiet"])
+            .current_dir(&top)
+            .status()?;
+        anyhow::ensure!(status.success(), "git init failed");
+        require_top_level(&top)?;
+        let Err(error) = require_top_level(&top.join("inner")) else {
+            bail!("a folder inside a checkout passed as its top");
+        };
+        assert!(
+            format!("{error:#}").contains("isn't the top of its git checkout, which is ../"),
+            "{error:#}"
+        );
+        // git's own reason comes through, such as a safe.directory hint.
+        let broken = scratch.path().join("broken");
+        fs::create_dir(&broken)?;
+        fs::write(broken.join(".git"), "gitdir: missing\n")?;
+        let Err(error) = require_top_level(&broken) else {
+            bail!("a broken checkout passed");
+        };
+        assert!(
+            format!("{error:#}").contains("not a git repository"),
+            "{error:#}"
+        );
+        Ok(())
+    }
 
     #[test]
     fn reads_git_versions() {
