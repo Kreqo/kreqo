@@ -391,9 +391,10 @@ mod tests {
         Ok(())
     }
 
-    /// The committed deny.toml, with each change applied once.
+    /// The committed deny.toml, with each change applied once. Line endings
+    /// are made `\n` first, since a Windows checkout may have `\r\n`.
     fn committed_with(changes: &[(&str, &str)]) -> String {
-        let mut text = include_str!("../../deny.toml").to_owned();
+        let mut text = include_str!("../../deny.toml").replace("\r\n", "\n");
         for (old, new) in changes {
             assert!(text.contains(old), "deny.toml no longer holds {old:?}");
             text = text.replacen(old, new, 1);
