@@ -71,8 +71,10 @@ jobs:
       - name: Check
         run: cargo xtask check fmt docs crates deny reuse secrets tool-tests
       # Its own step, so that the token reaches zizmor's online audits and
-      # nothing else the pull request builds (CI-08).
+      # nothing else the pull request builds (CI-08). It runs even when the
+      # Check step failed, so that one failure never hides another.
       - name: Audit the workflows
+        if: ${{ !cancelled() }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: cargo xtask check workflows

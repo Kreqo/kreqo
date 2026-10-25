@@ -370,6 +370,47 @@ mod tests {
         assert_eq!(in_ci, every);
     }
 
+    /// A `cargo xtask check` step after the first in its job runs even when
+    /// an earlier step failed, so that one failure never hides another.
+    #[test]
+    fn ci_runs_each_check_step_after_a_failure() {
+        let workflow = include_str!("../../.github/workflows/ci.yml");
+        for steps in steps_by_job(workflow) {
+            let checks = steps.iter().filter(|step| {
+                step.iter()
+                    .any(|line| line.trim().starts_with("run: cargo xtask check "))
+            });
+            for step in checks.skip(1) {
+                assert!(
+                    step.iter()
+                        .any(|line| line.trim() == "if: ${{ !cancelled() }}"),
+                    "this step runs only when the steps before it passed:\n{}",
+                    step.join("\n")
+                );
+            }
+        }
+    }
+
+    /// The steps of each job in a workflow, each step as its lines.
+    fn steps_by_job(workflow: &str) -> Vec<Vec<Vec<&str>>> {
+        let mut jobs: Vec<Vec<Vec<&str>>> = Vec::new();
+        for line in workflow.lines() {
+            let indent = line.len() - line.trim_start().len();
+            if indent == 2 && !line.trim().is_empty() {
+                jobs.push(Vec::new());
+            } else if line.starts_with("      - ") {
+                if let Some(job) = jobs.last_mut() {
+                    job.push(vec![line]);
+                }
+            } else if indent >= 8
+                && let Some(step) = jobs.last_mut().and_then(|job| job.last_mut())
+            {
+                step.push(line);
+            }
+        }
+        jobs
+    }
+
     #[test]
     fn reads_cargo_aliases() -> Result<()> {
         let config = "[alias]\nxtask = \"run --package xtask --\"\ndeny = \"help\"\n";
