@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 //! The secret scan (SEC-03), with no escape hatches, as Dara decided:
-//! Betterleaks' built-in rules only, whatever config the scanned tree holds;
-//! inline `betterleaks:allow` comments ignored; and no scanner config or
-//! ignore file allowed in the tree until a revoked secret first needs one.
-//! The history scan covers the current branch, binary files and merge
-//! commits included. The staged scan also reads staged binary files whole,
-//! since git shows them no diff. Findings name their file and line, with
-//! the secret masked.
+//! Betterleaks' built-in rules only, whatever config the scanned tree holds,
+//! without their default path prefilter; inline `betterleaks:allow`
+//! comments ignored; and no scanner config or ignore file allowed in the
+//! tree until a revoked secret first needs one. The history scan covers the
+//! current branch twice, once with binary files read as text and once with
+//! archives unpacked, merge commits included and renames off. The staged
+//! scan also reads staged binary files whole, with their paths, since git
+//! shows them no diff. Findings name their file and line, with the secret
+//! masked.
 
 use std::io::Write;
 use std::path::Path;
@@ -19,9 +21,16 @@ use anyhow::{Context, Result, bail};
 use crate::check::run_command;
 use crate::{git, tools};
 
-/// A config that keeps Betterleaks' built-in rules and nothing else. Passed
-/// through the environment, it outranks a config file in the scanned tree.
-const BUILT_IN_RULES: &str = "[extend]\nuseDefault = true\n";
+/// A config that keeps Betterleaks' built-in rules and turns off their
+/// default path prefilter, which skips paths such as `.svg` files, lock
+/// files and `node_modules/`. Passed through the environment, it outranks a
+/// config file in the scanned tree.
+const BUILT_IN_RULES: &str = "prefilter = '''false'''\n\n[extend]\nuseDefault = true\n";
+
+/// Git settings for every scan: rename detection off, so that a file moved
+/// after it was committed is read again, and colors off, which would hide
+/// the diff from Betterleaks.
+const GIT_SETTINGS: [(&str, &str); 2] = [("diff.renames", "false"), ("color.ui", "never")];
 
 /// Files that would change what Betterleaks reports.
 const SCANNER_FILES: [&str; 4] = [
@@ -45,13 +54,33 @@ const FLAGS: [&str; 4] = [
 pub fn scan_history(root: &Path) -> Result<()> {
     tools::require(root, &tools::BETTERLEAKS)?;
     check_tree(root)?;
-    run_command(
+    scan_revisions(root, "HEAD")
+}
+
+/// Scans the history of the given revisions twice: once reading binary
+/// files as text, and once without, since `--text` keeps Betterleaks from
+/// unpacking archives.
+fn scan_revisions(root: &Path, revisions: &str) -> Result<()> {
+    let log_options = format!("--no-renames --diff-merges=first-parent {revisions}");
+    let as_text = run_command(
         root,
         betterleaks()
             .args(["git", "."])
             .args(FLAGS)
-            .arg("--log-opts=--text --diff-merges=first-parent HEAD"),
-    )
+            .arg(format!("--log-opts=--text {log_options}")),
+    );
+    let with_archives = run_command(
+        root,
+        betterleaks()
+            .args(["git", "."])
+            .args(FLAGS)
+            .arg(format!("--log-opts={log_options}")),
+    );
+    match (as_text, with_archives) {
+        (Err(error), Ok(())) | (Ok(()), Err(error)) => Err(error),
+        (Err(first), Err(second)) => bail!("{first:#}; {second:#}"),
+        (Ok(()), Ok(())) => Ok(()),
+    }
 }
 
 /// Scans the staged changes, as the pre-commit hook does. Both scans run, so
@@ -81,14 +110,20 @@ pub fn scan_staged(root: &Path) -> Result<()> {
     }
 }
 
-/// Betterleaks, held to its built-in rules.
+/// Betterleaks, held to its built-in rules and to the git settings above.
 fn betterleaks() -> Command {
     let mut command = tools::BETTERLEAKS.command();
     command
         .env("BETTERLEAKS_CONFIG_TOML", BUILT_IN_RULES)
         .env_remove("BETTERLEAKS_CONFIG")
         .env_remove("GITLEAKS_CONFIG")
-        .env_remove("GITLEAKS_CONFIG_TOML");
+        .env_remove("GITLEAKS_CONFIG_TOML")
+        .env("GIT_CONFIG_COUNT", GIT_SETTINGS.len().to_string());
+    for (index, (key, value)) in GIT_SETTINGS.iter().enumerate() {
+        command
+            .env(format!("GIT_CONFIG_KEY_{index}"), key)
+            .env(format!("GIT_CONFIG_VALUE_{index}"), value);
+    }
     command
 }
 
@@ -159,20 +194,24 @@ fn binary_paths(numstat: &str) -> Vec<String> {
         .collect()
 }
 
-/// Scans one staged file's content in full.
+/// Scans one staged file's content in full, with its path, so that rules
+/// about paths, such as one for keystores, can fire.
 fn scan_staged_file(root: &Path, path: &str) -> Result<()> {
+    // `:0:` names the staged stage, even for a path that looks like one.
     let blob = Command::new("git")
-        .args(["cat-file", "blob", &format!(":{path}")])
+        .args(["cat-file", "blob", &format!(":0:{path}")])
         .current_dir(root)
         .output()
         .with_context(|| format!("couldn't read the staged {path}"))?;
     if !blob.status.success() {
         bail!("couldn't read the staged {path}");
     }
-    println!("$ git cat-file blob :{path} | betterleaks stdin");
+    println!("$ git cat-file blob :0:{path} | betterleaks stdin --set-attr path={path}");
     let mut child = betterleaks()
         .arg("stdin")
         .args(FLAGS)
+        .arg("--set-attr")
+        .arg(format!("path={path}"))
         .current_dir(root)
         .stdin(Stdio::piped())
         .spawn()
