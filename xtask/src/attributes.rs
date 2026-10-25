@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use anyhow::{Context, Result};
-use proc_macro2::{Delimiter, TokenStream, TokenTree};
+use proc_macro2::{Delimiter, Ident, TokenStream, TokenTree};
 
 use crate::git;
 
@@ -49,20 +49,21 @@ pub fn check(root: &Path, crate_roots: &BTreeSet<PathBuf>) -> Result<Vec<String>
         let is_crate_root = crate_roots.contains(&path);
         for attribute in attributes(stream) {
             let place = format!("{}:{}", relative.display(), attribute.line);
-            if !arguments_of(&attribute.tokens, "allow").is_empty() {
+            let applied = applied(&attribute.tokens);
+            if applied.iter().any(|(name, _)| name == "allow") {
                 problems.push(format!(
                     "{place}: an `allow` attribute; suppress with `#[expect(lint, reason = \"…\")]` (QA-01)"
                 ));
             }
-            for arguments in arguments_of(&attribute.tokens, "expect") {
-                if !mentions(&arguments, "unsafe_code") {
+            for (_, arguments) in applied.iter().filter(|(name, _)| name == "expect") {
+                if !mentions(arguments, "unsafe_code") {
                     continue;
                 }
                 if !(attribute.inner && is_crate_root) {
                     problems.push(format!(
                         "{place}: `expect(unsafe_code)` belongs only in a crate root's `#![expect(unsafe_code, reason = \"ADR-NNNN\")]` (SEC-01)"
                     ));
-                } else if !adr_number(&arguments).is_some_and(|number| adr_exists(root, &number)) {
+                } else if !adr_number(arguments).is_some_and(|number| adr_exists(root, &number)) {
                     problems.push(format!(
                         "{place}: its reason names no ADR in docs/adr/ (SEC-01)"
                     ));
@@ -109,27 +110,61 @@ fn collect_attributes(stream: TokenStream, found: &mut Vec<Attribute>) {
     }
 }
 
-/// The arguments of every `name(…)` in an attribute, at any depth, so that
-/// `cfg_attr(…, allow(…))` counts too.
-fn arguments_of(tokens: &TokenStream, name: &str) -> Vec<TokenStream> {
-    let mut found = Vec::new();
-    let mut after_name = false;
-    for token in tokens.clone() {
-        if let TokenTree::Group(group) = &token {
-            if after_name && group.delimiter() == Delimiter::Parenthesis {
-                found.push(group.stream());
-            }
-            found.extend(arguments_of(&group.stream(), name));
-        }
-        after_name = matches!(&token, TokenTree::Ident(ident) if ident == name);
+/// The attributes that an attribute's tokens apply, each as its name and
+/// its arguments: the attribute itself when its path is a single
+/// identifier, such as `allow(…)`, and for `cfg_attr(condition, …)`, each
+/// attribute after the condition, however deep. A longer path, such as
+/// rstest's `case::allow(…)`, names something else.
+fn applied(tokens: &TokenStream) -> Vec<(String, TokenStream)> {
+    let tokens: Vec<TokenTree> = tokens.clone().into_iter().collect();
+    let [TokenTree::Ident(name), TokenTree::Group(arguments)] = tokens.as_slice() else {
+        return Vec::new();
+    };
+    if arguments.delimiter() != Delimiter::Parenthesis {
+        return Vec::new();
     }
-    found
+    let name = unraw(name);
+    if name == "cfg_attr" {
+        split_commas(arguments.stream())
+            .iter()
+            .skip(1)
+            .flat_map(applied)
+            .collect()
+    } else {
+        vec![(name, arguments.stream())]
+    }
+}
+
+/// The comma-separated parts of a token stream.
+fn split_commas(stream: TokenStream) -> Vec<TokenStream> {
+    let mut parts = vec![TokenStream::new()];
+    for token in stream {
+        match &token {
+            TokenTree::Punct(comma) if comma.as_char() == ',' => parts.push(TokenStream::new()),
+            _ => {
+                if let Some(part) = parts.last_mut() {
+                    part.extend([token]);
+                }
+            }
+        }
+    }
+    parts
+}
+
+/// An identifier's name without a raw identifier's `r#`, since rustc
+/// honors `r#allow` as `allow`.
+fn unraw(ident: &Ident) -> String {
+    let name = ident.to_string();
+    match name.strip_prefix("r#") {
+        Some(name) => name.to_owned(),
+        None => name,
+    }
 }
 
 /// Whether the identifier appears anywhere in the tokens.
 fn mentions(tokens: &TokenStream, name: &str) -> bool {
     tokens.clone().into_iter().any(|token| match token {
-        TokenTree::Ident(ident) => ident == name,
+        TokenTree::Ident(ident) => unraw(&ident) == name,
         TokenTree::Group(group) => mentions(&group.stream(), name),
         _ => false,
     })
@@ -143,7 +178,7 @@ fn adr_number(arguments: &TokenStream) -> Option<String> {
             TokenTree::Ident(key),
             TokenTree::Punct(equals),
             TokenTree::Literal(value),
-        ] if key == "reason" && equals.as_char() == '=' => Some(value.to_string()),
+        ] if unraw(key) == "reason" && equals.as_char() == '=' => Some(value.to_string()),
         _ => None,
     })?;
     reason.match_indices("ADR-").find_map(|(index, _)| {
@@ -171,12 +206,16 @@ fn adr_exists(root: &Path, number: &str) -> bool {
 mod tests {
     use super::*;
 
-    /// The lines of the attributes in `text` that use `name(…)`.
+    /// The lines of the attributes in `text` that apply `name(…)`.
     fn lines_using(text: &str, name: &str) -> Result<Vec<usize>> {
         let stream = TokenStream::from_str(text).map_err(|error| anyhow::anyhow!("{error}"))?;
         Ok(attributes(stream)
             .into_iter()
-            .filter(|attribute| !arguments_of(&attribute.tokens, name).is_empty())
+            .filter(|attribute| {
+                applied(&attribute.tokens)
+                    .iter()
+                    .any(|(applied, _)| applied == name)
+            })
             .map(|attribute| attribute.line)
             .collect())
     }
@@ -198,8 +237,27 @@ mod m {
 }
 #[disallow(dead_code)]
 fn g() {}
+#[r#allow(dead_code)]
+fn h() {}
+#[case::allow(1)]
+#[cfg_attr(test, cfg_attr(unix, allow(unused)))]
+fn i() {}
 "##;
-        assert_eq!(lines_using(text, "allow")?, [2, 12]);
+        assert_eq!(lines_using(text, "allow")?, [2, 12, 16, 19]);
+        Ok(())
+    }
+
+    #[test]
+    fn reads_raw_identifiers() -> Result<()> {
+        let stream = TokenStream::from_str("r#expect(r#unsafe_code, r#reason = \"ADR-0001\")")
+            .map_err(|error| anyhow::anyhow!("{error}"))?;
+        let applied = applied(&stream);
+        let [(name, arguments)] = applied.as_slice() else {
+            anyhow::bail!("expected one applied attribute, got {}", applied.len());
+        };
+        assert_eq!(name, "expect");
+        assert!(mentions(arguments, "unsafe_code"));
+        assert_eq!(adr_number(arguments), Some("0001".to_owned()));
         Ok(())
     }
 
