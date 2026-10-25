@@ -57,6 +57,14 @@ pub fn scan_history(root: &Path) -> Result<()> {
     scan_revisions(root, "HEAD")
 }
 
+/// Scans every branch's and tag's history, as the daily scan does, so that a
+/// ref no push run scanned is still covered.
+pub fn scan_all_refs(root: &Path) -> Result<()> {
+    tools::require(root, &tools::BETTERLEAKS)?;
+    check_tree(root)?;
+    scan_revisions(root, "--all")
+}
+
 /// Scans the history of the given revisions twice: once reading binary
 /// files as text, and once without, since `--text` keeps Betterleaks from
 /// unpacking archives.

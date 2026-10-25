@@ -37,6 +37,8 @@ enum Command {
     Hooks,
     /// Scans the staged changes for secrets; the pre-commit hook runs it (SEC-03).
     PreCommit,
+    /// Scans every branch's and tag's history for secrets; the daily scan runs it (SEC-03).
+    ScanAllRefs,
     /// Prints the pinned tool versions as GitHub Actions outputs (CI-07).
     Tools,
 }
@@ -60,6 +62,7 @@ fn run() -> Result<bool> {
         Command::Check { steps } => check::run(&root, &steps),
         Command::Hooks => hooks::install(&root).map(|()| true),
         Command::PreCommit => hooks::pre_commit(&root).map(|()| true),
+        Command::ScanAllRefs => secrets::scan_all_refs(&root).map(|()| true),
         Command::Tools => {
             tools::print_github_outputs();
             Ok(true)
