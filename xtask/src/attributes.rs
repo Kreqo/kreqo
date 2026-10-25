@@ -294,9 +294,10 @@ fn collect_attributes(stream: TokenStream, top_level: bool, found: &mut Vec<Attr
 
 /// The attributes that an attribute's tokens apply, each as its name and
 /// its arguments: the attribute itself when its path is a single
-/// identifier, such as `allow(…)`, and for `cfg_attr(condition, …)`, each
-/// attribute after the condition, however deep. A longer path, such as
-/// rstest's `case::allow(…)`, names something else.
+/// identifier, such as `allow(…)`; for `cfg_attr(condition, …)`, each
+/// attribute after the condition, however deep; and for
+/// `doc(test(attr(…)))`, each attribute it gives every doctest. A longer
+/// path, such as rstest's `case::allow(…)`, names something else.
 fn applied(tokens: &TokenStream) -> Vec<(String, TokenStream)> {
     let tokens: Vec<TokenTree> = tokens.clone().into_iter().collect();
     let [TokenTree::Ident(name), TokenTree::Group(arguments)] = tokens.as_slice() else {
@@ -306,14 +307,34 @@ fn applied(tokens: &TokenStream) -> Vec<(String, TokenStream)> {
         return Vec::new();
     }
     let name = unraw(name);
-    if name == "cfg_attr" {
-        split_commas(arguments.stream())
+    match name.as_str() {
+        "cfg_attr" => split_commas(arguments.stream())
             .iter()
             .skip(1)
             .flat_map(applied)
-            .collect()
-    } else {
-        vec![(name, arguments.stream())]
+            .collect(),
+        "doc" => split_commas(arguments.stream())
+            .iter()
+            .filter_map(|part| arguments_of(part, "test"))
+            .flat_map(split_commas)
+            .filter_map(|part| arguments_of(&part, "attr"))
+            .flat_map(split_commas)
+            .flat_map(|attribute| applied(&attribute))
+            .collect(),
+        _ => vec![(name, arguments.stream())],
+    }
+}
+
+/// What the parentheses of `name(…)` hold, if the tokens are that.
+fn arguments_of(tokens: &TokenStream, name: &str) -> Option<TokenStream> {
+    let tokens: Vec<TokenTree> = tokens.clone().into_iter().collect();
+    match tokens.as_slice() {
+        [TokenTree::Ident(ident), TokenTree::Group(group)]
+            if unraw(ident) == name && group.delimiter() == Delimiter::Parenthesis =>
+        {
+            Some(group.stream())
+        }
+        _ => None,
     }
 }
 
@@ -417,6 +438,13 @@ fn h() {}
 fn i() {}
 "##;
         assert_eq!(lines_using(text, "allow")?, [2, 12, 16, 19]);
+        Ok(())
+    }
+
+    #[test]
+    fn finds_allow_attributes_given_to_doctests() -> Result<()> {
+        let text = "#![doc(test(no_crate_inject, attr(deny(warnings), allow(unused))))]\n#![doc(html_root_url = \"https://example.org\")]\n#![doc(test(attr(cfg_attr(unix, allow(dead_code)))))]\n";
+        assert_eq!(lines_using(text, "allow")?, [1, 3]);
         Ok(())
     }
 
