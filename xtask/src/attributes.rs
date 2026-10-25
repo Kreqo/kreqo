@@ -243,16 +243,88 @@ fn canonical(path: &Path) -> PathBuf {
     fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
 }
 
-/// The text with a leading shebang line blanked, as rustc ignores it, and
-/// line numbers kept. `#![` starts an inner attribute instead.
+/// The text with a leading shebang line blanked and line numbers kept, as
+/// rustc's `strip_shebang` reads it: `#!` starts a shebang unless the next
+/// token, past whitespace and comments other than doc comments, is `[`.
 fn without_shebang(text: &str) -> Cow<'_, str> {
     match text.strip_prefix("#!") {
-        Some(rest) if !rest.trim_start().starts_with('[') => {
+        Some(rest) if !past_trivia(rest).starts_with('[') => {
             let line_end = text.find('\n').unwrap_or(text.len());
             Cow::Owned(text.get(line_end..).unwrap_or_default().to_owned())
         }
         _ => Cow::Borrowed(text),
     }
+}
+
+/// The text past its leading whitespace and comments, as rustc's lexer
+/// reads them. A doc comment is a token, so it stops there.
+fn past_trivia(mut text: &str) -> &str {
+    loop {
+        text = text.trim_start_matches(is_rust_whitespace);
+        if let Some(rest) = text.strip_prefix("//") {
+            // `//!` and `///` are doc comments, but `////` isn't.
+            if rest.starts_with('!') || (rest.starts_with('/') && !rest.starts_with("//")) {
+                return text;
+            }
+            text = rest
+                .find('\n')
+                .and_then(|end| rest.get(end..))
+                .unwrap_or_default();
+        } else if let Some(rest) = text.strip_prefix("/*") {
+            // `/*!` and `/**` are doc comments, but `/***` and `/**/` aren't.
+            if rest.starts_with('!')
+                || (rest.starts_with('*') && !rest.starts_with("**") && !rest.starts_with("*/"))
+            {
+                return text;
+            }
+            text = past_block_comment(rest);
+        } else {
+            return text;
+        }
+    }
+}
+
+/// The text past the end of a block comment whose `/*` is already read,
+/// counting nested comments; nothing when it never ends.
+fn past_block_comment(text: &str) -> &str {
+    let mut depth = 1_usize;
+    let mut chars = text.char_indices().peekable();
+    while let Some((_, c)) = chars.next() {
+        match (c, chars.peek()) {
+            ('/', Some((_, '*'))) => {
+                chars.next();
+                depth += 1;
+            }
+            ('*', Some((slash, '/'))) => {
+                let end = slash + 1;
+                chars.next();
+                depth -= 1;
+                if depth == 0 {
+                    return text.get(end..).unwrap_or_default();
+                }
+            }
+            _ => {}
+        }
+    }
+    ""
+}
+
+/// Whether rustc's lexer reads the character as whitespace: Unicode's
+/// Pattern_White_Space, which includes the bidi marks.
+fn is_rust_whitespace(c: char) -> bool {
+    matches!(
+        c,
+        '\t' | '\n'
+            | '\u{B}'
+            | '\u{C}'
+            | '\r'
+            | ' '
+            | '\u{85}'
+            | '\u{200E}'
+            | '\u{200F}'
+            | '\u{2028}'
+            | '\u{2029}'
+    )
 }
 
 /// Every attribute in a token stream, nested ones included.
@@ -603,6 +675,37 @@ mod m {
         );
         assert_eq!(without_shebang("#![allow(x)]\n"), "#![allow(x)]\n");
         assert_eq!(without_shebang("#! [allow(x)]\n"), "#! [allow(x)]\n");
+    }
+
+    #[test]
+    fn reads_a_shebang_as_rustc_does() -> Result<()> {
+        // Whitespace and comments other than doc comments may come between
+        // `#!` and `[`, which keeps it an inner attribute.
+        for text in [
+            "#!/**/[allow(x)]\n",
+            "#!/* x /* nested */ */ [allow(x)]\n",
+            "#!// x\n[allow(x)]\n",
+            "#!//// x\n[allow(x)]\n",
+            "#!\u{200E}[allow(x)]\n",
+        ] {
+            assert_eq!(without_shebang(text), text);
+        }
+        // A doc comment is a token, so `#!` starts a shebang.
+        assert_eq!(without_shebang("#!/// x\n[allow(x)]\n"), "\n[allow(x)]\n");
+        assert_eq!(without_shebang("#!/** x */[allow(x)]\n"), "\n");
+        assert_eq!(without_shebang("#!/* never closed [allow(x)]\n"), "\n");
+        let denied = denied()?;
+        let source = Source {
+            root: Path::new("."),
+            name: "main.rs",
+            is_crate_root: true,
+            denied: &denied,
+        };
+        assert_eq!(
+            source.problems("#!/* x */ [expect(unsafe_code, reason = \"no ADR\")]\nfn main() {}\n"),
+            ["main.rs:1: its reason names no ADR in docs/adr/ (SEC-01)"]
+        );
+        Ok(())
     }
 
     #[test]
