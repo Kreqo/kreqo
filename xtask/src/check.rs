@@ -300,6 +300,11 @@ fn check_cargo_config(root: &Path) -> Result<()> {
     bail!("{}", problems.join("; "))
 }
 
+/// The only alias the repository's cargo config may define, exactly as
+/// `cargo xtask` runs it: xtask from the committed lockfile (ARCH-06,
+/// CI-16).
+const XTASK_ALIAS: &str = "run --package xtask --locked --";
+
 /// What the repository's cargo config sets beyond the `xtask` alias.
 fn repository_config_problems(config: &str) -> Result<Vec<String>> {
     let config: toml::Table = config.parse()?;
@@ -307,10 +312,16 @@ fn repository_config_problems(config: &str) -> Result<Vec<String>> {
     for (key, value) in &config {
         match (key.as_str(), value.as_table()) {
             ("alias", Some(aliases)) => {
-                for alias in aliases.keys().filter(|alias| *alias != "xtask") {
-                    problems.push(format!(
-                        "defines the cargo alias `{alias}`, which could stand in for a command the checks run"
-                    ));
+                for (alias, command) in aliases {
+                    if alias != "xtask" {
+                        problems.push(format!(
+                            "defines the cargo alias `{alias}`, which could stand in for a command the checks run"
+                        ));
+                    } else if command.as_str() != Some(XTASK_ALIAS) {
+                        problems.push(format!(
+                            "defines the `xtask` alias as {command}, but it must be \"{XTASK_ALIAS}\": anything more, such as `--config`, could bring back what this file may not hold"
+                        ));
+                    }
                 }
             }
             _ => problems.push(format!(
@@ -513,7 +524,7 @@ mod tests {
         let config = r#"include = "more.toml"
 
 [alias]
-xtask = "run --package xtask --locked --"
+xtask = "run --config env.CARGO_BUILD_RUSTFLAGS='--cap-lints=allow' --package xtask --locked --"
 fmt = "clippy --version"
 
 [build]
@@ -527,6 +538,7 @@ PATH = "stubs"
             repository_config_problems(config)?,
             [
                 "defines the cargo alias `fmt`, which could stand in for a command the checks run",
+                "defines the `xtask` alias as \"run --config env.CARGO_BUILD_RUSTFLAGS='--cap-lints=allow' --package xtask --locked --\", but it must be \"run --package xtask --locked --\": anything more, such as `--config`, could bring back what this file may not hold",
                 "sets `build`, but the repository's cargo config may hold only the `xtask` alias",
                 "sets `env`, but the repository's cargo config may hold only the `xtask` alias",
                 "sets `include`, but the repository's cargo config may hold only the `xtask` alias",
