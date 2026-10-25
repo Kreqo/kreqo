@@ -9,3 +9,4 @@
 
 mod secrets;
 mod support;
+mod workflows;

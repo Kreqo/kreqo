@@ -34,7 +34,8 @@ pub enum Step {
     Reuse,
     /// Betterleaks over the git history (SEC-03).
     Secrets,
-    /// zizmor over the workflows, online when GH_TOKEN is set (CI-07, CI-08, CI-09).
+    /// zizmor over the workflows, actions and Dependabot configs, online when
+    /// GH_TOKEN is set (CI-07, CI-08, CI-09).
     Workflows,
     /// xtask's own tests that run the pinned Betterleaks and zizmor, which a
     /// plain `cargo test` skips (QA-09).
@@ -153,12 +154,15 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
                 zizmor.arg("--offline").env_remove("GH_TOKEN");
             }
             // The files come from git, so that an ignore rule can't hide a
-            // tracked workflow from zizmor's own collection.
+            // tracked one: what zizmor's own collection finds, workflows in
+            // nested folders and Dependabot configs included.
             let workflows = git::files(
                 root,
                 &[
-                    ":(glob).github/workflows/*.yml",
-                    ":(glob).github/workflows/*.yaml",
+                    ":(glob)**/.github/workflows/*.yml",
+                    ":(glob)**/.github/workflows/*.yaml",
+                    ":(glob)**/.github/dependabot.yml",
+                    ":(glob)**/.github/dependabot.yaml",
                     ":(glob)**/action.yml",
                     ":(glob)**/action.yaml",
                 ],
