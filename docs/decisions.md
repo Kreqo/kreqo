@@ -275,3 +275,28 @@ From now on, each item that a review leaves for later becomes a forge issue, as 
 
 - **Archives by name:** Betterleaks picks the archives it unpacks by their names, such as `.zip` and `.tar.gz`, so it doesn't read inside `.docx`, `.jar` or other files that are zip archives under another name.
 - **Deleted refs:** a ref that started no push run and is deleted before the daily scan escapes it, though GitHub may keep serving its commits. The forge's own push protection could cover it.
+
+## 2026-10-25: the last follow-up review of PR #1
+
+Dara's split of the last follow-up review's findings: this pull request fixes what it owes, which is the blocking finding, the tests that passed without their fixes (QA-09), its own regression and stale text; the rest become issues or are recorded here. Its findings and how each was handled are in the pull request.
+
+### What the checks hold to, after the last review
+
+The repository's `.cargo/config.toml` may hold the `xtask` alias only as `run --package xtask --locked --`, since anything more, such as `--config`, could bring back the `rustflags` and `[env]` the file may not hold. The commit-msg hook cuts a message only at git's own cut line, with the comment string git is set to use.
+
+- **Rules:** QA-01, SEC-01, SEC-03.
+
+### What the bar leaves to review, after the last review
+
+- **zizmor's ignores:** a `# zizmor: ignore[…]` comment in a workflow, or a `disable` or `ignore` entry in `.github/zizmor.yml`, lowers an audit the way an attribute lowers a lint, and only a change to the workflows or the tools' configuration can add one.
+- **Reasons that only look like words:** a suppression's reason passes with an invisible letter, such as U+3164, or a doubled `until`.
+- **A cut line on purpose:** a `git commit -m` message that carries git's exact cut line stops the commit-msg hook there, though git keeps what follows; CI's scan of the pushed commit reads it.
+- **A cargo config in a subfolder:** cargo reads one only when it runs in that folder, so only local runs see it; CI runs from the root.
+
+### What the last follow-up review left for later
+
+- **Lint groups in the workspace table:** a group allowed at a higher priority than a denied lint it holds lowers that lint in every crate.
+- **Cargo settings that weaken tests:** `overflow-checks` or `debug-assertions` turned off in the dev or test profile, or a member's `rust-version` below the workspace's.
+- **The Description run's log:** GitHub prints a step's environment in its log, so the log repeats the title and description; reading them from `GITHUB_EVENT_PATH` would keep them out.
+- **Tags of trees and of tags:** a tagged tree's files are scanned without their paths, and a tag of a tag has its inner message unread.
+- **A byte-order mark before a shebang:** the attribute check doesn't skip one, so an honest file that starts with both fails the crates step.
