@@ -37,6 +37,11 @@ enum Command {
     Hooks,
     /// Scans the staged changes for secrets; the pre-commit hook runs it (SEC-03).
     PreCommit,
+    /// Scans a commit message for secrets; the commit-msg hook runs it (SEC-03).
+    CommitMsg {
+        /// The file that holds the message.
+        file: PathBuf,
+    },
     /// Scans every branch's and tag's history for secrets; the daily scan runs it (SEC-03).
     ScanAllRefs,
     /// Prints the pinned tool versions as GitHub Actions outputs (CI-07).
@@ -62,6 +67,7 @@ fn run() -> Result<bool> {
         Command::Check { steps } => check::run(&root, &steps),
         Command::Hooks => hooks::install(&root).map(|()| true),
         Command::PreCommit => hooks::pre_commit(&root).map(|()| true),
+        Command::CommitMsg { file } => hooks::commit_msg(&root, &file).map(|()| true),
         Command::ScanAllRefs => secrets::scan_all_refs(&root).map(|()| true),
         Command::Tools => {
             tools::print_github_outputs();

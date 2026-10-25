@@ -12,6 +12,7 @@
 //! shows them no diff. Findings name their file and line, with the secret
 //! masked.
 
+use std::fs;
 use std::io::Write;
 use std::path::Path;
 use std::process::{Command, Stdio};
@@ -65,30 +66,72 @@ pub fn scan_all_refs(root: &Path) -> Result<()> {
     scan_revisions(root, "--all")
 }
 
-/// Scans the history of the given revisions twice: once reading binary
-/// files as text, and once without, since `--text` keeps Betterleaks from
-/// unpacking archives.
+/// Scans a commit message before the commit is made, as the commit-msg hook
+/// does: once committed, it can't leave history (CI-01).
+pub fn scan_message(root: &Path, file: &Path) -> Result<()> {
+    tools::require(root, &tools::BETTERLEAKS)?;
+    let path = root.join(file);
+    let message = fs::read(&path).with_context(|| format!("couldn't read {}", path.display()))?;
+    scan_bytes(root, "commit message", &message)
+}
+
+/// Scans the history of the given revisions: the changes twice, once
+/// reading binary files as text and once without, since `--text` keeps
+/// Betterleaks from unpacking archives; then the commit messages and notes,
+/// and every tag's message.
 fn scan_revisions(root: &Path, revisions: &str) -> Result<()> {
     let log_options = format!("--no-renames --diff-merges=first-parent {revisions}");
-    let as_text = run_command(
-        root,
-        betterleaks()
-            .args(["git", "."])
-            .args(FLAGS)
-            .arg(format!("--log-opts=--text {log_options}")),
-    );
-    let with_archives = run_command(
-        root,
-        betterleaks()
-            .args(["git", "."])
-            .args(FLAGS)
-            .arg(format!("--log-opts={log_options}")),
-    );
-    match (as_text, with_archives) {
-        (Err(error), Ok(())) | (Ok(()), Err(error)) => Err(error),
-        (Err(first), Err(second)) => bail!("{first:#}; {second:#}"),
-        (Ok(()), Ok(())) => Ok(()),
+    all(vec![
+        run_command(
+            root,
+            betterleaks()
+                .args(["git", "."])
+                .args(FLAGS)
+                .arg(format!("--log-opts=--text {log_options}")),
+        ),
+        run_command(
+            root,
+            betterleaks()
+                .args(["git", "."])
+                .args(FLAGS)
+                .arg(format!("--log-opts={log_options}")),
+        ),
+        git_output(root, &["log", "--format=%B%n%N", revisions])
+            .and_then(|messages| scan_bytes(root, "commit messages and notes", &messages)),
+        git_output(root, &["for-each-ref", "--format=%(contents)", "refs/tags"])
+            .and_then(|messages| scan_bytes(root, "tag messages", &messages)),
+    ])
+}
+
+/// Fails if any part failed, naming every failure.
+fn all(results: Vec<Result<()>>) -> Result<()> {
+    let failures: Vec<String> = results
+        .into_iter()
+        .filter_map(Result::err)
+        .map(|error| format!("{error:#}"))
+        .collect();
+    if failures.is_empty() {
+        Ok(())
+    } else {
+        bail!("{}", failures.join("; "))
     }
+}
+
+/// What a git command prints, or why it failed.
+fn git_output(root: &Path, args: &[&str]) -> Result<Vec<u8>> {
+    let output = Command::new("git")
+        .args(args)
+        .current_dir(root)
+        .output()
+        .context("couldn't run git")?;
+    if !output.status.success() {
+        bail!(
+            "git {} failed: {}",
+            args.join(" "),
+            String::from_utf8_lossy(&output.stderr).trim()
+        );
+    }
+    Ok(output.stdout)
 }
 
 /// Scans the staged changes, as the pre-commit hook does. Both scans run, so
@@ -206,15 +249,13 @@ fn binary_paths(numstat: &str) -> Vec<String> {
 /// about paths, such as one for keystores, can fire.
 fn scan_staged_file(root: &Path, path: &str) -> Result<()> {
     // `:0:` names the staged stage, even for a path that looks like one.
-    let blob = Command::new("git")
-        .args(["cat-file", "blob", &format!(":0:{path}")])
-        .current_dir(root)
-        .output()
-        .with_context(|| format!("couldn't read the staged {path}"))?;
-    if !blob.status.success() {
-        bail!("couldn't read the staged {path}");
-    }
-    println!("$ git cat-file blob :0:{path} | betterleaks stdin --set-attr path={path}");
+    let blob = git_output(root, &["cat-file", "blob", &format!(":0:{path}")])?;
+    scan_bytes(root, path, &blob)
+}
+
+/// Scans content through Betterleaks' stdin, under a path that names it.
+fn scan_bytes(root: &Path, path: &str, content: &[u8]) -> Result<()> {
+    println!("$ … | betterleaks stdin --set-attr path={path}");
     let mut child = betterleaks()
         .arg("stdin")
         .args(FLAGS)
@@ -228,13 +269,13 @@ fn scan_staged_file(root: &Path, path: &str) -> Result<()> {
         .stdin
         .take()
         .context("couldn't write to betterleaks")?
-        .write_all(&blob.stdout)
+        .write_all(content)
         .context("couldn't write to betterleaks")?;
     let status = child.wait().context("couldn't run betterleaks")?;
     if status.success() {
         Ok(())
     } else {
-        bail!("betterleaks found a secret in the staged {path}")
+        bail!("betterleaks found a secret in the {path}")
     }
 }
 

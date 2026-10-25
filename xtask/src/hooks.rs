@@ -2,22 +2,33 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 //! Git hooks (SEC-03): `cargo xtask hooks` installs a pre-commit hook that
-//! runs `cargo xtask pre-commit`, which scans the staged changes for secrets.
+//! runs `cargo xtask pre-commit`, which scans the staged changes for
+//! secrets, and a commit-msg hook that runs `cargo xtask commit-msg`, which
+//! scans the commit message.
 
 use std::fs;
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{Context, Result, bail};
 
 use crate::secrets;
 
-/// The pre-commit hook: a shim, so that the logic stays in Rust (ARCH-06).
-const PRE_COMMIT: &str =
-    "#!/bin/sh\n# Installed by `cargo xtask hooks` (SEC-03).\nexec cargo xtask pre-commit\n";
+/// The hooks, each a shim, so that the logic stays in Rust (ARCH-06).
+const HOOKS: [(&str, &str); 2] = [
+    (
+        "pre-commit",
+        "#!/bin/sh\n# Installed by `cargo xtask hooks` (SEC-03).\nexec cargo xtask pre-commit\n",
+    ),
+    (
+        "commit-msg",
+        "#!/bin/sh\n# Installed by `cargo xtask hooks` (SEC-03).\nexec cargo xtask commit-msg \"$1\"\n",
+    ),
+];
 
-/// Installs the pre-commit hook, leaving any other hook in place.
+/// Installs the hooks, leaving any other hook in place. Every hook is
+/// checked before any is written, so a refusal leaves nothing half done.
 pub fn install(root: &Path) -> Result<()> {
     refuse_shared_hooks_path(root)?;
     // `--git-path` honors core.hooksPath and finds the hooks of worktrees.
@@ -34,25 +45,29 @@ pub fn install(root: &Path) -> Result<()> {
     }
     let hooks = String::from_utf8(output.stdout).context("git printed a non-UTF-8 path")?;
     let hooks = root.join(hooks.trim());
-    let path = hooks.join("pre-commit");
-    match fs::read_to_string(&path) {
-        Ok(existing) if existing == PRE_COMMIT => {
-            println!("The pre-commit hook is already installed.");
-            return Ok(());
-        }
-        Ok(_) => bail!(
-            "{} already exists; move it aside, then run cargo xtask hooks again",
-            path.display()
-        ),
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-        Err(error) => {
-            return Err(error).with_context(|| format!("couldn't read {}", path.display()));
+    let mut missing: Vec<(PathBuf, &str)> = Vec::new();
+    for (name, script) in HOOKS {
+        let path = hooks.join(name);
+        match fs::read_to_string(&path) {
+            Ok(existing) if existing == script => {
+                println!("The {name} hook is already installed.");
+            }
+            Ok(_) => bail!(
+                "{} already exists; move it aside, then run cargo xtask hooks again",
+                path.display()
+            ),
+            Err(error) if error.kind() == io::ErrorKind::NotFound => missing.push((path, script)),
+            Err(error) => {
+                return Err(error).with_context(|| format!("couldn't read {}", path.display()));
+            }
         }
     }
     fs::create_dir_all(&hooks).with_context(|| format!("couldn't create {}", hooks.display()))?;
-    fs::write(&path, PRE_COMMIT).with_context(|| format!("couldn't write {}", path.display()))?;
-    make_executable(&path)?;
-    println!("Installed {}.", path.display());
+    for (path, script) in missing {
+        fs::write(&path, script).with_context(|| format!("couldn't write {}", path.display()))?;
+        make_executable(&path)?;
+        println!("Installed {}.", path.display());
+    }
     Ok(())
 }
 
@@ -94,4 +109,10 @@ fn make_executable(_path: &Path) -> Result<()> {
 /// Scans the staged changes for secrets, as the pre-commit hook does.
 pub fn pre_commit(root: &Path) -> Result<()> {
     secrets::scan_staged(root)
+}
+
+/// Scans the commit message in `file` for secrets, as the commit-msg hook
+/// does.
+pub fn commit_msg(root: &Path, file: &Path) -> Result<()> {
+    secrets::scan_message(root, file)
 }
