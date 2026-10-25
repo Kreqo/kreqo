@@ -574,6 +574,24 @@ mod tests {
         );
     }
 
+    /// The Description workflow scans the title and description on every
+    /// event that can change them, passed through the environment (CI-09),
+    /// in the job that the ruleset requires as `description`.
+    #[test]
+    fn the_description_workflow_scans_every_change() {
+        let workflow = include_str!("../../.github/workflows/description.yml");
+        let has = |wanted: &str| workflow.lines().any(|line| line.trim() == wanted);
+        for line in [
+            "types: [opened, edited, reopened, synchronize]",
+            "name: description",
+            "PULL_REQUEST_TITLE: ${{ github.event.pull_request.title }}",
+            "PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}",
+            "run: cargo xtask scan-pull-request",
+        ] {
+            assert!(has(line), "description.yml lacks {line:?}");
+        }
+    }
+
     /// actions/checkout fetches only branches and tags, so the daily scan
     /// fetches the notes before it scans every ref.
     #[test]

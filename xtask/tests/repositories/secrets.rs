@@ -157,9 +157,12 @@ fn the_history_scan_reads_every_path() -> Result<()> {
         format!("const token = \"{token}\";\n"),
     )?;
     repo.commit_all("Vendor a package")?;
-    repo.git(&["mv", "node_modules/pkg/index.js", "index.js"])?;
+    std::fs::create_dir(repo.root().join("src"))?;
+    repo.git(&["mv", "node_modules/pkg/index.js", "src/moved.js"])?;
     repo.commit_all("Move the package's code")?;
-    repo.xtask(&["check", "secrets"]).fails_with("index.js")
+    // Only with rename detection off does the move show the file's content
+    // under its new path.
+    repo.xtask(&["check", "secrets"]).fails_with("src/moved.js")
 }
 
 #[test]
@@ -357,6 +360,15 @@ fn the_pull_request_scan_reads_the_title_and_description() -> Result<()> {
         &[title, ("PULL_REQUEST_BODY", body.as_str())],
     )
     .fails_with("pull request description")?;
+    let leaky_title = format!("Use {}", fake_token());
+    repo.xtask_with(
+        &["scan-pull-request"],
+        &[
+            ("PULL_REQUEST_TITLE", leaky_title.as_str()),
+            ("PULL_REQUEST_BODY", ""),
+        ],
+    )
+    .fails_with("pull request title")?;
     repo.xtask_with(&["scan-pull-request"], &[("PULL_REQUEST_BODY", "")])
         .fails_with("PULL_REQUEST_TITLE isn't set")
 }
@@ -371,7 +383,9 @@ fn git_settings_never_hide_the_diff() -> Result<()> {
     repo.git(&["config", "color.diff", "always"])?;
     repo.write("settings.txt", format!("token = {}\n", fake_token()))?;
     repo.git(&["add", "settings.txt"])?;
-    let colored = [("GIT_CONFIG_PARAMETERS", "'color.ui=always'")];
+    // `git -c color.diff=always` outranks the scan's own `color.diff=never`
+    // unless the scan leaves `git -c`'s settings out.
+    let colored = [("GIT_CONFIG_PARAMETERS", "'color.diff=always'")];
     repo.xtask(&["pre-commit"]).fails_with("github-pat")?;
     repo.xtask_with(&["pre-commit"], &colored)
         .fails_with("github-pat")?;

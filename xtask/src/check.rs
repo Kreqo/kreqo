@@ -159,20 +159,25 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
         Step::ToolTests => {
             tools::require(root, &tools::BETTERLEAKS)?;
             tools::require(root, &tools::ZIZMOR)?;
-            cargo(
-                root,
-                &[
-                    "test",
-                    "--package",
-                    "xtask",
-                    "--all-features",
-                    "--locked",
-                    "--",
-                    "--ignored",
-                ],
-            )
+            run_command(root, &mut tool_tests())
         }
     }
+}
+
+/// xtask's tests that a plain `cargo test` skips because they need the
+/// pinned tools, and only those, since `cargo test` runs the rest.
+fn tool_tests() -> Command {
+    let mut command = cargo_command();
+    command.args([
+        "test",
+        "--package",
+        "xtask",
+        "--all-features",
+        "--locked",
+        "--",
+        "--ignored",
+    ]);
+    command
 }
 
 /// rustdoc over the workspace, with its warnings, such as a broken
@@ -488,11 +493,23 @@ mod tests {
                 .map(|(key, _)| key.to_string_lossy().into_owned())
                 .collect()
         };
-        let offline_flag = |command: &Command| command.get_args().any(|arg| arg == "--offline");
+        let has_arg = |command: &Command, wanted: &str| command.get_args().any(|arg| arg == wanted);
+        let offline_flag = |command: &Command| has_arg(command, "--offline");
         let online = zizmor(Some("read-only".to_owned()), true)?;
+        // The settings, named here rather than taken from the constant, so
+        // that dropping one fails this test.
         assert_eq!(
             removed(&online),
-            BTreeSet::from(ZIZMOR_SETTINGS.map(String::from))
+            BTreeSet::from(
+                [
+                    "GH_HOST",
+                    "GITHUB_TOKEN",
+                    "ZIZMOR_GITHUB_TOKEN",
+                    "ZIZMOR_NO_ONLINE_AUDITS",
+                    "ZIZMOR_OFFLINE",
+                ]
+                .map(String::from)
+            )
         );
         assert!(
             online
@@ -503,8 +520,22 @@ mod tests {
         let offline = zizmor(None, false)?;
         assert!(offline_flag(&offline));
         assert!(removed(&offline).contains("GH_TOKEN"));
+        // A workflow zizmor can't parse fails, online or offline.
+        assert!(
+            has_arg(&online, "--strict-collection") && has_arg(&offline, "--strict-collection")
+        );
         assert!(zizmor(None, true).is_err());
         Ok(())
+    }
+
+    /// The tool tests are the ignored ones; without `--ignored`, the step
+    /// would run none of them and still pass.
+    #[test]
+    fn runs_only_the_ignored_tests_as_tool_tests() {
+        let tests = tool_tests();
+        let args: Vec<_> = tests.get_args().collect();
+        assert!(args.starts_with(&[OsStr::new("test")]));
+        assert!(args.ends_with(&[OsStr::new("--"), OsStr::new("--ignored")]));
     }
 
     #[test]
