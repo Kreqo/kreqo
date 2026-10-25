@@ -146,15 +146,31 @@ fn scan_messages(root: &Path, scope: Scope) -> Result<()> {
             files.push((format!("note {annotated}"), note.to_owned()));
         }
     }
-    let mut tag_listing = vec!["for-each-ref", "--format=%(objecttype) %(objectname)"];
+    let mut tag_listing = vec![
+        "for-each-ref",
+        "--format=%(objecttype) %(objectname) %(*objecttype) %(*objectname)",
+    ];
     if let Scope::Head = scope {
         tag_listing.extend(["--points-at", "HEAD"]);
     }
     tag_listing.push("refs/tags");
-    let tags = git_output(root, &tag_listing)?;
-    for tag in lines(&tags) {
-        if let Some(id) = tag.strip_prefix("tag ") {
-            files.push((format!("tag {id}"), id.to_owned()));
+    for tag in lines(&git_output(root, &tag_listing)?) {
+        let fields: Vec<&str> = tag.split_whitespace().collect();
+        if let ["tag", id, ..] = fields.as_slice() {
+            files.push((format!("tag {id}"), (*id).to_owned()));
+        }
+        // A tag can hold a blob or a tree instead of a commit, which no
+        // history scan reads.
+        match fields.as_slice() {
+            ["blob", id] | ["tag", _, "blob", id] => {
+                files.push((format!("blob {id}"), (*id).to_owned()));
+            }
+            ["tree", id] | ["tag", _, "tree", id] => {
+                for blob in blobs_in_tree(root, id)? {
+                    files.push((format!("blob {blob}"), blob));
+                }
+            }
+            _ => {}
         }
     }
     let ids: Vec<&str> = files.iter().map(|(_, id)| id.as_str()).collect();
@@ -176,6 +192,22 @@ fn scan_messages(root: &Path, scope: Scope) -> Result<()> {
     }
     run_command(scratch.path(), betterleaks().args(["dir", "."]).args(FLAGS))
         .context("the scan of messages failed; each finding's path names its commit, note or tag")
+}
+
+/// The blobs in a tree, nested trees included.
+fn blobs_in_tree(root: &Path, tree: &str) -> Result<Vec<String>> {
+    let listing = git_output(root, &["ls-tree", "-r", "-z", tree])?;
+    // Each entry is `<mode> <type> <id>`, a tab and its path.
+    Ok(String::from_utf8_lossy(&listing)
+        .split('\0')
+        .filter_map(|entry| {
+            let (object, _) = entry.split_once('\t')?;
+            match object.split(' ').collect::<Vec<_>>()[..] {
+                [_, "blob", id] => Some(id.to_owned()),
+                _ => None,
+            }
+        })
+        .collect())
 }
 
 /// The lines of git's output.
@@ -421,6 +453,20 @@ fn scan_bytes(root: &Path, path: &str, content: &[u8]) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// actions/checkout fetches only branches and tags, so the daily scan
+    /// fetches the notes before it scans every ref.
+    #[test]
+    fn the_daily_scan_fetches_notes() {
+        let workflow = include_str!("../../.github/workflows/daily.yml");
+        let line = |text: &str| workflow.lines().position(|line| line.contains(text));
+        let fetch = line("\"+refs/notes/*:refs/notes/*\"");
+        let scan = line("run: cargo xtask scan-all-refs");
+        assert!(
+            fetch.is_some() && fetch < scan,
+            "daily.yml must fetch the notes before it scans every ref"
+        );
+    }
 
     #[test]
     fn reads_binary_paths_from_numstat() {

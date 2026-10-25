@@ -243,3 +243,52 @@ fn a_scan_of_head_reads_only_the_tags_at_head() -> Result<()> {
     ])?;
     repo.xtask(&["check", "secrets"]).fails_with("github-pat")
 }
+
+/// The daily scan reads notes on any commit, and what a tag holds when it
+/// holds a blob or a tree instead of a commit.
+#[test]
+#[ignore = "needs Betterleaks; cargo xtask check tool-tests runs it"]
+fn the_daily_scan_reads_notes_and_what_tags_hold() -> Result<()> {
+    let token = fake_token();
+    let repo = Repo::new()?;
+    repo.git(&["switch", "--quiet", "--create", "side"])?;
+    let side = repo.commit_all("Work on the side")?;
+    repo.git(&[
+        "notes",
+        "add",
+        "--message",
+        &format!("token = {token}"),
+        &side,
+    ])?;
+    repo.git(&["switch", "--quiet", "main"])?;
+    repo.xtask(&["check", "secrets"]).passes()?;
+    repo.xtask(&["scan-all-refs"])
+        .fails_with(&format!("note {side}"))?;
+
+    let repo = Repo::new()?;
+    let file = repo.write_outside("settings.txt", format!("token = {token}\n"))?;
+    let file = file.to_str().context("the scratch path isn't UTF-8")?;
+    let blob = repo.git(&["hash-object", "-w", file])?;
+    let blob = blob.trim();
+    repo.git(&["tag", "key", blob])?;
+    repo.xtask(&["check", "secrets"]).passes()?;
+    repo.xtask(&["scan-all-refs"])
+        .fails_with(&format!("blob {blob}"))?;
+
+    let repo = Repo::new()?;
+    repo.write("snapshot/settings.txt", format!("token = {token}\n"))?;
+    repo.git(&["add", "snapshot"])?;
+    let tree = repo.git(&["write-tree"])?;
+    repo.git(&["rm", "--quiet", "--cached", "-r", "snapshot"])?;
+    std::fs::remove_dir_all(repo.root().join("snapshot"))?;
+    repo.git(&[
+        "tag",
+        "--annotate",
+        "snapshot",
+        "--message",
+        "A snapshot",
+        tree.trim(),
+    ])?;
+    repo.xtask(&["check", "secrets"]).passes()?;
+    repo.xtask(&["scan-all-refs"]).fails_with("github-pat")
+}

@@ -3,10 +3,12 @@
 
 # SEC-02's daily cargo-deny scan of the default branch, so that an advisory
 # published after a merge still turns up, and SEC-03's daily secret scan of
-# every branch and tag. A scheduled run uses the default branch's workflow
-# and ignores skip markers, so it covers the pushes that GitHub created no
-# run for: commits marked [skip ci], more than three tags at once, or
-# commits whose secrets.yml is missing or changed.
+# every branch, tag and note. A scheduled run uses the default branch's
+# workflow and ignores skip markers, so it covers the pushes that GitHub
+# created no run for: commits marked [skip ci], more than three tags at
+# once, commits whose secrets.yml is missing or changed, and notes, which
+# start no run. A ref deleted before the scan escapes it, though GitHub
+# may keep serving its commits.
 name: Daily
 
 on:
@@ -66,6 +68,9 @@ jobs:
         with:
           fetch-depth: 0 # Every branch and tag, with its whole history.
           persist-credentials: false
+      - name: Fetch the notes
+        # actions/checkout fetches only branches and tags.
+        run: git fetch --no-tags origin "+refs/notes/*:refs/notes/*"
       - name: Install the pinned toolchain (CI-16)
         shell: bash
         # The runner's own stable toolchain would otherwise enter the cache
