@@ -292,3 +292,17 @@ fn the_daily_scan_reads_notes_and_what_tags_hold() -> Result<()> {
     repo.xtask(&["check", "secrets"]).passes()?;
     repo.xtask(&["scan-all-refs"]).fails_with("github-pat")
 }
+
+/// A merge runs the commit-msg hook but not the pre-commit hook, so the
+/// message hook checks the tree too.
+#[test]
+#[ignore = "needs Betterleaks; cargo xtask check tool-tests runs it"]
+fn the_message_hook_refuses_a_scanner_file_in_the_tree() -> Result<()> {
+    let repo = Repo::new()?;
+    repo.write(".gitignore", ".betterleaksignore\n")?;
+    repo.write(".betterleaksignore", "")?;
+    let file = repo.write_outside("MERGE_MSG", "Merge branch 'side'\n")?;
+    let file = file.to_str().context("the scratch path isn't UTF-8")?;
+    repo.xtask(&["commit-msg", file])
+        .fails_with("could change what the secret scan reports")
+}

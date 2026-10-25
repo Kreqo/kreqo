@@ -92,9 +92,11 @@ pub fn scan_all_refs(root: &Path) -> Result<()> {
 }
 
 /// Scans a commit message before the commit is made, as the commit-msg hook
-/// does: once committed, it can't leave history (CI-01).
+/// does: once committed, it can't leave history (CI-01). It checks the tree
+/// too, since a merge runs this hook but not the pre-commit hook.
 pub fn scan_message(root: &Path, file: &Path) -> Result<()> {
     tools::require(root, &tools::BETTERLEAKS)?;
+    check_tree(root)?;
     let path = root.join(file);
     let message = fs::read(&path).with_context(|| format!("couldn't read {}", path.display()))?;
     scan_bytes(root, "commit message", &message)
