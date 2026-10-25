@@ -4,6 +4,7 @@
 //! `cargo xtask check`: what CI runs, as one command for sessions and CI
 //! alike. Each step names the rules it serves.
 
+use std::collections::BTreeSet;
 use std::ffi::OsString;
 use std::fs;
 use std::io;
@@ -264,9 +265,10 @@ fn check_cargo_config(root: &Path) -> Result<()> {
                 .or_else(|| std::env::var_os("USERPROFILE"))
                 .map(|home| PathBuf::from(home).join(".cargo"))
         });
-    let folders = root
-        .ancestors()
-        .skip(1)
+    let resolved_root = fs::canonicalize(root).ok();
+    let folders = folders_up(root)
+        .into_iter()
+        .filter(|folder| folder != root && Some(folder) != resolved_root.as_ref())
         .map(|folder| folder.join(".cargo"))
         .chain(cargo_home);
     for folder in folders {
@@ -324,6 +326,22 @@ fn aliases(config: &str) -> Result<Vec<String>> {
         .unwrap_or_default())
 }
 
+/// The folder and each folder above it, as spelled and then with links
+/// resolved, since cargo and cargo-deny may see the path either way; each
+/// real folder once.
+pub fn folders_up(folder: &Path) -> Vec<PathBuf> {
+    let resolved = fs::canonicalize(folder).ok();
+    let mut seen = BTreeSet::new();
+    folder
+        .ancestors()
+        .chain(resolved.iter().flat_map(|path| path.ancestors()))
+        .filter(|folder| {
+            seen.insert(fs::canonicalize(folder).unwrap_or_else(|_| folder.to_path_buf()))
+        })
+        .map(Path::to_path_buf)
+        .collect()
+}
+
 /// Fails if either part failed, naming both failures when both did.
 fn both(first: Result<()>, second: Result<()>) -> Result<()> {
     match (first, second) {
@@ -374,7 +392,6 @@ fn show(command: &Command) -> String {
 mod tests {
     use super::*;
     use crate::scratch::Scratch;
-    use std::collections::BTreeSet;
     use std::ffi::OsStr;
 
     /// CI's `cargo xtask check` lines, together, run every step, so that a

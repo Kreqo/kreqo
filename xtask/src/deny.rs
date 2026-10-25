@@ -13,11 +13,13 @@
 //! ahead, and the suppression fails once that day passes.
 
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, Result, bail};
 use toml::{Table, Value};
+
+use crate::check::folders_up;
 
 /// What a setting in deny.toml may hold under the written policy.
 enum Setting {
@@ -124,19 +126,12 @@ pub fn check_policy(root: &Path) -> Result<()> {
         fs::read_to_string(&path).with_context(|| format!("couldn't read {}", path.display()))?;
     let mut problems = policy_problems(&text, today()?)
         .with_context(|| format!("couldn't parse {}", path.display()))?;
-    // cargo-deny looks for exceptions files from the manifest's folder up,
-    // whatever --config says.
-    for folder in root.ancestors() {
-        for file in EXCEPTION_FILES {
-            let path = folder.join(file);
-            if path.exists() {
-                problems.push(format!(
-                    "{} exists; cargo-deny reads it on its own, so its entries belong in deny.toml",
-                    path.display()
-                ));
-            }
-        }
-    }
+    problems.extend(exceptions_files(root).into_iter().map(|path| {
+        format!(
+            "{} exists; cargo-deny reads it on its own, so its entries belong in deny.toml",
+            path.display()
+        )
+    }));
     if problems.is_empty() {
         return Ok(());
     }
@@ -144,6 +139,16 @@ pub fn check_policy(root: &Path) -> Result<()> {
         eprintln!("deny.toml: {problem} (SEC-02)");
     }
     bail!("{} problem(s) with SEC-02's written policy", problems.len())
+}
+
+/// The exceptions files that cargo-deny would read: it looks from the
+/// manifest's folder up, whatever --config says.
+fn exceptions_files(root: &Path) -> Vec<PathBuf> {
+    folders_up(root)
+        .iter()
+        .flat_map(|folder| EXCEPTION_FILES.map(|file| folder.join(file)))
+        .filter(|path| path.exists())
+        .collect()
 }
 
 /// The ways a deny.toml strays from the policy on a given day, counted from
@@ -380,6 +385,7 @@ fn civil_from_days(days: u64) -> (u64, u64, u64) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::scratch::Scratch;
 
     /// 2026-10-24, a fixed day for the tests that judge dates.
     const TODAY: u64 = 20_750;
@@ -513,6 +519,33 @@ mod tests {
         assert_eq!(day_of("2028-02-29"), Some(TODAY + 493));
         assert_eq!(day_of("2027-02-29"), None);
         assert_eq!(day_of("1969-12-31"), None);
+    }
+
+    #[test]
+    fn finds_exceptions_files_above_the_checkout() -> Result<()> {
+        let scratch = Scratch::new()?;
+        let above = scratch.path().join("above");
+        let root = above.join("repo");
+        fs::create_dir_all(root.join(".cargo"))?;
+        fs::write(above.join("deny.exceptions.toml"), "")?;
+        fs::write(root.join(".cargo").join("deny.exceptions.toml"), "")?;
+        assert_eq!(
+            exceptions_files(&root),
+            [
+                root.join(".cargo").join("deny.exceptions.toml"),
+                above.join("deny.exceptions.toml"),
+            ]
+        );
+        // Through a link, cargo-deny resolves the root first.
+        #[cfg(unix)]
+        {
+            let link = scratch.path().join("link");
+            std::os::unix::fs::symlink(&root, &link)?;
+            let found = exceptions_files(&link);
+            let above = fs::canonicalize(&above)?.join("deny.exceptions.toml");
+            assert!(found.contains(&above), "{found:?}");
+        }
+        Ok(())
     }
 
     #[test]
