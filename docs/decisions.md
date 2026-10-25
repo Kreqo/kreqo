@@ -16,7 +16,7 @@ The setup brief stays outside the repository, so the parts of its plan that sess
 - When a rule's literal text is impractical, sessions build what meets its intent and propose a wording change with before and after. Rule text is never edited silently, and nothing deviates from a rule without a deviation record (DOC-06). Rule changes go to Dara in batches; the conventions stay 0.1.0 (draft), and IDs are never reused.
 - New projects come only from `cargo xtask new` once it exists (M8), never from copying another project.
 - Until the tooling exists, the default branch is protected by hand: pull requests only, squash merges only, no force pushes. Until M7 builds the AI review, a separate session runs `/code-review` on each pull request, and its report goes on the pull request, labeled with the model. Dara merges every pull request and signs off explicitly on changes from the sign-off list.
-- A fresh clone installs the secret-scanning pre-commit hook with `cargo xtask hooks` (SEC-03). Sessions with several repositories skip this repository's hooks, so they run it themselves; CI, not hooks, is what enforces. Nobody commits with `--no-verify`: when the hook can't build xtask, fix or stash that change instead.
+- A fresh clone installs the secret-scanning pre-commit and commit-msg hooks with `cargo xtask hooks` (SEC-03). Sessions with several repositories skip this repository's hooks, so they run it themselves; CI, not hooks, is what enforces. Nobody commits with `--no-verify`: when a hook can't build xtask, fix or stash that change instead.
 - Until M4 adds the pull request template, a description gives the sections CI-12 lists. Its GOV-03 block says how AI was used and what it produced, names Dara's decisions in this log as the human creative input, and leaves what the human verified to Dara.
 - Everything is in American English, and rule text says "the forge", not GitHub.
 
@@ -197,3 +197,32 @@ CI hands zizmor the job's read-only token, so it also checks that each pinned SH
 - **QA-01's copy check:** with the first nested workspace or repository outside the monorepo.
 - **CI-02's semver check:** with the first library release.
 - **reuse's dependencies:** pinning them by hash, with the dependency bot in M5.
+
+## 2026-10-24: the follow-up review of PR #1
+
+Answers to the two design questions that the follow-up review of PR #1 raised, and what its fixes changed. Its findings and how each was handled are in the pull request.
+
+### Only the root's build folder is ignored
+
+.gitignore leaves out `/target/` at the root only, so that a source folder named `target` can't vanish from a commit. The crates step fails on a nested workspace, so none has a build folder yet; each adds its own line once nested workspaces are allowed.
+
+- **Rules:** QA-14.
+
+### Generated code waits for the first derive crate
+
+Code that a derive crate generates with `quote!` can't use `expect`, since an expectation would fire in the user's crate. Until a crate generates code, the `allow` check flags these attributes like any other; the first derive crate that needs one brings Dara a proposal for QA-01.
+
+- **Rules:** QA-01.
+
+### The secret scan covers every path, message and ref
+
+Betterleaks' default path prefilter is off, so `.svg` files, lock files and vendored folders are scanned, and git's rename detection is off, so a moved file is read again. The history scan runs twice, once reading binary files as text and once unpacking archives, and it also reads the commit messages and notes it covers and every tag's message. The pre-commit hook reads staged binary files whole, with their paths, and a commit-msg hook scans each message before the commit is made. A daily scan covers every branch and tag, so that a push GitHub creates no run for is still scanned within a day.
+
+- **Rules:** SEC-03, CI-01.
+
+### What the follow-up review left for later
+
+- **Templates:** the member check fails on any Cargo.toml outside `members` and ignores `[workspace] exclude`, so M8's project templates need a name or rule of their own.
+- **ADRs behind unsafe code:** the check confirms that an `expect(unsafe_code)` names an existing ADR; review checks that the ADR covers that code.
+- **Running xtask directly:** run outside cargo, as `target/debug/xtask`, it falls back to the path it was compiled in, and its `include_str!` tests read the files of the checkout they were compiled in. Running it through cargo, as every hook and workflow does, avoids both.
+- **One test:** `ci_runs_every_step` shows that CI runs each step; the `ci` job, which requires every other job, is what makes each one block a merge.
