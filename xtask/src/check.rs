@@ -5,7 +5,8 @@
 //! alike. Each step names the rules it serves.
 
 use std::ffi::OsString;
-use std::path::Path;
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{Context, Result, bail};
@@ -60,6 +61,7 @@ pub fn run(root: &Path, steps: &[Step]) -> Result<bool> {
     } else {
         steps
     };
+    check_cargo_aliases(root)?;
     let mut failed = Vec::new();
     for &step in steps {
         println!("\n== {}", step.name());
@@ -113,9 +115,12 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
             // Both run, so that a problem in deny.toml, such as an expired
             // suppression, never hides a newly published advisory.
             let policy = deny::check_policy(root);
-            let scan = cargo(
+            // The binary itself, so that no cargo alias can stand in for it.
+            let scan = run_command(
                 root,
-                &["deny", "--locked", "--config", "deny.toml", "check"],
+                tools::CARGO_DENY
+                    .command()
+                    .args(["--locked", "--config", "deny.toml", "check"]),
             );
             both(policy, scan)
         }
@@ -138,6 +143,69 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
             run_command(root, zizmor.arg("."))
         }
     }
+}
+
+/// External cargo commands that the steps run, which a cargo alias could
+/// replace; cargo ignores an alias only for its built-in commands.
+const ALIASABLE: [&str; 3] = ["fmt", "clippy", "deny"];
+
+/// Fails if a cargo alias could stand in for a command the steps run: the
+/// repository's own config may define only `xtask`, and no config above it
+/// or in CARGO_HOME may define one of the aliasable commands.
+fn check_cargo_aliases(root: &Path) -> Result<()> {
+    let mut problems = Vec::new();
+    let cargo_home = std::env::var_os("CARGO_HOME")
+        .map(PathBuf::from)
+        .or_else(|| {
+            std::env::var_os("HOME")
+                .or_else(|| std::env::var_os("USERPROFILE"))
+                .map(|home| PathBuf::from(home).join(".cargo"))
+        });
+    let folders = root
+        .ancestors()
+        .map(|folder| folder.join(".cargo"))
+        .chain(cargo_home);
+    for folder in folders {
+        for name in ["config.toml", "config"] {
+            let path = folder.join(name);
+            let Ok(text) = fs::read_to_string(&path) else {
+                continue;
+            };
+            let in_repository = path.starts_with(root);
+            for alias in
+                aliases(&text).with_context(|| format!("couldn't parse {}", path.display()))?
+            {
+                let allowed = if in_repository {
+                    alias == "xtask"
+                } else {
+                    !ALIASABLE.contains(&alias.as_str())
+                };
+                if !allowed {
+                    problems.push(format!(
+                        "{} defines the cargo alias `{alias}`",
+                        path.display()
+                    ));
+                }
+            }
+        }
+    }
+    if problems.is_empty() {
+        return Ok(());
+    }
+    bail!(
+        "{}; an alias could stand in for a command the checks run",
+        problems.join("; ")
+    )
+}
+
+/// The aliases a cargo config defines.
+fn aliases(config: &str) -> Result<Vec<String>> {
+    let config: toml::Table = config.parse()?;
+    Ok(config
+        .get("alias")
+        .and_then(toml::Value::as_table)
+        .map(|aliases| aliases.keys().cloned().collect())
+        .unwrap_or_default())
 }
 
 /// Fails if either part failed, naming both failures when both did.
@@ -208,5 +276,13 @@ mod tests {
             .collect();
         every.sort_unstable();
         assert_eq!(in_ci, every);
+    }
+
+    #[test]
+    fn reads_cargo_aliases() -> Result<()> {
+        let config = "[alias]\nxtask = \"run --package xtask --\"\ndeny = \"help\"\n";
+        assert_eq!(aliases(config)?, ["deny", "xtask"]);
+        assert!(aliases("[build]\njobs = 4\n")?.is_empty());
+        Ok(())
     }
 }
