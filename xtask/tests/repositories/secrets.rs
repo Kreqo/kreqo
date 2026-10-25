@@ -345,3 +345,26 @@ fn the_pull_request_scan_reads_the_title_and_description() -> Result<()> {
     repo.xtask_with(&["scan-pull-request"], &[("PULL_REQUEST_BODY", "")])
         .fails_with("PULL_REQUEST_TITLE isn't set")
 }
+
+/// Colors or a text conversion would hide the diff from Betterleaks;
+/// neither the repository's config nor `git -c` on the command that runs
+/// the hook turns them on.
+#[test]
+#[ignore = "needs Betterleaks; cargo xtask check tool-tests runs it"]
+fn git_settings_never_hide_the_diff() -> Result<()> {
+    let repo = Repo::new()?;
+    repo.git(&["config", "color.diff", "always"])?;
+    repo.write("settings.txt", format!("token = {}\n", fake_token()))?;
+    repo.git(&["add", "settings.txt"])?;
+    let colored = [("GIT_CONFIG_PARAMETERS", "'color.ui=always'")];
+    repo.xtask(&["pre-commit"]).fails_with("github-pat")?;
+    repo.xtask_with(&["pre-commit"], &colored)
+        .fails_with("github-pat")?;
+    repo.write(".gitattributes", "*.txt diff=hidden\n")?;
+    repo.git(&["config", "diff.hidden.textconv", "echo hidden"])?;
+    repo.commit_all("Add the settings")?;
+    repo.xtask(&["check", "secrets"])
+        .fails_with("settings.txt")?;
+    repo.xtask_with(&["check", "secrets"], &colored)
+        .fails_with("settings.txt")
+}

@@ -31,10 +31,15 @@ use crate::{git, tools};
 /// config file in the scanned tree.
 const BUILT_IN_RULES: &str = "prefilter = '''false'''\n\n[extend]\nuseDefault = true\n";
 
-/// Git settings for every scan: rename detection off, so that a file moved
-/// after it was committed is read again, and colors off, which would hide
-/// the diff from Betterleaks.
-const GIT_SETTINGS: [(&str, &str); 2] = [("diff.renames", "false"), ("color.ui", "never")];
+/// Git settings for every scan, through GIT_CONFIG_COUNT, which outranks
+/// every config file: rename detection off, so that a file moved after it
+/// was committed is read again, and colors off, which would hide the diff
+/// from Betterleaks.
+const GIT_SETTINGS: [(&str, &str); 3] = [
+    ("diff.renames", "false"),
+    ("color.ui", "never"),
+    ("color.diff", "never"),
+];
 
 /// Files that would change what Betterleaks reports.
 const SCANNER_FILES: [&str; 4] = [
@@ -78,6 +83,7 @@ impl Scope {
 /// Scans the current branch's history, as `cargo xtask check secrets` and
 /// CI do.
 pub fn scan_history(root: &Path) -> Result<()> {
+    git::require_version(root)?;
     tools::require(root, &tools::BETTERLEAKS)?;
     check_tree(root)?;
     scan_revisions(root, Scope::Head)
@@ -86,6 +92,7 @@ pub fn scan_history(root: &Path) -> Result<()> {
 /// Scans every branch's and tag's history, as the daily scan does, so that a
 /// ref no push run scanned is still covered.
 pub fn scan_all_refs(root: &Path) -> Result<()> {
+    git::require_version(root)?;
     tools::require(root, &tools::BETTERLEAKS)?;
     check_tree(root)?;
     scan_revisions(root, Scope::AllRefs)
@@ -95,6 +102,7 @@ pub fn scan_all_refs(root: &Path) -> Result<()> {
 /// does: once committed, it can't leave history (CI-01). It checks the tree
 /// too, since a merge runs this hook but not the pre-commit hook.
 pub fn scan_message(root: &Path, file: &Path) -> Result<()> {
+    git::require_version(root)?;
     tools::require(root, &tools::BETTERLEAKS)?;
     check_tree(root)?;
     let path = root.join(file);
@@ -144,7 +152,10 @@ fn above_cut_line(message: &[u8]) -> &[u8] {
 /// from unpacking archives; then the messages.
 fn scan_revisions(root: &Path, scope: Scope) -> Result<()> {
     let revisions = scope.revisions();
-    let log_options = format!("--no-renames --diff-merges=first-parent {revisions}");
+    // Without text conversion, a textconv driver can't change what the
+    // scan reads.
+    let log_options =
+        format!("--no-renames --no-color --no-textconv --diff-merges=first-parent {revisions}");
     all(vec![
         run_command(
             root,
@@ -347,6 +358,7 @@ fn git_output(root: &Path, args: &[&str]) -> Result<Vec<u8>> {
 /// Scans the staged changes, as the pre-commit hook does. Both scans run, so
 /// that every finding shows up at once.
 pub fn scan_staged(root: &Path) -> Result<()> {
+    git::require_version(root)?;
     tools::require(root, &tools::BETTERLEAKS)?;
     check_tree(root)?;
     let diff = run_command(
@@ -372,6 +384,8 @@ pub fn scan_staged(root: &Path) -> Result<()> {
 }
 
 /// Betterleaks, held to its built-in rules and to the git settings above.
+/// The settings of `git -c`, which git passes to a hook through
+/// GIT_CONFIG_PARAMETERS, would outrank them, so they're left out.
 fn betterleaks() -> Command {
     let mut command = tools::BETTERLEAKS.command();
     command
@@ -379,6 +393,7 @@ fn betterleaks() -> Command {
         .env_remove("BETTERLEAKS_CONFIG")
         .env_remove("GITLEAKS_CONFIG")
         .env_remove("GITLEAKS_CONFIG_TOML")
+        .env_remove("GIT_CONFIG_PARAMETERS")
         .env("GIT_CONFIG_COUNT", GIT_SETTINGS.len().to_string());
     for (index, (key, value)) in GIT_SETTINGS.iter().enumerate() {
         command

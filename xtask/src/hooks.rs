@@ -13,7 +13,7 @@ use std::process::Command;
 
 use anyhow::{Context, Result, bail};
 
-use crate::secrets;
+use crate::{git, secrets};
 
 /// The hooks, each a shim, so that the logic stays in Rust (ARCH-06).
 const HOOKS: [(&str, &str); 2] = [
@@ -30,6 +30,7 @@ const HOOKS: [(&str, &str); 2] = [
 /// Installs the hooks, leaving any other hook in place. Every hook is
 /// checked before any is written, so a refusal leaves nothing half done.
 pub fn install(root: &Path) -> Result<()> {
+    git::require_version(root)?;
     refuse_shared_hooks_path(root)?;
     // `--git-path` honors core.hooksPath and finds the hooks of worktrees.
     let output = Command::new("git")
@@ -79,14 +80,13 @@ fn refuse_shared_hooks_path(root: &Path) -> Result<()> {
         .current_dir(root)
         .output()
         .context("couldn't run git")?;
-    // git exits with 1 when the setting is absent. Any other failure, such
-    // as a git older than 2.26, which lacks --show-scope, leaves the scope
-    // unknown.
+    // git exits with 1 when the setting is absent. Any other failure leaves
+    // the scope unknown.
     match output.status.code() {
         Some(0) => {}
         Some(1) => return Ok(()),
         _ => bail!(
-            "couldn't tell where core.hooksPath is set (git 2.26 or later is needed): {}",
+            "couldn't tell where core.hooksPath is set: {}",
             String::from_utf8_lossy(&output.stderr).trim()
         ),
     }

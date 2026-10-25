@@ -11,6 +11,42 @@ use std::process::Command;
 
 use anyhow::{Context, Result, bail};
 
+/// The oldest git the checks support: the secret scan holds git to its
+/// settings with GIT_CONFIG_COUNT, which arrived in git 2.31.
+const OLDEST: (u32, u32) = (2, 31);
+
+/// Fails unless this machine's git is at least the oldest the checks
+/// support.
+pub fn require_version(root: &Path) -> Result<()> {
+    let output = Command::new("git")
+        .arg("--version")
+        .current_dir(root)
+        .output()
+        .context("couldn't run git")?;
+    let printed = String::from_utf8_lossy(&output.stdout);
+    match version(&printed) {
+        Some(found) if found >= OLDEST => Ok(()),
+        Some((major, minor)) => bail!(
+            "the checks need git {}.{} or later, but this machine has {major}.{minor}",
+            OLDEST.0,
+            OLDEST.1
+        ),
+        None => bail!("couldn't read git's version from {:?}", printed.trim()),
+    }
+}
+
+/// The major and minor version in `git --version`'s output, such as
+/// `git version 2.39.3 (Apple Git-146)` or `git version 2.47.0.windows.1`.
+fn version(printed: &str) -> Option<(u32, u32)> {
+    let number = printed
+        .trim()
+        .strip_prefix("git version ")?
+        .split_whitespace()
+        .next()?;
+    let mut parts = number.split('.');
+    Some((parts.next()?.parse().ok()?, parts.next()?.parse().ok()?))
+}
+
 /// The files matching the pathspecs that git tracks or would track, relative
 /// to the root, sorted. Files deleted from the working tree are left out.
 pub fn files(root: &Path, pathspecs: &[&str]) -> Result<Vec<PathBuf>> {
@@ -75,4 +111,21 @@ fn require_top_level(root: &Path) -> Result<()> {
         );
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn reads_git_versions() {
+        assert_eq!(version("git version 2.43.0\n"), Some((2, 43)));
+        assert_eq!(
+            version("git version 2.39.3 (Apple Git-146)\n"),
+            Some((2, 39))
+        );
+        assert_eq!(version("git version 2.47.0.windows.1\n"), Some((2, 47)));
+        assert_eq!(version("git help\n"), None);
+        assert!((2, 30) < OLDEST && (2, 31) >= OLDEST && (3, 0) >= OLDEST);
+    }
 }
