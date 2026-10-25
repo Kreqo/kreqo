@@ -283,7 +283,9 @@ fn check_reason(name: &str, entry: &Value, today: u64, problems: &mut Vec<String
         ));
         return;
     };
-    if justification(reason).is_empty() {
+    // A reason says something in words, not only punctuation or invisible
+    // characters.
+    if !justification(reason).chars().any(char::is_alphanumeric) {
         problems.push(format!("{name} gives a date but no reason"));
         return;
     }
@@ -466,6 +468,9 @@ mod tests {
   "RUSTSEC-0000-0002",
   { id = "RUSTSEC-0000-0003", reason = "until 2026-12-31, then revisit" },
   { id = "RUSTSEC-0000-0004", reason = "until 2026-12-31" },
+  { id = "RUSTSEC-0000-0005", reason = "— until 2026-12-31" },
+  { id = "RUSTSEC-0000-0006", reason = "\u200B until 2026-12-31" },
+  { id = "RUSTSEC-0000-0007", reason = "?! until 2026-12-31" },
 ]"#,
             ),
             (
@@ -484,6 +489,9 @@ mod tests {
                 "advisories.ignore[2] must be a table with a reason",
                 "advisories.ignore[3] gives no expiry date; end its reason with `until YYYY-MM-DD`",
                 "advisories.ignore[4] gives a date but no reason",
+                "advisories.ignore[5] gives a date but no reason",
+                "advisories.ignore[6] gives a date but no reason",
+                "advisories.ignore[7] gives a date but no reason",
                 "bans.skip[0] expired after 2026-10-01",
                 "bans.skip[1] gives an impossible date, 2027-02-30",
                 "bans.skip[2] runs past 90 days from today; give a nearer date",
