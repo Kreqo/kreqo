@@ -3,8 +3,9 @@
 
 # What every pull request passes before it merges (CI-02): `cargo xtask
 # check`, split into jobs, with tests on the Tier 1 platforms (CI-04,
-# PLAT-03). The `ci` job is the one required check. Hardened as CI-07, CI-08
-# and CI-09 ask; zizmor checks this file.
+# PLAT-03). The ruleset requires the `ci` job, which needs every other job
+# here, and the Description workflow's `description` job. Hardened as
+# CI-07, CI-08 and CI-09 ask; zizmor checks this file.
 name: CI
 
 on:

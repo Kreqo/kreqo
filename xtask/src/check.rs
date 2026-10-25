@@ -236,12 +236,14 @@ fn zizmor(token: Option<String>, in_ci: bool) -> Result<Command> {
 /// replace; cargo ignores an alias only for its built-in commands.
 const ALIASABLE: [&str; 3] = ["fmt", "clippy", "deny"];
 
-/// Fails if a cargo config in the repository could change what the steps
-/// run, or one above it or in CARGO_HOME could alias a command they run.
-/// The repository's `.cargo/config.toml` may hold only the `xtask` alias:
-/// another alias could stand in for a step, `rustflags` could lower every
-/// lint, and `[env]` or `include` could do either. Cargo also reads a
-/// legacy `.cargo/config`, so none may exist.
+/// Fails if the repository's cargo config could change what the steps run,
+/// or if a config above the repository or in CARGO_HOME aliases a command
+/// they run. The repository's `.cargo/config.toml` may hold only the
+/// `xtask` alias: another alias could stand in for a step, `rustflags`
+/// could lower every lint, and `[env]` or `include` could do either. Cargo
+/// also reads a legacy `.cargo/config`, so none may exist. The configs
+/// above the repository and in CARGO_HOME belong to the machine, and CI
+/// has none, so the check reads them for aliases only.
 fn check_cargo_config(root: &Path) -> Result<()> {
     let mut problems = Vec::new();
     let folder = root.join(".cargo");
