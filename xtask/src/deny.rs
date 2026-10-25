@@ -5,9 +5,9 @@
 //! it. Every setting must be one the policy names, at the value it names,
 //! because a single unknown key, such as `[graph] exclude`, can hide a
 //! vulnerability, a banned SDK or a license failure. Every setting the
-//! policy names must be there too, since leaving one out brings back
-//! cargo-deny's weaker default, and the ban list and the allowed licenses
-//! must be exactly the policy's. Every suppression gives
+//! policy names must be there too, since leaving one out lets cargo-deny
+//! use its own default, which the policy doesn't name, and the ban list and
+//! the allowed licenses must be exactly the policy's. Every suppression gives
 //! its reason and an expiry date: cargo-deny 0.20 has no expiry of its own,
 //! so a reason ends with `until YYYY-MM-DD`, a real date at most 90 days
 //! ahead, and the suppression fails once that day passes.
@@ -172,7 +172,7 @@ fn policy_problems(text: &str, today: u64) -> Result<Vec<String>> {
         let present = config.get(*table).and_then(|table| table.get(*key));
         if setting.is_required() && present.is_none() {
             problems.push(format!(
-                "`{table}.{key}` is missing, which brings back cargo-deny's weaker default"
+                "`{table}.{key}` is missing, so cargo-deny would use its own default rather than the policy's setting"
             ));
         }
     }
@@ -451,7 +451,7 @@ mod tests {
             [
                 "`bans.deny` lacks `sentry`, which the policy names",
                 "`licenses.allow` has `GPL-3.0-only`, which the policy doesn't name",
-                "`advisories.yanked` is missing, which brings back cargo-deny's weaker default",
+                "`advisories.yanked` is missing, so cargo-deny would use its own default rather than the policy's setting",
             ]
         );
         Ok(())
