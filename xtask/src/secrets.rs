@@ -107,7 +107,8 @@ pub fn scan_message(root: &Path, file: &Path) -> Result<()> {
     check_tree(root)?;
     let path = root.join(file);
     let message = fs::read(&path).with_context(|| format!("couldn't read {}", path.display()))?;
-    scan_bytes(root, "commit message", above_cut_line(&message))
+    let comments = comment_strings(root)?;
+    scan_bytes(root, "commit message", above_cut_line(&message, &comments))
 }
 
 /// Scans a pull request's title and description, which become the squash
@@ -129,22 +130,59 @@ pub fn scan_pull_request(root: &Path) -> Result<()> {
     )
 }
 
-/// The message above git's cut line. With `git commit --verbose`, the file
-/// also holds the staged diff below that line, which git drops, and
-/// scanning it would refuse the very commit that removes a leaked secret.
-fn above_cut_line(message: &[u8]) -> &[u8] {
-    // git writes its comment string, a space and this.
-    const CUT_LINE: &[u8] = b" ------------------------ >8 ------------------------";
+/// The message above git's cut line, which is the comment string, a space
+/// and this. With `git commit --verbose`, the file also holds the staged
+/// diff below that line, which git drops, and scanning it would refuse the
+/// very commit that removes a leaked secret. Only git's exact line counts,
+/// since git keeps a line that merely ends like it.
+fn above_cut_line<'a>(message: &'a [u8], comments: &[String]) -> &'a [u8] {
+    const CUT_LINE: &str = " ------------------------ >8 ------------------------";
+    let cut_lines: Vec<String> = comments
+        .iter()
+        .map(|comment| format!("{comment}{CUT_LINE}"))
+        .collect();
     let mut start = 0;
     for line in message.split_inclusive(|&byte| byte == b'\n') {
         let text = line.strip_suffix(b"\n").unwrap_or(line);
         let text = text.strip_suffix(b"\r").unwrap_or(text);
-        if text.len() > CUT_LINE.len() && text.ends_with(CUT_LINE) {
+        if cut_lines.iter().any(|cut_line| cut_line.as_bytes() == text) {
             return message.get(..start).unwrap_or(message);
         }
         start += line.len();
     }
     message
+}
+
+/// The comment strings that git may start its cut line with: its
+/// core.commentString or core.commentChar, `#` when neither is set, and
+/// every character it may pick when either is `auto`.
+fn comment_strings(root: &Path) -> Result<Vec<String>> {
+    for key in ["core.commentString", "core.commentChar"] {
+        let output = Command::new("git")
+            .args(["config", "--get", key])
+            .current_dir(root)
+            .output()
+            .context("couldn't run git")?;
+        // git exits with 1 when the setting is absent.
+        match output.status.code() {
+            Some(0) => {
+                let value = String::from_utf8_lossy(&output.stdout)
+                    .trim_end_matches(['\n', '\r'])
+                    .to_owned();
+                return Ok(if value == "auto" {
+                    "#;@!$%^&|:".chars().map(String::from).collect()
+                } else {
+                    vec![value]
+                });
+            }
+            Some(1) => {}
+            _ => bail!(
+                "git config --get {key} failed: {}",
+                String::from_utf8_lossy(&output.stderr).trim()
+            ),
+        }
+    }
+    Ok(vec!["#".to_owned()])
 }
 
 /// Scans the history the scope covers: the changes twice, once reading
@@ -510,16 +548,27 @@ mod tests {
 
     #[test]
     fn reads_a_message_above_the_cut_line() {
+        let hash = ["#".to_owned()];
         let message = b"Remove the token\n\n# Please enter the commit message\n# ------------------------ >8 ------------------------\n# Do not modify or remove the line above.\ndiff --git a/a b/a\n-token\n";
         assert_eq!(
-            above_cut_line(message),
+            above_cut_line(message, &hash),
             b"Remove the token\n\n# Please enter the commit message\n"
         );
-        assert_eq!(above_cut_line(b"No cut line\n"), b"No cut line\n");
+        assert_eq!(above_cut_line(b"No cut line\n", &hash), b"No cut line\n");
+        // git keeps a line that only ends like its cut line, and one with
+        // another comment string than its own.
+        for kept in [
+            b"Fix\nNote: # ------------------------ >8 ------------------------\ntoken\n"
+                .as_slice(),
+            b"Fix\n; ------------------------ >8 ------------------------\ntoken\n",
+        ] {
+            assert_eq!(above_cut_line(kept, &hash), kept);
+        }
         // core.commentChar can be another character.
         assert_eq!(
             above_cut_line(
-                b"Fix\r\n; ------------------------ >8 ------------------------\r\ndiff\r\n"
+                b"Fix\r\n; ------------------------ >8 ------------------------\r\ndiff\r\n",
+                &[";".to_owned()]
             ),
             b"Fix\r\n"
         );

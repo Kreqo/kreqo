@@ -308,7 +308,9 @@ fn the_message_hook_refuses_a_scanner_file_in_the_tree() -> Result<()> {
 }
 
 /// `git commit --verbose` puts the staged diff below git's cut line, which
-/// git drops, so the commit that removes a leaked token passes.
+/// git drops, so the commit that removes a leaked token passes. A line that
+/// only ends like the cut line, or one with another comment string than
+/// git's, cuts nothing, since git keeps what follows it.
 #[test]
 #[ignore = "needs Betterleaks; cargo xtask check tool-tests runs it"]
 fn the_message_hook_reads_only_above_the_cut_line() -> Result<()> {
@@ -324,7 +326,20 @@ fn the_message_hook_reads_only_above_the_cut_line() -> Result<()> {
     let file = file.to_str().context("the scratch path isn't UTF-8")?;
     repo.xtask(&["commit-msg", file]).passes()?;
     repo.write_outside("COMMIT_EDITMSG", format!("Add {token}\n\n{diff}"))?;
-    repo.xtask(&["commit-msg", file]).fails_with("github-pat")
+    repo.xtask(&["commit-msg", file]).fails_with("github-pat")?;
+    repo.write_outside("COMMIT_EDITMSG", format!("Add x\n\nNote: {diff}"))?;
+    repo.xtask(&["commit-msg", file]).fails_with("github-pat")?;
+    repo.git(&["config", "core.commentChar", ";"])?;
+    repo.write_outside(
+        "COMMIT_EDITMSG",
+        format!("Remove the revoked token\n\n{diff}"),
+    )?;
+    repo.xtask(&["commit-msg", file]).fails_with("github-pat")?;
+    repo.write_outside(
+        "COMMIT_EDITMSG",
+        format!("Remove the revoked token\n\n{}", diff.replace('#', ";")),
+    )?;
+    repo.xtask(&["commit-msg", file]).passes()
 }
 
 /// A pull request's title and description become the squash commit's
