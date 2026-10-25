@@ -7,6 +7,7 @@
 //! ignored by a plain `cargo test`; `cargo xtask check tool-tests` runs
 //! them, as CI's checks job does.
 
+mod hooks;
 mod secrets;
 mod support;
 mod workflows;

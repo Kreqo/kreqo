@@ -104,18 +104,7 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
             ],
         ),
         Step::Test => cargo(root, &["test", "--workspace", "--all-features", "--locked"]),
-        Step::Docs => run_command(
-            root,
-            cargo_command()
-                .args([
-                    "doc",
-                    "--workspace",
-                    "--no-deps",
-                    "--all-features",
-                    "--locked",
-                ])
-                .env("RUSTDOCFLAGS", "--deny warnings"),
-        ),
+        Step::Docs => run_command(root, &mut docs()),
         Step::Crates => crates::check(root),
         Step::Deny => {
             tools::require(root, &tools::CARGO_DENY)?;
@@ -184,6 +173,22 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
             )
         }
     }
+}
+
+/// rustdoc over the workspace, with its warnings, such as a broken
+/// intra-doc link, denied (CI-02).
+fn docs() -> Command {
+    let mut command = cargo_command();
+    command
+        .args([
+            "doc",
+            "--workspace",
+            "--no-deps",
+            "--all-features",
+            "--locked",
+        ])
+        .env("RUSTDOCFLAGS", "--deny warnings");
+    command
 }
 
 /// Settings that zizmor reads from the environment, which could turn its
@@ -453,6 +458,14 @@ mod tests {
             }
         }
         jobs
+    }
+
+    #[test]
+    fn denies_rustdoc_warnings() {
+        assert!(
+            docs().get_envs().any(|(key, value)| key == "RUSTDOCFLAGS"
+                && value == Some(OsStr::new("--deny warnings")))
+        );
     }
 
     #[test]

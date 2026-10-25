@@ -110,23 +110,8 @@ pub fn check(root: &Path) -> Result<()> {
                 .map(|target| target.src_path.clone().into_std_path_buf()),
         );
     }
-    // A crate outside the members would escape every check, so until nested
-    // workspaces are supported (QA-01's copy of the lint table), none may
-    // exist.
-    for manifest in git::files(workspace_root, &[":(glob)**/Cargo.toml"])? {
-        if !manifests.contains(&workspace_root.join(&manifest)) {
-            problems.push(format!(
-                "{}: a crate outside the workspace's members, which no check covers; add it to `members` in the root Cargo.toml (QA-01, T2)",
-                manifest.display()
-            ));
-        }
-    }
-    if workspace_root.join("project.toml").exists() {
-        problems.push(
-            "project.toml: a project at the repository root would claim every crate (T2)"
-                .to_owned(),
-        );
-    }
+    let listed = git::files(workspace_root, &[":(glob)**/Cargo.toml"])?;
+    problems.extend(outside_the_members(workspace_root, &listed, &manifests));
     problems.extend(attributes::check(workspace_root, &crate_roots)?);
     if problems.is_empty() {
         return Ok(());
@@ -135,6 +120,35 @@ pub fn check(root: &Path) -> Result<()> {
         eprintln!("{problem}");
     }
     bail!("{} problem(s) with the workspace's crates", problems.len())
+}
+
+/// The problems outside the members: a crate outside them would escape
+/// every check, so until nested workspaces are supported (QA-01's copy of
+/// the lint table), none may exist, and a project at the repository root
+/// would claim every crate. `listed` holds the manifests git lists, from
+/// the root.
+fn outside_the_members(
+    workspace_root: &Path,
+    listed: &[PathBuf],
+    manifests: &BTreeSet<PathBuf>,
+) -> Vec<String> {
+    let mut problems: Vec<String> = listed
+        .iter()
+        .filter(|manifest| !manifests.contains(&workspace_root.join(manifest)))
+        .map(|manifest| {
+            format!(
+                "{}: a crate outside the workspace's members, which no check covers; add it to `members` in the root Cargo.toml (QA-01, T2)",
+                manifest.display()
+            )
+        })
+        .collect();
+    if workspace_root.join("project.toml").exists() {
+        problems.push(
+            "project.toml: a project at the repository root would claim every crate (T2)"
+                .to_owned(),
+        );
+    }
+    problems
 }
 
 /// Checks one crate and returns its problems.
@@ -215,6 +229,7 @@ fn inherits_workspace_lints(manifest: &str) -> Result<bool> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::scratch::Scratch;
 
     const VALID: &str =
         "kind = \"tool\"\nstage = \"incubating\"\nlicense = \"MIT OR Apache-2.0\"\n";
@@ -234,6 +249,23 @@ mod tests {
         assert!(toml::from_str::<Project>(&unknown_kind).is_err());
         let other_license = VALID.replace("MIT OR Apache-2.0", "MIT");
         assert!(toml::from_str::<Project>(&other_license).is_err());
+    }
+
+    #[test]
+    fn finds_what_lies_outside_the_members() -> Result<()> {
+        let scratch = Scratch::new()?;
+        let root = scratch.path();
+        fs::write(root.join("project.toml"), VALID)?;
+        let manifests = BTreeSet::from([root.join("Cargo.toml"), root.join("xtask/Cargo.toml")]);
+        let listed = ["Cargo.toml", "xtask/Cargo.toml", "tools/old/Cargo.toml"].map(PathBuf::from);
+        assert_eq!(
+            outside_the_members(root, &listed, &manifests),
+            [
+                "tools/old/Cargo.toml: a crate outside the workspace's members, which no check covers; add it to `members` in the root Cargo.toml (QA-01, T2)",
+                "project.toml: a project at the repository root would claim every crate (T2)",
+            ]
+        );
+        Ok(())
     }
 
     #[test]
