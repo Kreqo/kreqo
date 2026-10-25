@@ -134,7 +134,8 @@ mod tests {
             format!("{error:#}").contains("isn't the top of its git checkout, which is ../"),
             "{error:#}"
         );
-        // git's own reason comes through, such as a safe.directory hint.
+        // git's own reason comes through, such as a safe.directory hint. Its
+        // wording varies between versions, but it starts with `fatal:`.
         let broken = scratch.path().join("broken");
         fs::create_dir(&broken)?;
         fs::write(broken.join(".git"), "gitdir: missing\n")?;
@@ -142,7 +143,7 @@ mod tests {
             bail!("a broken checkout passed");
         };
         assert!(
-            format!("{error:#}").contains("not a git repository"),
+            format!("{error:#}").contains("so the checks have no file list: fatal: "),
             "{error:#}"
         );
         Ok(())
