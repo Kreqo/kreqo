@@ -306,3 +306,23 @@ fn the_message_hook_refuses_a_scanner_file_in_the_tree() -> Result<()> {
     repo.xtask(&["commit-msg", file])
         .fails_with("could change what the secret scan reports")
 }
+
+/// `git commit --verbose` puts the staged diff below git's cut line, which
+/// git drops, so the commit that removes a leaked token passes.
+#[test]
+#[ignore = "needs Betterleaks; cargo xtask check tool-tests runs it"]
+fn the_message_hook_reads_only_above_the_cut_line() -> Result<()> {
+    let token = fake_token();
+    let repo = Repo::new()?;
+    let diff = format!(
+        "# ------------------------ >8 ------------------------\n# Do not modify or remove the line above.\n# Everything below it will be ignored.\ndiff --git a/settings.txt b/settings.txt\n-token = {token}\n+token = revoked\n"
+    );
+    let file = repo.write_outside(
+        "COMMIT_EDITMSG",
+        format!("Remove the revoked token\n\n{diff}"),
+    )?;
+    let file = file.to_str().context("the scratch path isn't UTF-8")?;
+    repo.xtask(&["commit-msg", file]).passes()?;
+    repo.write_outside("COMMIT_EDITMSG", format!("Add {token}\n\n{diff}"))?;
+    repo.xtask(&["commit-msg", file]).fails_with("github-pat")
+}

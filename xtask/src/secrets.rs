@@ -99,7 +99,25 @@ pub fn scan_message(root: &Path, file: &Path) -> Result<()> {
     check_tree(root)?;
     let path = root.join(file);
     let message = fs::read(&path).with_context(|| format!("couldn't read {}", path.display()))?;
-    scan_bytes(root, "commit message", &message)
+    scan_bytes(root, "commit message", above_cut_line(&message))
+}
+
+/// The message above git's cut line. With `git commit --verbose`, the file
+/// also holds the staged diff below that line, which git drops, and
+/// scanning it would refuse the very commit that removes a leaked secret.
+fn above_cut_line(message: &[u8]) -> &[u8] {
+    // git writes its comment string, a space and this.
+    const CUT_LINE: &[u8] = b" ------------------------ >8 ------------------------";
+    let mut start = 0;
+    for line in message.split_inclusive(|&byte| byte == b'\n') {
+        let text = line.strip_suffix(b"\n").unwrap_or(line);
+        let text = text.strip_suffix(b"\r").unwrap_or(text);
+        if text.len() > CUT_LINE.len() && text.ends_with(CUT_LINE) {
+            return message.get(..start).unwrap_or(message);
+        }
+        start += line.len();
+    }
+    message
 }
 
 /// Scans the history the scope covers: the changes twice, once reading
@@ -455,6 +473,23 @@ fn scan_bytes(root: &Path, path: &str, content: &[u8]) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reads_a_message_above_the_cut_line() {
+        let message = b"Remove the token\n\n# Please enter the commit message\n# ------------------------ >8 ------------------------\n# Do not modify or remove the line above.\ndiff --git a/a b/a\n-token\n";
+        assert_eq!(
+            above_cut_line(message),
+            b"Remove the token\n\n# Please enter the commit message\n"
+        );
+        assert_eq!(above_cut_line(b"No cut line\n"), b"No cut line\n");
+        // core.commentChar can be another character.
+        assert_eq!(
+            above_cut_line(
+                b"Fix\r\n; ------------------------ >8 ------------------------\r\ndiff\r\n"
+            ),
+            b"Fix\r\n"
+        );
+    }
 
     /// actions/checkout fetches only branches and tags, so the daily scan
     /// fetches the notes before it scans every ref.
