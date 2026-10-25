@@ -290,13 +290,15 @@ fn civil_from_days(days: u64) -> (u64, u64, u64) {
 mod tests {
     use super::*;
 
-    /// 2026-10-24, as the day the tests run on.
+    /// 2026-10-24, a fixed day for the tests that judge dates.
     const TODAY: u64 = 20_750;
 
+    /// Judged on the real date, as the deny step judges it, so that a
+    /// suppression valid today never fails CI.
     #[test]
     fn accepts_the_committed_policy() -> Result<()> {
         let text = include_str!("../../deny.toml");
-        assert_eq!(policy_problems(text, TODAY)?, Vec::<String>::new());
+        assert_eq!(policy_problems(text, today()?)?, Vec::<String>::new());
         Ok(())
     }
 
