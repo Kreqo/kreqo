@@ -102,6 +102,25 @@ pub fn scan_message(root: &Path, file: &Path) -> Result<()> {
     scan_bytes(root, "commit message", above_cut_line(&message))
 }
 
+/// Scans a pull request's title and description, which become the squash
+/// commit's message when it merges (CI-13), as the description workflow
+/// does. CI passes them through the environment (CI-09).
+pub fn scan_pull_request(root: &Path) -> Result<()> {
+    tools::require(root, &tools::BETTERLEAKS)?;
+    let scratch = Scratch::new()?;
+    for (variable, part) in [
+        ("PULL_REQUEST_TITLE", "title"),
+        ("PULL_REQUEST_BODY", "description"),
+    ] {
+        let text = std::env::var(variable).with_context(|| format!("{variable} isn't set"))?;
+        let path = scratch.path().join(format!("pull request {part}"));
+        fs::write(&path, text).with_context(|| format!("couldn't write {}", path.display()))?;
+    }
+    run_command(scratch.path(), betterleaks().args(["dir", "."]).args(FLAGS)).context(
+        "the pull request's title or description holds a secret, which the squash commit's message would keep",
+    )
+}
+
 /// The message above git's cut line. With `git commit --verbose`, the file
 /// also holds the staged diff below that line, which git drops, and
 /// scanning it would refuse the very commit that removes a leaked secret.

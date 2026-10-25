@@ -326,3 +326,22 @@ fn the_message_hook_reads_only_above_the_cut_line() -> Result<()> {
     repo.write_outside("COMMIT_EDITMSG", format!("Add {token}\n\n{diff}"))?;
     repo.xtask(&["commit-msg", file]).fails_with("github-pat")
 }
+
+/// A pull request's title and description become the squash commit's
+/// message, so they're scanned before it merges.
+#[test]
+#[ignore = "needs Betterleaks; cargo xtask check tool-tests runs it"]
+fn the_pull_request_scan_reads_the_title_and_description() -> Result<()> {
+    let repo = Repo::new()?;
+    let title = ("PULL_REQUEST_TITLE", "Add the settings");
+    repo.xtask_with(&["scan-pull-request"], &[title, ("PULL_REQUEST_BODY", "")])
+        .passes()?;
+    let body = format!("Testing showed:\n\ntoken = {}\n", fake_token());
+    repo.xtask_with(
+        &["scan-pull-request"],
+        &[title, ("PULL_REQUEST_BODY", body.as_str())],
+    )
+    .fails_with("pull request description")?;
+    repo.xtask_with(&["scan-pull-request"], &[("PULL_REQUEST_BODY", "")])
+        .fails_with("PULL_REQUEST_TITLE isn't set")
+}

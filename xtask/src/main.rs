@@ -45,6 +45,9 @@ enum Command {
     },
     /// Scans every branch's and tag's history for secrets; the daily scan runs it (SEC-03).
     ScanAllRefs,
+    /// Scans a pull request's title and description, from PULL_REQUEST_TITLE and
+    /// PULL_REQUEST_BODY, for secrets; the description workflow runs it (SEC-03).
+    ScanPullRequest,
     /// Prints the pinned tool versions as GitHub Actions outputs (CI-07).
     Tools,
 }
@@ -70,6 +73,7 @@ fn run() -> Result<bool> {
         Command::PreCommit => hooks::pre_commit(&root).map(|()| true),
         Command::CommitMsg { file } => hooks::commit_msg(&root, &file).map(|()| true),
         Command::ScanAllRefs => secrets::scan_all_refs(&root).map(|()| true),
+        Command::ScanPullRequest => secrets::scan_pull_request(&root).map(|()| true),
         Command::Tools => {
             tools::print_github_outputs();
             Ok(true)
