@@ -12,6 +12,7 @@ Dara's decisions on the monorepo and its foundation, oldest first, and the worki
 The setup brief stays outside the repository, so the parts of its plan that sessions follow while building the foundation are recorded here.
 
 - Every file and check names the rule it serves; anything else becomes an issue.
+- Checks catch honest mistakes and shortcuts, an AI agent's included, not deliberate rewrites of xtask, the workflows or the tools' configuration, which review covers. Every fix to a check comes with a test that fails without it (QA-09).
 - Existing tools come before custom code, and custom code is Rust in `cargo xtask` (ARCH-01, ARCH-06). `cargo xtask check` runs what CI runs, so a session checks its work before pushing. Sessions build and test only the packages a change touches and leave the full run to `cargo xtask check` and CI.
 - When a rule's literal text is impractical, sessions build what meets its intent and propose a wording change with before and after. Rule text is never edited silently, and nothing deviates from a rule without a deviation record (DOC-06). Rule changes go to Dara in batches; the conventions stay 0.1.0 (draft), and IDs are never reused.
 - New projects come only from `cargo xtask new` once it exists (M8), never from copying another project.
@@ -224,5 +225,53 @@ Betterleaks' default path prefilter is off, so `.svg` files, lock files and vend
 
 - **Templates:** the member check fails on any Cargo.toml outside `members` and ignores `[workspace] exclude`, so M8's project templates need a name or rule of their own.
 - **ADRs behind unsafe code:** the check confirms that an `expect(unsafe_code)` names an existing ADR; review checks that the ADR covers that code.
-- **Running xtask directly:** run outside cargo, as `target/debug/xtask`, it falls back to the path it was compiled in, and its `include_str!` tests read the files of the checkout they were compiled in. Running it through cargo, as every hook and workflow does, avoids both.
+- **Running xtask directly, or sharing a build folder:** run outside cargo, as `target/debug/xtask`, it falls back to the path it was compiled in; running it through cargo, as every hook and workflow does, avoids that. Under a build folder that several checkouts share, cargo can reuse one checkout's build for another, so a test reads the first checkout's copies of the files it includes, such as deny.toml; a build folder per checkout avoids that.
 - **One test:** `ci_runs_every_step` shows that CI runs each step; the `ci` job, which requires every other job, is what makes each one block a merge.
+
+## 2026-10-24: the second follow-up review of PR #1
+
+Answers to the four design questions that the second follow-up review of PR #1 raised, and what its fixes changed. Its findings and how each was handled are in the pull request.
+
+### What the checks defend against
+
+The checks catch honest mistakes and shortcuts in ordinary code, configuration and pull request text, including an AI agent's attempts to get CI green, such as a lowered lint level, a cargo setting or a pasted token. They don't try to stop a change that deliberately rewrites xtask, the workflows or the tools' configuration: CI runs the pull request's own copies of all three, so no check can. Review catches that, and those paths get Dara's sign-off as risk-tier paths once GOV-02's risk file exists. A review finding that only such a change could exploit is recorded rather than fixed.
+
+- **Why:** a check that a pull request can rewrite can't stop that pull request; review can.
+- **Rules:** CI-03, GOV-02, QA-01, SEC-01, SEC-03.
+
+### Tests that need the pinned tools have a step of their own
+
+Every fix to a check comes with a test that fails without it. The tests that run xtask in throwaway git repositories live in `xtask/tests/repositories/`. A plain `cargo test` skips the ones that need Betterleaks or zizmor, and `cargo xtask check tool-tests` runs them, in CI's Linux checks job, where the pinned tools are installed, and in a full local check. Tests that need only git run on all three platforms.
+
+- **Rules:** QA-09, CI-04.
+
+### A pull request's title and description are scanned before it merges
+
+The squash commit's message is the pull request's title and description (CI-13), which no hook sees, and CI-01 keeps whatever it holds. The Description workflow scans them whenever a pull request is opened, edited, reopened or synchronized, passing them through environment variables (CI-09), and its `description` job is a required check beside `ci`. A message edited in the merge dialog is scanned only once it's on the default branch.
+
+- **Rules:** SEC-03, CI-01, CI-09, CI-13.
+
+### Deferred findings become issues
+
+From now on, each item that a review leaves for later becomes a forge issue, as REV-01 and the working rules ask, and this log links it. Dara sees each issue's draft before it's filed.
+
+- **Rules:** REV-01.
+
+### What the checks hold to now
+
+- **Lint levels:** the attribute check flags any `warn` or `expect` of `warnings` or of a lint the workspace table denies, and any `expect` of a group that holds one, outside SEC-01's crate-root `expect`. It also reads the attributes that `doc(test(attr(…)))` gives doctests, and it reads a shebang as rustc does. The repository's `.cargo/config.toml` may hold only the `xtask` alias, since `rustflags`, `[env]` or an `include` could lower every lint or stand in for a step.
+- **The secret scan:** a scan of HEAD reads the tags at HEAD only, since a tag elsewhere was scanned when it was pushed, and CI-01 keeps release tags. The daily scan reads every tag, the notes, which it fetches, and what a tag holds when it holds a blob or a tree. Messages, notes and tag messages are scanned as files named after their objects, so a finding names its commit, note or tag and keeps its fingerprint. The commit-msg hook also checks the tree, since a merge skips the pre-commit hook, and it reads a message only above git's cut line. The scans keep git's colors off, leave out the settings of `git -c` and read history without text conversion, so they need git 2.31 or later.
+- **zizmor:** it also reads nested workflows and Dependabot configs, it runs even when the Check step fails, and only GH_TOKEN reaches it, with the settings that could turn its online audits off cleared.
+
+- **Rules:** QA-01, SEC-01, SEC-03, CI-01, CI-07, CI-09.
+
+### What the bar leaves to review
+
+- **Crate roots:** a crate root that `#[path]` or a link mounts into another crate still counts as crate-level, and `#[path]` modules without the `.rs` extension and attribute names that `macro_rules!` builds go unchecked.
+- **The workflows' own settings:** a workflow step can set `CARGO_ALIAS_*` or other settings for the steps after it, and the Audit step's xtask, which the pull request builds, sees the read-only token.
+- **Text conversion in the hook:** Betterleaks runs the staged diff itself, so a textconv driver can change what the pre-commit hook reads; CI's history scan reads past it.
+
+### What the second follow-up review left for later
+
+- **Archives by name:** Betterleaks picks the archives it unpacks by their names, such as `.zip` and `.tar.gz`, so it doesn't read inside `.docx`, `.jar` or other files that are zip archives under another name.
+- **Deleted refs:** a ref that started no push run and is deleted before the daily scan escapes it, though GitHub may keep serving its commits. The forge's own push protection could cover it.

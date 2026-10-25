@@ -15,6 +15,7 @@ This is Kreqo's monorepo: every Kreqo crate, tool and app lives here, under one 
 - Layout (T1): crates/, tools/, apps/, experiments/, xtask/, conventions/, templates/, docs/. New projects come only from cargo xtask new once it exists (M8), never from copying another project.
 - Code: Rust for all logic and project tasks, in cargo xtask (ARCH-01, ARCH-06). M2 ports the local Python prototype and checks the Rust output against the committed views.
 - Every file or check you add names the rule it serves; anything else becomes an issue.
+- Checks catch honest mistakes and shortcuts, an AI agent's included; deliberate rewrites of xtask, the workflows or tool config are review's. Every fix to a check comes with a test that fails without it (QA-09).
 - Each milestone lands as one PR, which Dara squash-merges with its title and description as the commit message (CI-13, T10). Until M7 builds the AI review, a separate session runs /code-review on each PR, and its report goes on the PR, labeled with the model.
 - Commits: the author and committer are Dara Kong <dara@kreqo.org> (GOV-16). Keep the Co-Authored-By trailer (GOV-03), and end each PR description with it so the squash commit keeps it. Never add Signed-off-by (GOV-08).
 - PR descriptions you write are records, disclosed as AI-written, with the sections CI-12 lists until M4's template exists. In the GOV-03 block, say how AI was used and what it produced, name Dara's decisions in docs/decisions.md as the human creative input, and leave what the human verified to Dara.

@@ -5,8 +5,8 @@
 # the squash commit's message when it merges (CI-13), where a secret would
 # stay for good (CI-01). It runs again on every edit, and its
 # `description` job is a required check beside `ci`. A message edited in
-# the merge dialog isn't scanned. Hardened as CI-07, CI-08 and CI-09 ask;
-# zizmor checks this file.
+# the merge dialog is scanned only once it's on the default branch.
+# Hardened as CI-07, CI-08 and CI-09 ask; zizmor checks this file.
 name: Description
 
 on:
