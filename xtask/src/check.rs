@@ -136,9 +136,16 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
             zizmor.arg("--strict-collection");
             // The online audits, such as whether a pinned SHA is a real commit
             // of its action, need a token: CI passes the job's own, read-only
-            // one. Without a token, zizmor stays offline.
-            if std::env::var_os("GH_TOKEN").is_none() {
-                zizmor.arg("--offline");
+            // one, to this step alone. Elsewhere, without a token, zizmor
+            // stays offline; in CI, a missing token fails the step.
+            let token = std::env::var("GH_TOKEN")
+                .ok()
+                .filter(|token| !token.is_empty());
+            if token.is_none() {
+                if std::env::var("CI").is_ok_and(|ci| ci == "true") {
+                    bail!("CI runs zizmor's online audits, but GH_TOKEN is missing or empty");
+                }
+                zizmor.arg("--offline").env_remove("GH_TOKEN");
             }
             // The files come from git, so that an ignore rule can't hide a
             // tracked workflow from zizmor's own collection.
