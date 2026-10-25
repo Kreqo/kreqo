@@ -6,6 +6,7 @@
 
 use std::ffi::OsString;
 use std::fs;
+use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -61,7 +62,7 @@ pub fn run(root: &Path, steps: &[Step]) -> Result<bool> {
     } else {
         steps
     };
-    check_cargo_aliases(root)?;
+    check_cargo_config(root)?;
     let mut failed = Vec::new();
     for &step in steps {
         println!("\n== {}", step.name());
@@ -175,11 +176,38 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
 /// replace; cargo ignores an alias only for its built-in commands.
 const ALIASABLE: [&str; 3] = ["fmt", "clippy", "deny"];
 
-/// Fails if a cargo alias could stand in for a command the steps run: the
-/// repository's own config may define only `xtask`, and no config above it
-/// or in CARGO_HOME may define one of the aliasable commands.
-fn check_cargo_aliases(root: &Path) -> Result<()> {
+/// Fails if a cargo config in the repository could change what the steps
+/// run, or one above it or in CARGO_HOME could alias a command they run.
+/// The repository's `.cargo/config.toml` may hold only the `xtask` alias:
+/// another alias could stand in for a step, `rustflags` could lower every
+/// lint, and `[env]` or `include` could do either. Cargo also reads a
+/// legacy `.cargo/config`, so none may exist.
+fn check_cargo_config(root: &Path) -> Result<()> {
     let mut problems = Vec::new();
+    let folder = root.join(".cargo");
+    let legacy = folder.join("config");
+    if legacy.exists() {
+        problems.push(format!(
+            "{} exists; cargo reads it too, so the repository's cargo settings belong in config.toml",
+            legacy.display()
+        ));
+    }
+    let path = folder.join("config.toml");
+    match fs::read_to_string(&path) {
+        Ok(text) => {
+            let found = repository_config_problems(&text)
+                .with_context(|| format!("couldn't parse {}", path.display()))?;
+            problems.extend(
+                found
+                    .into_iter()
+                    .map(|problem| format!("{} {problem}", path.display())),
+            );
+        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Err(error) => {
+            return Err(error).with_context(|| format!("couldn't read {}", path.display()));
+        }
+    }
     let cargo_home = std::env::var_os("CARGO_HOME")
         .map(PathBuf::from)
         .or_else(|| {
@@ -189,6 +217,7 @@ fn check_cargo_aliases(root: &Path) -> Result<()> {
         });
     let folders = root
         .ancestors()
+        .skip(1)
         .map(|folder| folder.join(".cargo"))
         .chain(cargo_home);
     for folder in folders {
@@ -197,18 +226,12 @@ fn check_cargo_aliases(root: &Path) -> Result<()> {
             let Ok(text) = fs::read_to_string(&path) else {
                 continue;
             };
-            let in_repository = path.starts_with(root);
             for alias in
                 aliases(&text).with_context(|| format!("couldn't parse {}", path.display()))?
             {
-                let allowed = if in_repository {
-                    alias == "xtask"
-                } else {
-                    !ALIASABLE.contains(&alias.as_str())
-                };
-                if !allowed {
+                if ALIASABLE.contains(&alias.as_str()) {
                     problems.push(format!(
-                        "{} defines the cargo alias `{alias}`",
+                        "{} defines the cargo alias `{alias}`, which could stand in for a command the checks run",
                         path.display()
                     ));
                 }
@@ -218,10 +241,28 @@ fn check_cargo_aliases(root: &Path) -> Result<()> {
     if problems.is_empty() {
         return Ok(());
     }
-    bail!(
-        "{}; an alias could stand in for a command the checks run",
-        problems.join("; ")
-    )
+    bail!("{}", problems.join("; "))
+}
+
+/// What the repository's cargo config sets beyond the `xtask` alias.
+fn repository_config_problems(config: &str) -> Result<Vec<String>> {
+    let config: toml::Table = config.parse()?;
+    let mut problems = Vec::new();
+    for (key, value) in &config {
+        match (key.as_str(), value.as_table()) {
+            ("alias", Some(aliases)) => {
+                for alias in aliases.keys().filter(|alias| *alias != "xtask") {
+                    problems.push(format!(
+                        "defines the cargo alias `{alias}`, which could stand in for a command the checks run"
+                    ));
+                }
+            }
+            _ => problems.push(format!(
+                "sets `{key}`, but the repository's cargo config may hold only the `xtask` alias"
+            )),
+        }
+    }
+    Ok(problems)
 }
 
 /// The aliases a cargo config defines.
@@ -283,6 +324,7 @@ fn show(command: &Command) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::scratch::Scratch;
 
     /// CI's `cargo xtask check` lines, together, run every step, so that a
     /// new step can't run only locally.
@@ -309,6 +351,56 @@ mod tests {
         let config = "[alias]\nxtask = \"run --package xtask --\"\ndeny = \"help\"\n";
         assert_eq!(aliases(config)?, ["deny", "xtask"]);
         assert!(aliases("[build]\njobs = 4\n")?.is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn allows_only_the_xtask_alias_in_the_repository() -> Result<()> {
+        assert_eq!(
+            repository_config_problems(include_str!("../../.cargo/config.toml"))?,
+            Vec::<String>::new()
+        );
+        let config = r#"include = "more.toml"
+
+[alias]
+xtask = "run --package xtask --locked --"
+fmt = "clippy --version"
+
+[build]
+rustflags = ["--cap-lints=allow"]
+
+[env]
+CARGO_ALIAS_CLIPPY = "test --no-run"
+PATH = "stubs"
+"#;
+        assert_eq!(
+            repository_config_problems(config)?,
+            [
+                "defines the cargo alias `fmt`, which could stand in for a command the checks run",
+                "sets `build`, but the repository's cargo config may hold only the `xtask` alias",
+                "sets `env`, but the repository's cargo config may hold only the `xtask` alias",
+                "sets `include`, but the repository's cargo config may hold only the `xtask` alias",
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn refuses_a_legacy_cargo_config() -> Result<()> {
+        let scratch = Scratch::new()?;
+        let folder = scratch.path().join(".cargo");
+        fs::create_dir(&folder)?;
+        fs::write(
+            folder.join("config"),
+            "[build]\nrustflags = [\"--cap-lints=allow\"]\n",
+        )?;
+        let Err(error) = check_cargo_config(scratch.path()) else {
+            anyhow::bail!("a legacy .cargo/config passed");
+        };
+        assert!(
+            format!("{error:#}").contains("cargo reads it too"),
+            "{error:#}"
+        );
         Ok(())
     }
 }
