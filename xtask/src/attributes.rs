@@ -9,12 +9,13 @@
 //! each file as tokens: comments and strings never match, and an attribute
 //! that rustfmt wraps over several lines stays whole.
 
+use std::borrow::Cow;
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use proc_macro2::{Delimiter, Ident, TokenStream, TokenTree};
 
 use crate::git;
@@ -23,6 +24,9 @@ use crate::git;
 struct Attribute {
     /// Whether it's `#![…]` rather than `#[…]`.
     inner: bool,
+    /// Whether it sits at the top of its file rather than inside an item, as
+    /// a crate-level attribute must.
+    top_level: bool,
     line: usize,
     /// What its brackets hold.
     tokens: TokenStream,
@@ -31,12 +35,21 @@ struct Attribute {
 /// Checks every Rust file that git tracks or would track, and returns its
 /// problems. `crate_roots` are the files rustc starts each crate from.
 pub fn check(root: &Path, crate_roots: &BTreeSet<PathBuf>) -> Result<Vec<String>> {
+    let crate_roots: BTreeSet<PathBuf> = crate_roots.iter().map(|path| canonical(path)).collect();
     let mut problems = Vec::new();
     for relative in git::files(root, &[":(glob)**/*.rs"])? {
         let path = root.join(&relative);
-        let text = fs::read_to_string(&path)
-            .with_context(|| format!("couldn't read {}", relative.display()))?;
-        let stream = match TokenStream::from_str(&text) {
+        let text = match fs::read_to_string(&path) {
+            Ok(text) => text,
+            Err(error) => {
+                problems.push(format!(
+                    "{}: couldn't read it, so its attributes go unchecked: {error}",
+                    relative.display()
+                ));
+                continue;
+            }
+        };
+        let stream = match TokenStream::from_str(&without_shebang(&text)) {
             Ok(stream) => stream,
             Err(error) => {
                 problems.push(format!(
@@ -46,7 +59,7 @@ pub fn check(root: &Path, crate_roots: &BTreeSet<PathBuf>) -> Result<Vec<String>
                 continue;
             }
         };
-        let is_crate_root = crate_roots.contains(&path);
+        let is_crate_root = crate_roots.contains(&canonical(&path));
         for attribute in attributes(stream) {
             let place = format!("{}:{}", relative.display(), attribute.line);
             let applied = applied(&attribute.tokens);
@@ -59,7 +72,7 @@ pub fn check(root: &Path, crate_roots: &BTreeSet<PathBuf>) -> Result<Vec<String>
                 if !mentions(arguments, "unsafe_code") {
                     continue;
                 }
-                if !(attribute.inner && is_crate_root) {
+                if !(attribute.inner && attribute.top_level && is_crate_root) {
                     problems.push(format!(
                         "{place}: `expect(unsafe_code)` belongs only in a crate root's `#![expect(unsafe_code, reason = \"ADR-NNNN\")]` (SEC-01)"
                     ));
@@ -74,14 +87,32 @@ pub fn check(root: &Path, crate_roots: &BTreeSet<PathBuf>) -> Result<Vec<String>
     Ok(problems)
 }
 
+/// The path with `..` and links resolved, so that two names for one file
+/// compare equal; the path as it is when it can't be resolved.
+fn canonical(path: &Path) -> PathBuf {
+    fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
+}
+
+/// The text with a leading shebang line blanked, as rustc ignores it, and
+/// line numbers kept. `#![` starts an inner attribute instead.
+fn without_shebang(text: &str) -> Cow<'_, str> {
+    match text.strip_prefix("#!") {
+        Some(rest) if !rest.trim_start().starts_with('[') => {
+            let line_end = text.find('\n').unwrap_or(text.len());
+            Cow::Owned(text.get(line_end..).unwrap_or_default().to_owned())
+        }
+        _ => Cow::Borrowed(text),
+    }
+}
+
 /// Every attribute in a token stream, nested ones included.
 fn attributes(stream: TokenStream) -> Vec<Attribute> {
     let mut found = Vec::new();
-    collect_attributes(stream, &mut found);
+    collect_attributes(stream, true, &mut found);
     found
 }
 
-fn collect_attributes(stream: TokenStream, found: &mut Vec<Attribute>) {
+fn collect_attributes(stream: TokenStream, top_level: bool, found: &mut Vec<Attribute>) {
     let tokens: Vec<TokenTree> = stream.into_iter().collect();
     let mut index = 0;
     while let Some(token) = tokens.get(index) {
@@ -93,6 +124,7 @@ fn collect_attributes(stream: TokenStream, found: &mut Vec<Attribute>) {
                     Some(TokenTree::Group(group)) if group.delimiter() == Delimiter::Bracket => {
                         found.push(Attribute {
                             inner,
+                            top_level,
                             line: hash.span().start().line,
                             tokens: group.stream(),
                         });
@@ -102,7 +134,7 @@ fn collect_attributes(stream: TokenStream, found: &mut Vec<Attribute>) {
                 }
             }
             TokenTree::Group(group) => {
-                collect_attributes(group.stream(), found);
+                collect_attributes(group.stream(), false, found);
                 index += 1;
             }
             _ => index += 1,
@@ -262,16 +294,25 @@ fn i() {}
     }
 
     #[test]
-    fn tells_inner_attributes_from_outer_ones() -> Result<()> {
-        let stream =
-            TokenStream::from_str("#![expect(unsafe_code)]\n#[expect(unsafe_code)]\nfn f() {}\n")
-                .map_err(|error| anyhow::anyhow!("{error}"))?;
-        let inner: Vec<bool> = attributes(stream)
+    fn tells_inner_top_level_attributes_from_the_rest() -> Result<()> {
+        let text = "#![expect(unsafe_code)]\n#[expect(unsafe_code)]\nfn f() {}\nmod m {\n    #![expect(unsafe_code)]\n}\n";
+        let stream = TokenStream::from_str(text).map_err(|error| anyhow::anyhow!("{error}"))?;
+        let kinds: Vec<(bool, bool)> = attributes(stream)
             .iter()
-            .map(|attribute| attribute.inner)
+            .map(|attribute| (attribute.inner, attribute.top_level))
             .collect();
-        assert_eq!(inner, [true, false]);
+        assert_eq!(kinds, [(true, true), (false, true), (true, false)]);
         Ok(())
+    }
+
+    #[test]
+    fn blanks_a_shebang_but_keeps_inner_attributes() {
+        assert_eq!(
+            without_shebang("#!/usr/bin/env -S cargo 'x'\n#![allow(x)]\n"),
+            "\n#![allow(x)]\n"
+        );
+        assert_eq!(without_shebang("#![allow(x)]\n"), "#![allow(x)]\n");
+        assert_eq!(without_shebang("#! [allow(x)]\n"), "#! [allow(x)]\n");
     }
 
     #[test]

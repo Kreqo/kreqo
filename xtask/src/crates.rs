@@ -162,14 +162,20 @@ fn check_package(workspace_root: &Path, package: &Package) -> Result<Vec<String>
         )),
         Err(error) => problems.push(format!("{name}: {error:#}")),
     }
-    let text = fs::read_to_string(manifest)
-        .with_context(|| format!("couldn't read {}", manifest.display()))?;
-    if !inherits_workspace_lints(&text)
-        .with_context(|| format!("couldn't parse {}", manifest.display()))?
-    {
-        problems.push(format!(
+    // A read error becomes a problem too, so that the step still reports
+    // everything else it found.
+    let inherits = fs::read_to_string(manifest)
+        .map_err(anyhow::Error::from)
+        .and_then(|text| inherits_workspace_lints(&text));
+    match inherits {
+        Ok(true) => {}
+        Ok(false) => problems.push(format!(
             "{name}: its Cargo.toml lacks `[lints] workspace = true` (QA-01)"
-        ));
+        )),
+        Err(error) => problems.push(format!(
+            "{name}: couldn't read {}: {error:#}",
+            manifest.display()
+        )),
     }
     Ok(problems)
 }
