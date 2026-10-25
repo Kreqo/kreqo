@@ -53,12 +53,34 @@ const FLAGS: [&str; 4] = [
     "--ignore-gitleaks-allow",
 ];
 
+/// What a history scan covers.
+#[derive(Clone, Copy)]
+enum Scope {
+    /// The current branch, and the tags at its tip. A tag elsewhere was
+    /// scanned when it was pushed, and the daily scan reads it; since CI-01
+    /// keeps release tags, one with a secret in its message would otherwise
+    /// fail every later scan for good.
+    Head,
+    /// Every branch and every tag.
+    AllRefs,
+}
+
+impl Scope {
+    /// The revisions git's commands take.
+    fn revisions(self) -> &'static str {
+        match self {
+            Self::Head => "HEAD",
+            Self::AllRefs => "--all",
+        }
+    }
+}
+
 /// Scans the current branch's history, as `cargo xtask check secrets` and
 /// CI do.
 pub fn scan_history(root: &Path) -> Result<()> {
     tools::require(root, &tools::BETTERLEAKS)?;
     check_tree(root)?;
-    scan_revisions(root, "HEAD")
+    scan_revisions(root, Scope::Head)
 }
 
 /// Scans every branch's and tag's history, as the daily scan does, so that a
@@ -66,7 +88,7 @@ pub fn scan_history(root: &Path) -> Result<()> {
 pub fn scan_all_refs(root: &Path) -> Result<()> {
     tools::require(root, &tools::BETTERLEAKS)?;
     check_tree(root)?;
-    scan_revisions(root, "--all")
+    scan_revisions(root, Scope::AllRefs)
 }
 
 /// Scans a commit message before the commit is made, as the commit-msg hook
@@ -78,10 +100,11 @@ pub fn scan_message(root: &Path, file: &Path) -> Result<()> {
     scan_bytes(root, "commit message", &message)
 }
 
-/// Scans the history of the given revisions: the changes twice, once
-/// reading binary files as text and once without, since `--text` keeps
-/// Betterleaks from unpacking archives; then the messages.
-fn scan_revisions(root: &Path, revisions: &str) -> Result<()> {
+/// Scans the history the scope covers: the changes twice, once reading
+/// binary files as text and once without, since `--text` keeps Betterleaks
+/// from unpacking archives; then the messages.
+fn scan_revisions(root: &Path, scope: Scope) -> Result<()> {
+    let revisions = scope.revisions();
     let log_options = format!("--no-renames --diff-merges=first-parent {revisions}");
     all(vec![
         run_command(
@@ -98,16 +121,16 @@ fn scan_revisions(root: &Path, revisions: &str) -> Result<()> {
                 .args(FLAGS)
                 .arg(format!("--log-opts={log_options}")),
         ),
-        scan_messages(root, revisions),
+        scan_messages(root, scope),
     ])
 }
 
-/// Scans the messages of the revisions' commits, their notes, and every
-/// tag's message, each as a file named after its object, such as
-/// `commit 1f3c…`, so that a finding names the commit, note or tag, and
-/// keeps its fingerprint as history grows.
-fn scan_messages(root: &Path, revisions: &str) -> Result<()> {
-    let commits: BTreeSet<String> = git_output(root, &["rev-list", revisions])
+/// Scans the messages of the scope's commits, their notes, and its tags'
+/// messages, each as a file named after its object, such as `commit 1f3c…`,
+/// so that a finding names the commit, note or tag, and keeps its
+/// fingerprint as history grows.
+fn scan_messages(root: &Path, scope: Scope) -> Result<()> {
+    let commits: BTreeSet<String> = git_output(root, &["rev-list", scope.revisions()])
         .map(|listed| lines(&listed))?
         .into_iter()
         .collect();
@@ -123,14 +146,12 @@ fn scan_messages(root: &Path, revisions: &str) -> Result<()> {
             files.push((format!("note {annotated}"), note.to_owned()));
         }
     }
-    let tags = git_output(
-        root,
-        &[
-            "for-each-ref",
-            "--format=%(objecttype) %(objectname)",
-            "refs/tags",
-        ],
-    )?;
+    let mut tag_listing = vec!["for-each-ref", "--format=%(objecttype) %(objectname)"];
+    if let Scope::Head = scope {
+        tag_listing.extend(["--points-at", "HEAD"]);
+    }
+    tag_listing.push("refs/tags");
+    let tags = git_output(root, &tag_listing)?;
     for tag in lines(&tags) {
         if let Some(id) = tag.strip_prefix("tag ") {
             files.push((format!("tag {id}"), id.to_owned()));

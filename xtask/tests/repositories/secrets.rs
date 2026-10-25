@@ -211,3 +211,35 @@ fn a_finding_in_a_message_names_its_object() -> Result<()> {
     repo.xtask(&["check", "secrets"])
         .fails_with(&format!("tag {}", tag.trim()))
 }
+
+/// A tag elsewhere was scanned when it was pushed, and the daily scan
+/// reads it; since CI-01 keeps release tags, one with a token in its
+/// message would otherwise fail every pull request for good.
+#[test]
+#[ignore = "needs Betterleaks; cargo xtask check tool-tests runs it"]
+fn a_scan_of_head_reads_only_the_tags_at_head() -> Result<()> {
+    let token = fake_token();
+    let repo = Repo::new()?;
+    repo.git(&["switch", "--quiet", "--create", "side"])?;
+    repo.commit_all("Work on the side")?;
+    repo.git(&[
+        "tag",
+        "--annotate",
+        "annotated",
+        "--message",
+        &format!("token = {token}"),
+    ])?;
+    repo.commit_all(&format!("More work\n\ntoken = {token}\n"))?;
+    repo.git(&["tag", "lightweight"])?;
+    repo.git(&["switch", "--quiet", "main"])?;
+    repo.xtask(&["check", "secrets"]).passes()?;
+    repo.xtask(&["scan-all-refs"]).fails_with("github-pat")?;
+    repo.git(&[
+        "tag",
+        "--annotate",
+        "at-head",
+        "--message",
+        &format!("token = {token}"),
+    ])?;
+    repo.xtask(&["check", "secrets"]).fails_with("github-pat")
+}
