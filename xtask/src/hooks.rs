@@ -79,9 +79,16 @@ fn refuse_shared_hooks_path(root: &Path) -> Result<()> {
         .current_dir(root)
         .output()
         .context("couldn't run git")?;
-    // git exits with 1 when the setting is absent.
-    if !output.status.success() {
-        return Ok(());
+    // git exits with 1 when the setting is absent. Any other failure, such
+    // as a git older than 2.26, which lacks --show-scope, leaves the scope
+    // unknown.
+    match output.status.code() {
+        Some(0) => {}
+        Some(1) => return Ok(()),
+        _ => bail!(
+            "couldn't tell where core.hooksPath is set (git 2.26 or later is needed): {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        ),
     }
     let printed = String::from_utf8_lossy(&output.stdout);
     let scope = printed.split('\t').next().unwrap_or_default();
