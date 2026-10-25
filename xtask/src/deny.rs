@@ -4,7 +4,10 @@
 //! SEC-02's written policy, enforced on deny.toml before cargo-deny reads
 //! it. Every setting must be one the policy names, at the value it names,
 //! because a single unknown key, such as `[graph] exclude`, can hide a
-//! vulnerability, a banned SDK or a license failure. Every suppression gives
+//! vulnerability, a banned SDK or a license failure. Every setting the
+//! policy names must be there too, since leaving one out brings back
+//! cargo-deny's weaker default, and the ban list and the allowed licenses
+//! must be exactly the policy's. Every suppression gives
 //! its reason and an expiry date: cargo-deny 0.20 has no expiry of its own,
 //! so a reason ends with `until YYYY-MM-DD`, a real date at most 90 days
 //! ahead, and the suppression fails once that day passes.
@@ -22,18 +25,59 @@ enum Setting {
     Is(&'static str),
     /// Exactly `true`.
     IsTrue,
-    /// A list of strings, such as the allowed licenses.
-    Strings,
+    /// Exactly these strings, in any order.
+    Exactly(&'static [&'static str]),
     /// Suppressions: tables with only these keys, each giving a reason that
     /// ends with its expiry date.
     Suppressions(&'static [&'static str]),
-    /// Bans: tables with a crate and a reason only, since `wrappers` or
-    /// `deny-multiple-versions` would lift the ban (PRIV-09).
-    Bans,
+    /// Bans of exactly these crates, each a table with a crate and a reason
+    /// only, since `wrappers` or `deny-multiple-versions` would lift the ban
+    /// (PRIV-09).
+    Bans(&'static [&'static str]),
     /// License exceptions, which can't carry a reason in cargo-deny 0.20;
     /// review checks the comment above each.
     Exceptions,
 }
+
+impl Setting {
+    /// Whether deny.toml must hold the setting: every one but the lists of
+    /// suppressions and exceptions, which may be empty.
+    fn is_required(&self) -> bool {
+        !matches!(self, Self::Suppressions(_) | Self::Exceptions)
+    }
+}
+
+/// The SDKs that PRIV-09 bans (docs/decisions.md).
+const BANNED_CRATES: [&str; 12] = [
+    "sentry",
+    "sentry-core",
+    "posthog-rs",
+    "segment",
+    "analytics",
+    "rudderanalytics",
+    "bugsnag",
+    "rollbar",
+    "honeybadger",
+    "mixpanel",
+    "mixpanel-rs",
+    "amplitude",
+];
+
+/// The licenses that the dependencies of MIT OR Apache-2.0 crates may use
+/// (LEGAL-03, docs/decisions.md).
+const ALLOWED_LICENSES: [&str; 11] = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+    "CC0-1.0",
+    "Unlicense",
+    "BSL-1.0",
+    "MPL-2.0",
+];
 
 /// Every setting SEC-02's written policy names (docs/decisions.md).
 const POLICY: [(&str, &str, Setting); 14] = [
@@ -47,14 +91,14 @@ const POLICY: [(&str, &str, Setting); 14] = [
         Setting::Suppressions(&["id", "crate", "reason"]),
     ),
     ("bans", "multiple-versions", Setting::Is("deny")),
-    ("bans", "deny", Setting::Bans),
+    ("bans", "deny", Setting::Bans(&BANNED_CRATES)),
     ("bans", "skip", Setting::Suppressions(&["crate", "reason"])),
     (
         "bans",
         "skip-tree",
         Setting::Suppressions(&["crate", "reason", "depth"]),
     ),
-    ("licenses", "allow", Setting::Strings),
+    ("licenses", "allow", Setting::Exactly(&ALLOWED_LICENSES)),
     ("licenses", "unused-allowed-license", Setting::Is("allow")),
     ("licenses", "exceptions", Setting::Exceptions),
     ("sources", "unknown-registry", Setting::Is("deny")),
@@ -118,6 +162,14 @@ fn policy_problems(text: &str, today: u64) -> Result<Vec<String>> {
             check_setting(&name, value, setting, today, &mut problems);
         }
     }
+    for (table, key, setting) in &POLICY {
+        let present = config.get(*table).and_then(|table| table.get(*key));
+        if setting.is_required() && present.is_none() {
+            problems.push(format!(
+                "`{table}.{key}` is missing, which brings back cargo-deny's weaker default"
+            ));
+        }
+    }
     Ok(problems)
 }
 
@@ -135,13 +187,13 @@ fn check_setting(
         Setting::IsTrue if value.as_bool() != Some(true) => {
             problems.push(format!("`{name}` must be true"));
         }
-        Setting::Strings
-            if !value
-                .as_array()
-                .is_some_and(|items| items.iter().all(Value::is_str)) =>
-        {
-            problems.push(format!("`{name}` must be a list of strings"));
-        }
+        Setting::Exactly(expected) => match value.as_array() {
+            Some(items) if items.iter().all(Value::is_str) => {
+                let listed: Vec<&str> = items.iter().filter_map(Value::as_str).collect();
+                check_list(name, &listed, expected, problems);
+            }
+            _ => problems.push(format!("`{name}` must be a list of strings")),
+        },
         Setting::Suppressions(keys) => {
             for (index, entry) in entries(value).iter().enumerate() {
                 let entry_name = format!("{name}[{index}]");
@@ -149,11 +201,16 @@ fn check_setting(
                 check_reason(&entry_name, entry, today, problems);
             }
         }
-        Setting::Bans => {
+        Setting::Bans(expected) => {
             for (index, entry) in entries(value).iter().enumerate() {
                 let entry_name = format!("{name}[{index}]");
                 check_keys(&entry_name, entry, &["crate", "reason"], problems);
             }
+            let banned: Vec<&str> = entries(value)
+                .iter()
+                .filter_map(|entry| entry.get("crate").and_then(Value::as_str))
+                .collect();
+            check_list(name, &banned, expected, problems);
         }
         Setting::Exceptions => {
             for (index, entry) in entries(value).iter().enumerate() {
@@ -171,6 +228,18 @@ fn check_setting(
 
 fn entries(value: &Value) -> &[Value] {
     value.as_array().map(Vec::as_slice).unwrap_or_default()
+}
+
+/// Fails a list that lacks an item the policy names, or has one it doesn't.
+fn check_list(name: &str, listed: &[&str], expected: &[&str], problems: &mut Vec<String>) {
+    for item in expected.iter().filter(|item| !listed.contains(item)) {
+        problems.push(format!("`{name}` lacks `{item}`, which the policy names"));
+    }
+    for item in listed.iter().filter(|item| !expected.contains(item)) {
+        problems.push(format!(
+            "`{name}` has `{item}`, which the policy doesn't name"
+        ));
+    }
 }
 
 /// Fails an entry that isn't a table, or that has a key outside `keys`.
@@ -302,28 +371,37 @@ mod tests {
         Ok(())
     }
 
+    /// The committed deny.toml, with each change applied once.
+    fn committed_with(changes: &[(&str, &str)]) -> String {
+        let mut text = include_str!("../../deny.toml").to_owned();
+        for (old, new) in changes {
+            assert!(text.contains(old), "deny.toml no longer holds {old:?}");
+            text = text.replacen(old, new, 1);
+        }
+        text
+    }
+
     #[test]
     fn rejects_settings_the_policy_doesnt_name() -> Result<()> {
-        let text = r#"
-            [graph]
-            all-features = true
-            exclude = ["openssl"]
-
-            [advisories]
-            yanked = "warn"
-
-            [bans]
-            deny = [{ crate = "sentry", reason = "PRIV-09", wrappers = ["my-crate"] }]
-
-            [licenses]
-            clarify = []
-
-            [licenses.private]
-            ignore = true
-        "#;
+        let text = committed_with(&[
+            (
+                "all-features = true",
+                "all-features = true\nexclude = [\"openssl\"]",
+            ),
+            ("yanked = \"deny\"", "yanked = \"warn\""),
+            (
+                "{ crate = \"sentry\", reason = \"PRIV-09: crash-reporting SDK\" }",
+                "{ crate = \"sentry\", reason = \"PRIV-09: crash-reporting SDK\", wrappers = [\"my-crate\"] }",
+            ),
+            ("exceptions = []", "exceptions = []\nclarify = []"),
+            (
+                "unknown-git = \"deny\"",
+                "unknown-git = \"deny\"\n\n[licenses.private]\nignore = true",
+            ),
+        ]);
         // Tables and keys come out in alphabetical order.
         assert_eq!(
-            policy_problems(text, TODAY)?,
+            policy_problems(&text, TODAY)?,
             [
                 "`advisories.yanked` must be \"deny\"",
                 "bans.deny[0] sets `wrappers`, which the policy doesn't allow",
@@ -336,25 +414,49 @@ mod tests {
     }
 
     #[test]
-    fn checks_reasons_and_expiry_dates() -> Result<()> {
-        let text = r#"
-            [advisories]
-            ignore = [
-              { id = "RUSTSEC-0000-0000", reason = "not reachable from our code; until 2026-12-31" },
-              { id = "RUSTSEC-0000-0001", reason = "no fix upstream yet" },
-              "RUSTSEC-0000-0002",
-              { id = "RUSTSEC-0000-0003", reason = "until 2026-12-31, then revisit" },
-            ]
-
-            [bans]
-            skip = [
-              { crate = "windows-sys@0.52.0", reason = "until 2026-10-01" },
-              { crate = "windows-sys@0.59.0", reason = "until 2027-02-30" },
-              { crate = "windows-sys@0.60.0", reason = "until 2027-06-30" },
-            ]
-        "#;
+    fn rejects_deletions_and_list_edits() -> Result<()> {
+        let text = committed_with(&[
+            ("yanked = \"deny\"\n", ""),
+            (
+                "  { crate = \"sentry\", reason = \"PRIV-09: crash-reporting SDK\" },\n",
+                "",
+            ),
+            ("\"MPL-2.0\",", "\"MPL-2.0\",\n  \"GPL-3.0-only\","),
+        ]);
         assert_eq!(
-            policy_problems(text, TODAY)?,
+            policy_problems(&text, TODAY)?,
+            [
+                "`bans.deny` lacks `sentry`, which the policy names",
+                "`licenses.allow` has `GPL-3.0-only`, which the policy doesn't name",
+                "`advisories.yanked` is missing, which brings back cargo-deny's weaker default",
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn checks_reasons_and_expiry_dates() -> Result<()> {
+        let text = committed_with(&[
+            (
+                "ignore = []",
+                r#"ignore = [
+  { id = "RUSTSEC-0000-0000", reason = "not reachable from our code; until 2026-12-31" },
+  { id = "RUSTSEC-0000-0001", reason = "no fix upstream yet" },
+  "RUSTSEC-0000-0002",
+  { id = "RUSTSEC-0000-0003", reason = "until 2026-12-31, then revisit" },
+]"#,
+            ),
+            (
+                "skip = []",
+                r#"skip = [
+  { crate = "windows-sys@0.52.0", reason = "until 2026-10-01" },
+  { crate = "windows-sys@0.59.0", reason = "until 2027-02-30" },
+  { crate = "windows-sys@0.60.0", reason = "until 2027-06-30" },
+]"#,
+            ),
+        ]);
+        assert_eq!(
+            policy_problems(&text, TODAY)?,
             [
                 "advisories.ignore[1] gives no expiry date; end its reason with `until YYYY-MM-DD`",
                 "advisories.ignore[2] must be a table with a reason",
