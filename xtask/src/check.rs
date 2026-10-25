@@ -36,6 +36,9 @@ pub enum Step {
     Secrets,
     /// zizmor over the workflows, online when GH_TOKEN is set (CI-07, CI-08, CI-09).
     Workflows,
+    /// xtask's own tests that run the pinned Betterleaks and zizmor, which a
+    /// plain `cargo test` skips (QA-09).
+    ToolTests,
 }
 
 impl Step {
@@ -50,6 +53,7 @@ impl Step {
             Self::Reuse => "reuse",
             Self::Secrets => "secrets",
             Self::Workflows => "workflows",
+            Self::ToolTests => "tool-tests",
         }
     }
 }
@@ -167,6 +171,22 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
                 zizmor
                     .args(["--config", ".github/zizmor.yml"])
                     .args(&workflows),
+            )
+        }
+        Step::ToolTests => {
+            tools::require(root, &tools::BETTERLEAKS)?;
+            tools::require(root, &tools::ZIZMOR)?;
+            cargo(
+                root,
+                &[
+                    "test",
+                    "--package",
+                    "xtask",
+                    "--all-features",
+                    "--locked",
+                    "--",
+                    "--ignored",
+                ],
             )
         }
     }
