@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 //! Scratch folders for files that must stay out of the repository, such as
-//! the throwaway files that tests write (QA-09): fresh folders under the
-//! system's temporary folder, each removed with everything in it once it's
-//! dropped.
+//! the messages the secret scan reads as files (SEC-03) and the throwaway
+//! files that tests write (QA-09): fresh folders under the system's
+//! temporary folder, each removed with everything in it once it's dropped.
 
 use std::fs;
 use std::io;

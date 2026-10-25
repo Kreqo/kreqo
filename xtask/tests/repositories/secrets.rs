@@ -173,3 +173,41 @@ fn the_scans_read_commit_messages() -> Result<()> {
     repo.commit_all(&message)?;
     repo.xtask(&["check", "secrets"]).fails_with("github-pat")
 }
+
+/// Each message is scanned as a file named after its object, so that a
+/// finding names the commit, note or tag, and keeps its fingerprint as
+/// history grows.
+#[test]
+#[ignore = "needs Betterleaks; cargo xtask check tool-tests runs it"]
+fn a_finding_in_a_message_names_its_object() -> Result<()> {
+    let token = fake_token();
+    let repo = Repo::new()?;
+    let commit = repo.commit_all(&format!("Add the settings\n\ntoken = {token}\n"))?;
+    repo.commit_all("Add nothing")?;
+    repo.xtask(&["check", "secrets"])
+        .fails_with(&format!("commit {commit}"))?;
+
+    let repo = Repo::new()?;
+    let head = repo.git(&["rev-parse", "HEAD"])?;
+    repo.git(&[
+        "notes",
+        "add",
+        "--message",
+        &format!("token = {token}"),
+        "HEAD",
+    ])?;
+    repo.xtask(&["check", "secrets"])
+        .fails_with(&format!("note {}", head.trim()))?;
+
+    let repo = Repo::new()?;
+    repo.git(&[
+        "tag",
+        "--annotate",
+        "v1",
+        "--message",
+        &format!("token = {token}"),
+    ])?;
+    let tag = repo.git(&["rev-parse", "v1"])?;
+    repo.xtask(&["check", "secrets"])
+        .fails_with(&format!("tag {}", tag.trim()))
+}

@@ -7,19 +7,22 @@
 //! comments ignored; and no scanner config or ignore file allowed in the
 //! tree until a revoked secret first needs one. The history scan covers the
 //! current branch twice, once with binary files read as text and once with
-//! archives unpacked, merge commits included and renames off. The staged
-//! scan also reads staged binary files whole, with their paths, since git
-//! shows them no diff. Findings name their file and line, with the secret
-//! masked.
+//! archives unpacked, merge commits included and renames off, and then its
+//! messages. The staged scan also reads staged binary files whole, with
+//! their paths, since git shows them no diff. Findings name their file and
+//! line, or the commit, note or tag whose message holds the secret, with
+//! the secret masked.
 
+use std::collections::BTreeSet;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result, bail, ensure};
 
 use crate::check::run_command;
+use crate::scratch::Scratch;
 use crate::{git, tools};
 
 /// A config that keeps Betterleaks' built-in rules and turns off their
@@ -77,8 +80,7 @@ pub fn scan_message(root: &Path, file: &Path) -> Result<()> {
 
 /// Scans the history of the given revisions: the changes twice, once
 /// reading binary files as text and once without, since `--text` keeps
-/// Betterleaks from unpacking archives; then the commit messages and notes,
-/// and every tag's message.
+/// Betterleaks from unpacking archives; then the messages.
 fn scan_revisions(root: &Path, revisions: &str) -> Result<()> {
     let log_options = format!("--no-renames --diff-merges=first-parent {revisions}");
     all(vec![
@@ -96,11 +98,127 @@ fn scan_revisions(root: &Path, revisions: &str) -> Result<()> {
                 .args(FLAGS)
                 .arg(format!("--log-opts={log_options}")),
         ),
-        git_output(root, &["log", "--format=%B%n%N", revisions])
-            .and_then(|messages| scan_bytes(root, "commit messages and notes", &messages)),
-        git_output(root, &["for-each-ref", "--format=%(contents)", "refs/tags"])
-            .and_then(|messages| scan_bytes(root, "tag messages", &messages)),
+        scan_messages(root, revisions),
     ])
+}
+
+/// Scans the messages of the revisions' commits, their notes, and every
+/// tag's message, each as a file named after its object, such as
+/// `commit 1f3c…`, so that a finding names the commit, note or tag, and
+/// keeps its fingerprint as history grows.
+fn scan_messages(root: &Path, revisions: &str) -> Result<()> {
+    let commits: BTreeSet<String> = git_output(root, &["rev-list", revisions])
+        .map(|listed| lines(&listed))?
+        .into_iter()
+        .collect();
+    let mut files: Vec<(String, String)> = commits
+        .iter()
+        .map(|id| (format!("commit {id}"), id.clone()))
+        .collect();
+    // `git notes list` pairs each note's blob with the object it annotates.
+    for pair in lines(&git_output(root, &["notes", "list"])?) {
+        if let Some((note, annotated)) = pair.split_once(' ')
+            && commits.contains(annotated)
+        {
+            files.push((format!("note {annotated}"), note.to_owned()));
+        }
+    }
+    let tags = git_output(
+        root,
+        &[
+            "for-each-ref",
+            "--format=%(objecttype) %(objectname)",
+            "refs/tags",
+        ],
+    )?;
+    for tag in lines(&tags) {
+        if let Some(id) = tag.strip_prefix("tag ") {
+            files.push((format!("tag {id}"), id.to_owned()));
+        }
+    }
+    let ids: Vec<&str> = files.iter().map(|(_, id)| id.as_str()).collect();
+    let contents = read_objects(root, &ids)?;
+    let scratch = Scratch::new()?;
+    for ((name, _), (kind, content)) in files.iter().zip(&contents) {
+        // A commit or tag object's message follows its headers and a blank
+        // line; a note is all message.
+        let message = match kind.as_str() {
+            "blob" => content.as_slice(),
+            _ => content
+                .windows(2)
+                .position(|pair| pair == b"\n\n")
+                .and_then(|end| content.get(end + 2..))
+                .unwrap_or_default(),
+        };
+        let path = scratch.path().join(name);
+        fs::write(&path, message).with_context(|| format!("couldn't write {}", path.display()))?;
+    }
+    run_command(scratch.path(), betterleaks().args(["dir", "."]).args(FLAGS))
+        .context("the scan of messages failed; each finding's path names its commit, note or tag")
+}
+
+/// The lines of git's output.
+fn lines(output: &[u8]) -> Vec<String> {
+    String::from_utf8_lossy(output)
+        .lines()
+        .filter(|line| !line.is_empty())
+        .map(str::to_owned)
+        .collect()
+}
+
+/// The type and content of each object, in order, read by one
+/// `git cat-file --batch`.
+fn read_objects(root: &Path, ids: &[&str]) -> Result<Vec<(String, Vec<u8>)>> {
+    let mut child = Command::new("git")
+        .args(["cat-file", "--batch"])
+        .current_dir(root)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .context("couldn't run git cat-file")?;
+    let mut stdin = child.stdin.take().context("couldn't write to git")?;
+    let request: String = ids.iter().map(|id| format!("{id}\n")).collect();
+    // Written from another thread, so that git's output never fills its pipe
+    // while this one waits to write.
+    let writer = std::thread::spawn(move || stdin.write_all(request.as_bytes()));
+    let output = child
+        .wait_with_output()
+        .context("couldn't run git cat-file")?;
+    ensure!(
+        output.status.success(),
+        "git cat-file failed: {}",
+        String::from_utf8_lossy(&output.stderr).trim()
+    );
+    writer
+        .join()
+        .map_err(|_| anyhow::anyhow!("couldn't write to git cat-file"))?
+        .context("couldn't write to git cat-file")?;
+    let mut rest = output.stdout.as_slice();
+    let mut objects = Vec::new();
+    for id in ids {
+        // Each object comes as `<id> <type> <size>`, a newline, its content
+        // and a newline.
+        let end = rest
+            .iter()
+            .position(|&byte| byte == b'\n')
+            .context("git cat-file stopped early")?;
+        let header = String::from_utf8_lossy(rest.get(..end).unwrap_or_default()).into_owned();
+        let mut fields = header.split(' ');
+        let (Some(_), Some(kind), Some(size)) = (fields.next(), fields.next(), fields.next())
+        else {
+            bail!("git cat-file couldn't read {id}: {header}");
+        };
+        let size: usize = size
+            .parse()
+            .with_context(|| format!("git cat-file printed a bad size for {id}"))?;
+        let content = rest
+            .get(end + 1..end + 1 + size)
+            .context("git cat-file stopped early")?;
+        objects.push((kind.to_owned(), content.to_vec()));
+        rest = rest.get(end + 2 + size..).unwrap_or_default();
+    }
+    Ok(objects)
 }
 
 /// Fails if any part failed, naming every failure.

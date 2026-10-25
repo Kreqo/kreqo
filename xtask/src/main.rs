@@ -9,7 +9,6 @@ mod crates;
 mod deny;
 mod git;
 mod hooks;
-#[cfg(test)]
 mod scratch;
 mod secrets;
 mod tools;
