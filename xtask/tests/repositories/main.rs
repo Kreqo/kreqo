@@ -7,6 +7,8 @@
 //! ignored by a plain `cargo test`; `cargo xtask check tool-tests` runs
 //! them, as CI's checks job does.
 
+#[cfg(unix)]
+mod git_version;
 mod hooks;
 mod secrets;
 mod support;

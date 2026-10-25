@@ -440,12 +440,14 @@ mod tests {
     #[test]
     fn ci_runs_each_check_step_after_a_failure() {
         let workflow = include_str!("../../.github/workflows/ci.yml");
+        let mut checked = 0;
         for steps in steps_by_job(workflow) {
             let checks = steps.iter().filter(|step| {
                 step.iter()
                     .any(|line| line.trim().starts_with("run: cargo xtask check "))
             });
             for step in checks.skip(1) {
+                checked += 1;
                 assert!(
                     step.iter()
                         .any(|line| line.trim() == "if: ${{ !cancelled() }}"),
@@ -454,6 +456,12 @@ mod tests {
                 );
             }
         }
+        // A reformat that hides the steps from this reading fails here
+        // rather than passing unchecked.
+        assert!(
+            checked > 0,
+            "found no job in ci.yml with a second check step"
+        );
     }
 
     /// The steps of each job in a workflow, each step as its lines.
@@ -575,6 +583,49 @@ PATH = "stubs"
                 "sets `include`, but the repository's cargo config may hold only the `xtask` alias",
             ]
         );
+        Ok(())
+    }
+
+    /// The check reads the repository's own config, and the configs above
+    /// the checkout, through a link as cargo resolves it too.
+    #[test]
+    fn reads_the_cargo_configs_in_and_above_the_checkout() -> Result<()> {
+        let scratch = Scratch::new()?;
+        let above = scratch.path().join("above");
+        let root = above.join("repo");
+        fs::create_dir_all(root.join(".cargo"))?;
+        fs::create_dir_all(above.join(".cargo"))?;
+        fs::write(
+            root.join(".cargo").join("config.toml"),
+            "[build]\nrustflags = [\"--cap-lints=allow\"]\n",
+        )?;
+        fs::write(
+            above.join(".cargo").join("config.toml"),
+            "[alias]\nclippy = \"test --no-run\"\n",
+        )?;
+        let Err(error) = check_cargo_config(&root) else {
+            anyhow::bail!("the cargo configs passed");
+        };
+        let error = format!("{error:#}");
+        assert!(error.contains("sets `build`"), "{error}");
+        assert!(
+            error.contains("defines the cargo alias `clippy`"),
+            "{error}"
+        );
+        #[cfg(unix)]
+        {
+            fs::remove_file(root.join(".cargo").join("config.toml"))?;
+            let link = scratch.path().join("link");
+            std::os::unix::fs::symlink(&root, &link)?;
+            let Err(error) = check_cargo_config(&link) else {
+                anyhow::bail!("the config above the linked checkout passed");
+            };
+            let error = format!("{error:#}");
+            assert!(
+                error.contains("defines the cargo alias `clippy`"),
+                "{error}"
+            );
+        }
         Ok(())
     }
 
