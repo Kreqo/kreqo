@@ -124,11 +124,17 @@ pub fn check_policy(root: &Path) -> Result<()> {
         fs::read_to_string(&path).with_context(|| format!("couldn't read {}", path.display()))?;
     let mut problems = policy_problems(&text, today()?)
         .with_context(|| format!("couldn't parse {}", path.display()))?;
-    for file in EXCEPTION_FILES {
-        if root.join(file).exists() {
-            problems.push(format!(
-                "{file} exists; cargo-deny reads it on its own, so its entries belong in deny.toml"
-            ));
+    // cargo-deny looks for exceptions files from the manifest's folder up,
+    // whatever --config says.
+    for folder in root.ancestors() {
+        for file in EXCEPTION_FILES {
+            let path = folder.join(file);
+            if path.exists() {
+                problems.push(format!(
+                    "{} exists; cargo-deny reads it on its own, so its entries belong in deny.toml",
+                    path.display()
+                ));
+            }
         }
     }
     if problems.is_empty() {
@@ -277,6 +283,10 @@ fn check_reason(name: &str, entry: &Value, today: u64, problems: &mut Vec<String
         ));
         return;
     };
+    if justification(reason).is_empty() {
+        problems.push(format!("{name} gives a date but no reason"));
+        return;
+    }
     match day_of(date) {
         None => problems.push(format!("{name} gives an impossible date, {date}")),
         Some(day) if day < today => problems.push(format!("{name} expired after {date}")),
@@ -285,6 +295,16 @@ fn check_reason(name: &str, entry: &Value, today: u64, problems: &mut Vec<String
         )),
         Some(_) => {}
     }
+}
+
+/// What a reason says before its `until`, without trailing punctuation.
+fn justification(reason: &str) -> &str {
+    reason
+        .rsplit_once("until ")
+        .map_or(reason, |(before, _)| before)
+        .trim()
+        .trim_end_matches([';', ',', '.', ':', '-'])
+        .trim_end()
 }
 
 /// The date that ends a reason as `until YYYY-MM-DD`, if one does.
@@ -444,14 +464,15 @@ mod tests {
   { id = "RUSTSEC-0000-0001", reason = "no fix upstream yet" },
   "RUSTSEC-0000-0002",
   { id = "RUSTSEC-0000-0003", reason = "until 2026-12-31, then revisit" },
+  { id = "RUSTSEC-0000-0004", reason = "until 2026-12-31" },
 ]"#,
             ),
             (
                 "skip = []",
                 r#"skip = [
-  { crate = "windows-sys@0.52.0", reason = "until 2026-10-01" },
-  { crate = "windows-sys@0.59.0", reason = "until 2027-02-30" },
-  { crate = "windows-sys@0.60.0", reason = "until 2027-06-30" },
+  { crate = "windows-sys@0.52.0", reason = "two versions upstream; until 2026-10-01" },
+  { crate = "windows-sys@0.59.0", reason = "two versions upstream; until 2027-02-30" },
+  { crate = "windows-sys@0.60.0", reason = "two versions upstream; until 2027-06-30" },
 ]"#,
             ),
         ]);
@@ -461,6 +482,7 @@ mod tests {
                 "advisories.ignore[1] gives no expiry date; end its reason with `until YYYY-MM-DD`",
                 "advisories.ignore[2] must be a table with a reason",
                 "advisories.ignore[3] gives no expiry date; end its reason with `until YYYY-MM-DD`",
+                "advisories.ignore[4] gives a date but no reason",
                 "bans.skip[0] expired after 2026-10-01",
                 "bans.skip[1] gives an impossible date, 2027-02-30",
                 "bans.skip[2] runs past 90 days from today; give a nearer date",
