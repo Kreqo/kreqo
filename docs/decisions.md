@@ -306,3 +306,15 @@ The repository's `.cargo/config.toml` may hold the `xtask` alias only as `run --
 - **The hook's comment string:** the commit-msg hook reads core.commentString even on git before 2.45, which ignores it; it reads `auto` only in lowercase, where git accepts any case; and it prefers core.commentString, where git 2.45 and later take whichever of the two keys was set last. Each way, the hook reads more of an honest message than git keeps and may refuse a commit that git would accept; only a message that carries a cut line on purpose, as recorded above, could get past it.
 - **The list form of the `xtask` alias:** cargo accepts `xtask = ["run", "--package", "xtask", "--locked", "--"]`, but the check refuses every form but the one string, so it fails closed.
 - **A test that reads the machine's cargo home:** `reads_the_cargo_configs_in_and_above_the_checkout` also reads the machine's CARGO_HOME, so on a machine whose cargo home config defines a `clippy` alias, it could pass without the walk above the checkout. CI has no such config.
+
+## 2026-10-26: before PR #1 merges
+
+### CI-07 names an action's repository
+
+Approved from the first rule batch, since M1's workflows need it, as QA-01 and SEC-01 were. A workflow's `uses:` names an action by its repository and can't take a URL, so "fully qualified URL" couldn't be followed as written; the SHA pins already meet the rule's intent. The TOML holds the new text with a history entry, and the views are regenerated.
+
+- **Rules:** CI-07.
+
+The text it replaced:
+
+- **CI-07, statement:** Workflow steps reference actions by fully qualified URL and full commit SHA, with the version as a comment, and container images by digest.

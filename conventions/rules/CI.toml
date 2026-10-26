@@ -88,7 +88,7 @@ status = "active"
 [[rule]]
 id = "CI-07"
 level = "MUST"
-statement = "Workflow steps reference actions by fully qualified URL and full commit SHA, with the version as a comment, and container images by digest."
+statement = "Workflow steps reference actions by their repository and full commit SHA, with the version as a comment, and container images by digest."
 rationale = "A mutable tag lets an upstream compromise replace the code a workflow runs."
 verification = "Pin check in the workflow analyzer (CI-09)"
 check = "CI"
@@ -96,6 +96,7 @@ trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 first rule batch: statement rewritten, since a workflow's `uses:` names an action by its repository and can't take a URL."]
 
 [[rule]]
 id = "CI-08"

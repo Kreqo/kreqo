@@ -141,7 +141,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 **CI-04** · MUST · Tier 1 platforms build and test on every pull request; Tier 2 platforms build nightly.\
 *Verified by:* Platform matrix job
 
-**CI-07** · MUST · Workflow steps reference actions by fully qualified URL and full commit SHA, with the version as a comment, and container images by digest.\
+**CI-07** · MUST · Workflow steps reference actions by their repository and full commit SHA, with the version as a comment, and container images by digest.\
 *Verified by:* Pin check in the workflow analyzer (CI-09)
 
 **CI-08** · MUST · Every workflow runs with the least privilege it needs: read-only or no permissions by default, writes granted per job, and checkouts never persist credentials. Where the forge lacks per-workflow permissions, the same outcome is enforced through repository settings and scoped tokens.\
