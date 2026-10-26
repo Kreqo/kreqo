@@ -300,3 +300,9 @@ The repository's `.cargo/config.toml` may hold the `xtask` alias only as `run --
 - **The Description run's log:** GitHub prints a step's environment in its log, so the log repeats the title and description; reading them from `GITHUB_EVENT_PATH` would keep them out ([#15](https://github.com/Kreqo/kreqo/issues/15)).
 - **Tags of trees and of tags:** a tagged tree's files are scanned without their paths, and a tag of a tag has its inner message unread ([#16](https://github.com/Kreqo/kreqo/issues/16)).
 - **A byte-order mark before a shebang:** the attribute check doesn't skip one, so an honest file that starts with both fails the crates step ([#17](https://github.com/Kreqo/kreqo/issues/17)).
+
+### What the review of the last six commits left as is
+
+- **The hook's comment string:** the commit-msg hook reads core.commentString even on git before 2.45, which ignores it; it reads `auto` only in lowercase, where git accepts any case; and it prefers core.commentString, where git 2.45 and later take whichever of the two keys was set last. Each way, the hook reads more of an honest message than git keeps and may refuse a commit that git would accept; only a message that carries a cut line on purpose, as recorded above, could get past it.
+- **The list form of the `xtask` alias:** cargo accepts `xtask = ["run", "--package", "xtask", "--locked", "--"]`, but the check refuses every form but the one string, so it fails closed.
+- **A test that reads the machine's cargo home:** `reads_the_cargo_configs_in_and_above_the_checkout` also reads the machine's CARGO_HOME, so on a machine whose cargo home config defines a `clippy` alias, it could pass without the walk above the checkout. CI has no such config.
