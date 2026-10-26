@@ -134,18 +134,17 @@ pub fn scan_pull_request(root: &Path) -> Result<()> {
 /// and this. With `git commit --verbose`, the file also holds the staged
 /// diff below that line, which git drops, and scanning it would refuse the
 /// very commit that removes a leaked secret. Only git's exact line counts,
-/// since git keeps a line that merely ends like it.
+/// bare newline included, since git keeps everything after a line that
+/// merely ends like it, ends in a carriage return or ends the file.
 fn above_cut_line<'a>(message: &'a [u8], comments: &[String]) -> &'a [u8] {
-    const CUT_LINE: &str = " ------------------------ >8 ------------------------";
+    const CUT_LINE: &str = " ------------------------ >8 ------------------------\n";
     let cut_lines: Vec<String> = comments
         .iter()
         .map(|comment| format!("{comment}{CUT_LINE}"))
         .collect();
     let mut start = 0;
     for line in message.split_inclusive(|&byte| byte == b'\n') {
-        let text = line.strip_suffix(b"\n").unwrap_or(line);
-        let text = text.strip_suffix(b"\r").unwrap_or(text);
-        if cut_lines.iter().any(|cut_line| cut_line.as_bytes() == text) {
+        if cut_lines.iter().any(|cut_line| cut_line.as_bytes() == line) {
             return message.get(..start).unwrap_or(message);
         }
         start += line.len();
@@ -565,13 +564,22 @@ mod tests {
             assert_eq!(above_cut_line(kept, &hash), kept);
         }
         // core.commentChar can be another character.
+        let semicolon = [";".to_owned()];
         assert_eq!(
             above_cut_line(
-                b"Fix\r\n; ------------------------ >8 ------------------------\r\ndiff\r\n",
-                &[";".to_owned()]
+                b"Fix\n; ------------------------ >8 ------------------------\ndiff\n",
+                &semicolon
             ),
-            b"Fix\r\n"
+            b"Fix\n"
         );
+        // git's cut line ends in a bare newline, so a line saved with CRLF,
+        // or one that ends the file, cuts nothing.
+        for kept in [
+            b"Fix\r\n; ------------------------ >8 ------------------------\r\ndiff\r\n".as_slice(),
+            b"Fix\n; ------------------------ >8 ------------------------",
+        ] {
+            assert_eq!(above_cut_line(kept, &semicolon), kept);
+        }
     }
 
     /// The Description workflow scans the title and description on every
