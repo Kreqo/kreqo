@@ -152,36 +152,46 @@ fn above_cut_line<'a>(message: &'a [u8], comments: &[String]) -> &'a [u8] {
     message
 }
 
-/// The comment strings that git may start its cut line with: its
-/// core.commentString or core.commentChar, `#` when neither is set, and
-/// every character it may pick when either is `auto`.
+/// The comment strings that git may start its cut line with, from its
+/// settings.
 fn comment_strings(root: &Path) -> Result<Vec<String>> {
-    for key in ["core.commentString", "core.commentChar"] {
-        let output = Command::new("git")
-            .args(["config", "--get", key])
-            .current_dir(root)
-            .output()
-            .context("couldn't run git")?;
-        // git exits with 1 when the setting is absent.
-        match output.status.code() {
-            Some(0) => {
-                let value = String::from_utf8_lossy(&output.stdout)
-                    .trim_end_matches(['\n', '\r'])
-                    .to_owned();
-                return Ok(if value == "auto" {
-                    "#;@!$%^&|:".chars().map(String::from).collect()
-                } else {
-                    vec![value]
-                });
-            }
-            Some(1) => {}
-            _ => bail!(
-                "git config --get {key} failed: {}",
-                String::from_utf8_lossy(&output.stderr).trim()
-            ),
-        }
+    Ok(comment_strings_for(
+        git_setting(root, "core.commentString")?.as_deref(),
+        git_setting(root, "core.commentChar")?.as_deref(),
+    ))
+}
+
+/// The comment strings for these settings: core.commentString, or else
+/// core.commentChar, or else `#`, and every character git may pick when
+/// the setting is `auto`.
+fn comment_strings_for(comment_string: Option<&str>, comment_char: Option<&str>) -> Vec<String> {
+    match comment_string.or(comment_char) {
+        Some("auto") => "#;@!$%^&|:".chars().map(String::from).collect(),
+        Some(setting) => vec![setting.to_owned()],
+        None => vec!["#".to_owned()],
     }
-    Ok(vec!["#".to_owned()])
+}
+
+/// A git setting, or nothing when it isn't set.
+fn git_setting(root: &Path, key: &str) -> Result<Option<String>> {
+    let output = Command::new("git")
+        .args(["config", "--get", key])
+        .current_dir(root)
+        .output()
+        .context("couldn't run git")?;
+    // git exits with 1 when the setting is absent.
+    match output.status.code() {
+        Some(0) => Ok(Some(
+            String::from_utf8_lossy(&output.stdout)
+                .trim_end_matches(['\n', '\r'])
+                .to_owned(),
+        )),
+        Some(1) => Ok(None),
+        _ => bail!(
+            "git config --get {key} failed: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        ),
+    }
 }
 
 /// Scans the history the scope covers: the changes twice, once reading
@@ -580,6 +590,18 @@ mod tests {
         ] {
             assert_eq!(above_cut_line(kept, &semicolon), kept);
         }
+    }
+
+    #[test]
+    fn takes_git_comment_strings_from_its_settings() {
+        assert_eq!(comment_strings_for(None, None), ["#"]);
+        assert_eq!(comment_strings_for(None, Some(";")), [";"]);
+        assert_eq!(comment_strings_for(Some("//"), Some(";")), ["//"]);
+        // For `auto`, git picks a character that starts no line of the
+        // message, from these.
+        let auto = ["#", ";", "@", "!", "$", "%", "^", "&", "|", ":"];
+        assert_eq!(comment_strings_for(None, Some("auto")), auto);
+        assert_eq!(comment_strings_for(Some("auto"), Some(";")), auto);
     }
 
     /// The Description workflow scans the title and description on every

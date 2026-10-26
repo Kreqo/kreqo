@@ -342,6 +342,19 @@ fn the_message_hook_reads_only_above_the_cut_line() -> Result<()> {
         "COMMIT_EDITMSG",
         format!("Remove the revoked token\n\n{}", diff.replace('#', ";")),
     )?;
+    repo.xtask(&["commit-msg", file]).passes()?;
+    // With `auto`, git picks the comment character, here `%`.
+    repo.git(&["config", "core.commentChar", "auto"])?;
+    let picked = format!("Remove the revoked token\n\n{}", diff.replace('#', "%"));
+    repo.write_outside("COMMIT_EDITMSG", &picked)?;
+    repo.xtask(&["commit-msg", file]).passes()?;
+    // core.commentString comes before core.commentChar.
+    repo.git(&["config", "core.commentString", "//"])?;
+    repo.xtask(&["commit-msg", file]).fails_with("github-pat")?;
+    repo.write_outside(
+        "COMMIT_EDITMSG",
+        format!("Remove the revoked token\n\n{}", diff.replace('#', "//")),
+    )?;
     repo.xtask(&["commit-msg", file]).passes()
 }
 
