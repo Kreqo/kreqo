@@ -191,13 +191,13 @@ CI hands zizmor the job's read-only token, so it also checks that each pinned SH
 
 ### What the review left for later
 
-- **Scheduled workflows lapse:** GitHub stops a public repository's scheduled workflows after 60 days without activity, which would end SEC-02's daily scan unnoticed. A Periodic check, like the one for interaction limits, will catch it.
-- **LIFE-01:** the conventions version and the README badge, in M5.
-- **LEGAL-08:** checking `reuse lint`'s licenses against the allowed list, in M5.
-- **The views:** "enforced by tooling" follows `who = "tool"`, not whether a check exists; M3's coverage report settles it.
-- **QA-01's copy check:** with the first nested workspace or repository outside the monorepo.
-- **CI-02's semver check:** with the first library release.
-- **reuse's dependencies:** pinning them by hash, with the dependency bot in M5.
+- **Scheduled workflows lapse:** GitHub stops a public repository's scheduled workflows after 60 days without activity, which would end SEC-02's daily scan unnoticed. A Periodic check, like the one for interaction limits, will catch it ([#3](https://github.com/Kreqo/kreqo/issues/3)).
+- **LIFE-01:** the conventions version and the README badge, in M5 ([#4](https://github.com/Kreqo/kreqo/issues/4)).
+- **LEGAL-08:** checking `reuse lint`'s licenses against the allowed list, in M5 ([#5](https://github.com/Kreqo/kreqo/issues/5)).
+- **The views:** "enforced by tooling" follows `who = "tool"`, not whether a check exists; M3's coverage report settles it ([#6](https://github.com/Kreqo/kreqo/issues/6)).
+- **QA-01's copy check:** with the first nested workspace or repository outside the monorepo ([#7](https://github.com/Kreqo/kreqo/issues/7)).
+- **CI-02's semver check:** with the first library release ([#8](https://github.com/Kreqo/kreqo/issues/8)).
+- **reuse's dependencies:** pinning them by hash, with the dependency bot in M5 ([#9](https://github.com/Kreqo/kreqo/issues/9)).
 
 ## 2026-10-24: the follow-up review of PR #1
 
@@ -223,7 +223,7 @@ Betterleaks' default path prefilter is off, so `.svg` files, lock files and vend
 
 ### What the follow-up review left for later
 
-- **Templates:** the member check fails on any Cargo.toml outside `members` and ignores `[workspace] exclude`, so M8's project templates need a name or rule of their own.
+- **Templates:** the member check fails on any Cargo.toml outside `members` and ignores `[workspace] exclude`, so M8's project templates need a name or rule of their own ([#10](https://github.com/Kreqo/kreqo/issues/10)).
 - **ADRs behind unsafe code:** the check confirms that an `expect(unsafe_code)` names an existing ADR; review checks that the ADR covers that code.
 - **Running xtask directly, or sharing a build folder:** run outside cargo, as `target/debug/xtask`, it falls back to the path it was compiled in; running it through cargo, as every hook and workflow does, avoids that. Under a build folder that several checkouts share, cargo can reuse one checkout's build for another, so a test reads the first checkout's copies of the files it includes, such as deny.toml; a build folder per checkout avoids that.
 - **One test:** `ci_runs_every_step` shows that CI runs each step; the `ci` job, which requires every other job, is what makes each one block a merge.
@@ -273,8 +273,8 @@ From now on, each item that a review leaves for later becomes a forge issue, as 
 
 ### What the second follow-up review left for later
 
-- **Archives by name:** Betterleaks picks the archives it unpacks by their names, such as `.zip` and `.tar.gz`, so it doesn't read inside `.docx`, `.jar` or other files that are zip archives under another name.
-- **Deleted refs:** a ref that started no push run and is deleted before the daily scan escapes it, though GitHub may keep serving its commits. The forge's own push protection could cover it.
+- **Archives by name:** Betterleaks picks the archives it unpacks by their names, such as `.zip` and `.tar.gz`, so it doesn't read inside `.docx`, `.jar` or other files that are zip archives under another name ([#11](https://github.com/Kreqo/kreqo/issues/11)).
+- **Deleted refs:** a ref that started no push run and is deleted before the daily scan escapes it, though GitHub may keep serving its commits. The forge's own push protection could cover it ([#12](https://github.com/Kreqo/kreqo/issues/12)).
 
 ## 2026-10-25: the last follow-up review of PR #1
 
@@ -295,8 +295,8 @@ The repository's `.cargo/config.toml` may hold the `xtask` alias only as `run --
 
 ### What the last follow-up review left for later
 
-- **Lint groups in the workspace table:** a group allowed at a higher priority than a denied lint it holds lowers that lint in every crate.
-- **Cargo settings that weaken tests:** `overflow-checks` or `debug-assertions` turned off in the dev or test profile, or a member's `rust-version` below the workspace's.
-- **The Description run's log:** GitHub prints a step's environment in its log, so the log repeats the title and description; reading them from `GITHUB_EVENT_PATH` would keep them out.
-- **Tags of trees and of tags:** a tagged tree's files are scanned without their paths, and a tag of a tag has its inner message unread.
-- **A byte-order mark before a shebang:** the attribute check doesn't skip one, so an honest file that starts with both fails the crates step.
+- **Lint groups in the workspace table:** a group allowed at a higher priority than a denied lint it holds lowers that lint in every crate ([#13](https://github.com/Kreqo/kreqo/issues/13)).
+- **Cargo settings that weaken tests:** `overflow-checks` or `debug-assertions` turned off in the dev or test profile, or a member's `rust-version` below the workspace's ([#14](https://github.com/Kreqo/kreqo/issues/14)).
+- **The Description run's log:** GitHub prints a step's environment in its log, so the log repeats the title and description; reading them from `GITHUB_EVENT_PATH` would keep them out ([#15](https://github.com/Kreqo/kreqo/issues/15)).
+- **Tags of trees and of tags:** a tagged tree's files are scanned without their paths, and a tag of a tag has its inner message unread ([#16](https://github.com/Kreqo/kreqo/issues/16)).
+- **A byte-order mark before a shebang:** the attribute check doesn't skip one, so an honest file that starts with both fails the crates step ([#17](https://github.com/Kreqo/kreqo/issues/17)).
