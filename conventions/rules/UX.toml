@@ -1,0 +1,325 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Interface (UX): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "UX-01"
+level = "MUST"
+statement = "Visual style comes only from the shared design tokens, in the DTCG 2025.10 format; no hard-coded colors, sizes or fonts."
+rationale = "Tokens are the one place where contrast is checked and themes are applied."
+verification = "CI: lint for hard-coded colors, sizes and fonts"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-02"
+level = "MUST"
+statement = "Every app is built from the suite's component library and bundled fonts, so it looks the same on every platform. New patterns are proposed to the library before they ship, may incubate in one app with Experimental status (UX-20), and are promoted when a second app needs them."
+rationale = "Proposing first keeps one design language; incubating avoids shared code with a single user (ARCH-07)."
+verification = "Review checklist: library components only; incubating patterns marked Experimental"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-03"
+level = "MUST NOT"
+statement = "Apps ship a toolkit's default theme or a platform-native widget style, or ship on Linux before an ADR has decided client-side versus system window decorations, the Flathub presentation question (BRAND-04 covers icon styles)."
+rationale = "The suite's own look is a deliberate departure from GNOME and KDE styling; Flathub promotion depends on the decorations choice."
+verification = "Review checklist: no default theme; decorations ADR linked"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["new-app"]
+open = { question = "Window decorations on Linux: client-side or system", leaning = "" }
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-04"
+level = "MUST"
+statement = "Defaults suit beginners; advanced features are disclosed progressively but always findable through search."
+rationale = "Progressive disclosure keeps the first screen simple without hiding depth from those who look."
+verification = "Review checklist: new features reachable from search and the command palette (UX-11)"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["feature"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-05"
+level = "MUST NOT"
+statement = "Apps use dark patterns: streaks that punish missed days, fake urgency, nagging or hidden cancelation."
+rationale = "Manipulation of attention breaks Principle 4, and Flathub rejects manipulative patterns."
+verification = "Review checklist: no dark patterns"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-06"
+level = "MUST"
+statement = "Terminology follows the shared glossary in every app and language (I18N-10)."
+rationale = "One word per concept across the suite lets users transfer what they learned."
+verification = "Review checklist: glossary terms; Weblate consistency check (I18N-10)"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-07"
+level = "MUST"
+statement = "Error messages say what happened and what to do next, in plain language (UX-15, UX-26)."
+rationale = "An error without a next step leaves the user stuck."
+verification = "Review checklist: errors name the cause and the action"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-08"
+level = "MUST"
+statement = "Interfaces follow the suite's interface guidelines. The guidelines follow the common skeleton (principles, foundations, patterns, components, inputs, platforms, brand, reference), carry a dated change log on every page, and are owned by the module named in GOVERNANCE.md (GOV-07). Where they are silent, the host platform's guidelines apply. Details: interface guidelines."
+rationale = "A named owner and a change log keep the guidelines current, and a fallback covers what they omit."
+verification = "Review checklist: guidelines followed; owner named in GOVERNANCE.md"
+check = "Review"
+trigger = "first-release"
+who = "you"
+moments = ["feature"]
+open = { question = "Interface guidelines", leaning = "Write them alongside the first app" }
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-09"
+level = "MUST"
+statement = "Behavior follows each platform's conventions: shortcuts (Cmd or Ctrl), text editing, scrolling and window controls (UX-16)."
+rationale = "Users carry platform habits between apps; breaking them costs trust."
+verification = "Review checklist: platform conventions per Tier 1 platform"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-10"
+level = "MUST"
+statement = "On mobile, navigation follows platform idioms: back gestures, swipe-back, safe areas and share sheets."
+rationale = "Mobile users navigate by system gestures that an app cannot redefine."
+verification = "Review checklist: mobile idioms on iOS and Android"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-11"
+level = "MUST"
+statement = "Every app has a command palette that reaches every action and shows each action's current shortcut (UX-16)."
+rationale = "A palette makes every action findable by name without memorizing menus."
+verification = "Review checklist: every new action registered in the palette"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-12"
+level = "MUST"
+statement = "Layouts adapt to screen size, input type (touch, mouse, keyboard, pen) and font scale. Every window works from 360×294 logical pixels (phone-capable apps) or 1024×600 (desktop-only apps) and at 200% text without clipping; content width is capped on wide windows. CI takes screenshots at these sizes (QA-06)."
+rationale = "Named sizes make adaptivity testable, and screenshots catch clipping before users do."
+verification = "CI: screenshots at the minimum sizes and 200% text"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-13"
+level = "SHOULD"
+statement = "Apps teach themselves in context; tips are opt-in and can be dismissed for good."
+rationale = "A tip that returns after dismissal is nagging (UX-05)."
+verification = "Review checklist: tips opt-in and dismissible for good"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-14"
+level = "MUST"
+statement = "Users can customize the look through token overrides (density, fonts, accent, including the system accent). A user or system accent overrides the brand hue in the interface; the brand hue survives in the app icon. The user's hue is applied with the suite's role lightness and chroma (BRAND-01), so an accent cannot break contrast, and user themes pass the same contrast checks (A11Y-03)."
+rationale = "Keeping role lightness and chroma under a user hue preserves contrast, as COSMIC's `with_accent` does."
+verification = "CI: contrast test over user-theme tokens; Review checklist: accent precedence"
+check = "Review"
+trigger = "one-point-oh"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-15"
+level = "MUST"
+statement = "UI text follows the suite writing guide: one English variant; one capitalization style per element type, chosen by ADR; verb-first labels naming the action and its object; no OK, Yes or No buttons; an ellipsis only on commands that need more input before acting, as defined by the same ADR; toggles named by their positive state, without Enable or Use; typographic quotes and dashes; no internal names; errors without blame or jokes, next to the problem, with a fix action where possible. A CI lint over the `.ftl` source strings checks what it can. Details: interface guidelines."
+rationale = "Consistent wording across apps is Principle 7, and a lint catches the mechanical part."
+verification = "CI: `.ftl` string lint; Review checklist: writing guide"
+check = "CI"
+trigger = "always"
+who = "you"
+moments = ["setup"]
+open = { question = "Capitalization style per element type, and when an ellipsis is used", leaning = "" }
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-16"
+level = "MUST"
+statement = "Shortcuts come from one suite keymap defined as data and mapped to each platform's standard table. App shortcuts never reuse a standard shortcut for another action and never use a system modifier (Super or Meta; Control on macOS). Every shortcut can be remapped with conflict detection, and the command palette (UX-11) shows each action's current shortcut."
+rationale = "A keymap as data can be checked for conflicts and mapped per platform by tooling."
+verification = "CI: keymap conflict and reserved-shortcut check"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-17"
+level = "MUST"
+statement = "Apps notify only about events the user asked to hear about, or that need action while the app is in the background; never for promotion, re-engagement or streak pressure. Every notification type can be turned off in the app, stale notifications are withdrawn, and no information appears only in a notification. Review reminders are opt-in and scheduled by the user. Details: interface guidelines."
+rationale = "Unasked notifications manipulate attention (Principle 4) and get apps muted."
+verification = "Review checklist: every notification type opt-out; none promotional"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-18"
+level = "SHOULD"
+statement = "Defaults work with no setup at first launch; setting changes apply immediately without a restart; system-wide settings are followed, never duplicated; task options sit next to the task; there is no catch-all Advanced section. Details: interface guidelines."
+rationale = "Duplicated or restart-bound settings drift from the system and from what the user sees."
+verification = "Review checklist: settings conventions"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-19"
+level = "SHOULD"
+statement = "Every view that can be empty says what belongs there and offers the next action (create, import, open). An app reset to empty returns to its first-run state. Details: interface guidelines."
+rationale = "An empty view without guidance reads as broken."
+verification = "Review checklist: empty state for each new view"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-20"
+level = "MUST"
+statement = "Each library component carries a status: Experimental, Stable or Deprecated. It becomes Stable only with tokens only, every interaction state specified, defined keyboard and screen-reader behavior, right-to-left and 200% text support, usage and content docs, and snapshot tests. Deprecation follows REL-07."
+rationale = "A definition of done keeps unfinished components out of stable apps."
+verification = "CI: status field required; Stable gated on snapshot tests and docs"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-21"
+level = "MUST"
+statement = "The interface never blocks: long work runs in the background with progress and instant cancel, and no dialog asks for input before an action that has a sensible default."
+rationale = "A blocked interface costs the user time; a default plus adjusting afterwards costs nothing."
+verification = "Review checklist: long operations cancellable; no pre-action dialogs"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-22"
+level = "SHOULD"
+statement = "Commands run at once with default or last-used settings and offer a way to adjust the last action. Details: interface guidelines."
+rationale = "Acting first and adjusting afterwards is faster than a dialog before every command."
+verification = "Review checklist: adjust-last-action available"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-23"
+level = "MUST"
+statement = "Every control has a tooltip: its name, a one-to-three-line imperative description that neither restates the name nor states default values, its shortcut, and for a disabled control the reason (A11Y-01). Details: interface guidelines."
+rationale = "Tooltips teach the interface in place (Principle 6) and show shortcuts where they are used."
+verification = "Review checklist: tooltip on every new control"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-24"
+level = "MUST"
+statement = "Changes to shared components, tokens, interaction patterns or terminology need approval from the design owner (GOV-07). UI pull requests include before-and-after screenshots or a recording. New interaction patterns are validated by use-case analysis or user testing before they enter the component library (UX-02)."
+rationale = "Shared UI changes reach every app; a named owner and visual evidence catch drift."
+verification = "Review checklist: design-owner approval; before-and-after screenshots"
+check = "Review"
+trigger = "first-release"
+who = "you"
+moments = ["feature"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-25"
+level = "MUST NOT"
+statement = "Apps carry third-party advertising or promote cryptocurrencies or related services."
+rationale = "Blue Angel DE-UZ 215 excludes advertising, and promotion breaks Principle 4."
+verification = "Review checklist: no ads or cryptocurrency promotion"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "UX-26"
+level = "SHOULD"
+statement = "Errors a user or developer can hit carry a stable code with a documentation page, linked from the message (UX-07). Details: interface guidelines."
+rationale = "A stable code is searchable and keeps its page when the wording changes."
+verification = "Review checklist: new errors have a code and a page"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"

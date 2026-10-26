@@ -1,0 +1,287 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Security (SEC): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "SEC-01"
+level = "MUST"
+statement = "`unsafe` is denied workspace-wide (`unsafe_code = \"deny\"` in the workspace lints). A crate that needs it has an ADR and a crate-root `#![expect(unsafe_code, reason = \"ADR-NNNN\")]` that CI checks. Every `unsafe` block has a human-written SAFETY comment, is judged sound against the Rust Reference and t-opsem decisions, and runs under Miri (SEC-19). Permit: `unsafe` in FFI crates under the same conditions, with the permit cited in the `expect` reason."
+rationale = "A workspace `forbid` cannot be lowered per crate; `expect` makes every exception visible to CI."
+verification = "CI: workspace lint table (QA-01) with `undocumented_unsafe_blocks`; `expect` reason resolved to an ADR; Miri job"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+history = ["2026-10-24 first rule batch: verification names the workspace lint table (QA-01)."]
+
+[[rule]]
+id = "SEC-02"
+level = "MUST"
+statement = "cargo-deny checks every pull request for advisories, licenses and duplicate dependencies, and a daily scheduled scan covers the default branch and every supported release tag (REL-09). A written policy names the advisory severities that block merges and releases. Each deny.toml suppression has a justification and an expiry date. From 1.0, advisories that do not affect the suite get a VEX statement. Clippy's security lints (QA-01) are the project's static analysis, under the same threshold."
+rationale = "New advisories hit code already released; a daily scan of release tags catches them after merge."
+verification = "CI: cargo-deny pull-request job and daily scheduled job; suppressions without an expiry fail"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-03"
+level = "MUST"
+statement = "No secret enters the repository. A secret scanner the organization runs itself (Betterleaks or an equivalent) checks every push in CI and in a pre-receive or pre-commit hook. A leaked secret is revoked before it is removed from history."
+rationale = "A secret in history is already compromised, so revocation comes before cleanup; the forge may offer no scanner."
+verification = "CI: secret-scanner job on every push; pre-receive hook on the forge"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-04"
+level = "MUST"
+statement = "SECURITY.md states: the private intake (a security@kreqo.org mailbox, plus the forge's confidential reports where it supports them); acknowledgement within 2 business days; assessment within 7 days; status updates at least weekly; supported versions (REL-09); a default embargo of up to 90 days, shorter when exploited; and credit for reporters who want it."
+rationale = "Reporters need one address to write to and a timeline they can hold the project to."
+verification = "CI: SECURITY.md present with each required section"
+check = "CI"
+trigger = "always"
+who = "you"
+moments = ["setup"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-05"
+level = "MUST"
+statement = "Projects meet OSPS Baseline v2026.08.28, re-pinned deliberately on each Baseline release: Level 1 on Day one, Level 2 by first release, Level 3 by 1.0. Evidence is published through the Best Practices badge's Baseline levels or a Security Insights file. The practices behind Scorecard's checks are enforced by forge-neutral tools (CI-07 to CI-10, QA-14, SEC-20); a Scorecard score is not a target."
+rationale = "Level 1 is mostly repository settings, and the Baseline tells new compliance efforts to use its current version."
+verification = "Release checklist: Baseline level evidence (badge or Security Insights file)"
+check = "Release"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-06"
+level = "MUST"
+statement = "Every parser and importer is fuzzed. Fuzz targets compile on every pull request, fuzzing runs on a schedule on Linux CI (cargo-fuzz does not support Windows), every crash becomes a regression test, and corpora are versioned."
+rationale = "Parsers take untrusted input, and a crash turned into a test cannot come back."
+verification = "CI: fuzz-build job on pull requests; scheduled fuzz job; corpus in version control"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-07"
+level = "MUST"
+statement = "Every release artifact (archives, installers, Flatpak bundles, crates) is built by the release pipeline, not on a workstation. Each carries an embedded dependency list (cargo-auditable), a CycloneDX or SPDX SBOM and SLSA v1.2 provenance, and is signed: keyless Sigstore through the forge's OIDC identity where the forge supports it, otherwise a self-managed key (SEC-16) as a Sigstore bundle, minisign or SSH signature. CI verifies all of these before publishing. Target SLSA Build Level 2 at first release and Level 3 by 1.0."
+rationale = "Pipeline-built, attested artifacts can be traced to their source and verified by anyone who downloads them."
+verification = "CI: release pipeline verifies signature, SBOM and provenance before publishing"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-08"
+level = "SHOULD"
+statement = "New dependencies are audited or covered by trusted audits (cargo-vet); fewer, well-maintained crates are preferred."
+rationale = "cargo-vet records who reviewed each crate, so an unreviewed dependency shows on the pull request."
+verification = "CI: cargo-vet job"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-09"
+level = "SHOULD"
+statement = "Builds are reproducible: the same source and toolchain yield bit-identical artifacts. Becomes a MUST at 1.0 (SLSA Build Level 3)."
+rationale = "A reproducible build lets anyone confirm that a published artifact matches its source."
+verification = "CI: rebuild of release artifacts with hash comparison"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-10"
+level = "MUST"
+statement = "The independent audit of sync and encryption is published in full, findings are tracked to resolution, and the audit is repeated after any change to the protocol or cryptography. It happens before E2EE sync is called stable, 1.0 at the latest. A security review of each app's security boundary is repeated at least every five years."
+rationale = "A published audit lets users verify the encryption claims instead of trusting them, as Standard Notes and Proton do."
+verification = "Release checklist: audit report published; findings tracker; date of last boundary review"
+check = "Release"
+trigger = "e2ee"
+who = "you"
+moments = ["release"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-11"
+level = "MUST"
+statement = "Cryptography uses only published standard algorithms and protocols from vetted, maintained crates chosen by ADR; no primitive or protocol is invented or modified. Keys and nonces come from a CSPRNG. TLS goes through rustls, version 1.2 or later, with certificate verification always on. Algorithms are swappable by protocol version."
+rationale = "Home-made cryptography fails in ways review cannot see, and standard algorithms keep public source outside export controls."
+verification = "Review checklist: cryptographic crates match the ADR; no custom primitives; rustls with verification on"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["dependency"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-12"
+level = "MUST"
+statement = "Every account with write, admin, release, publish or security-advisory access uses phishing-resistant MFA: hardware keys or passkeys, two registered per account with one kept offline. This covers the forge, the DNS registrar, crates.io and the account it logs in through, Flathub, app stores and signing infrastructure. SMS is not accepted, recovery codes are stored offline, and the forge requires 2FA for every user with write access."
+rationale = "A phished maintainer account is the shortest path to a malicious release."
+verification = "Settings audit: MFA method and key count per account in the asset register (LIFE-02)"
+check = "Settings"
+trigger = "always"
+who = "you"
+moments = ["setup"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-13"
+level = "MUST"
+statement = "A written vulnerability response process follows the OpenSSF runbook: intake, triage, private fix on a private branch or mirror that runs CI, release, advisory, disclosure. Vulnerabilities of medium or higher severity are fixed and released within 60 days of becoming public, critical ones as fast as possible. Once two maintainers exist, two people can read the intake and publish advisories."
+rationale = "A written runbook keeps the fix private until release; the 60-day target is a Best Practices criterion."
+verification = "Review checklist: process document current; timeline recorded for each report"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-14"
+level = "MUST"
+statement = "Every fixed vulnerability gets four things: a RustSec advisory for affected published crates, filed after the fix is public (RustSec handles no embargoes); an advisory page on kreqo.org with OSV JSON; a CVE ID for medium or higher severity, requested from MITRE; and an entry in the release notes (REL-13)."
+rationale = "Downstream scanners read the RustSec, OSV and CVE feeds; a fix missing from them never reaches users' tooling."
+verification = "Release checklist: RustSec advisory, OSV page, CVE ID and release-note entry linked"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-15"
+level = "MUST"
+statement = "An incident playbook covers a compromised maintainer account, a leaked signing key or token, a compromised forge or runner, a malicious dependency and a malicious release. Steps: revoke and rotate first; yank or replace affected releases with signed notices; re-key and publish new verification identities (DOC-08); publish a post-mortem within 30 days. Personal-information incidents also follow PRIV-11."
+rationale = "Revoking before cleaning up limits what a stolen credential can still do."
+verification = "Review checklist: playbook covers the five scenarios and names who acts"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-16"
+level = "MUST"
+statement = "Release-signing keys live in a hardware token or KMS, not in a CI secret readable by build steps or on a download server. Custody is documented (who holds them, where, how), with an offline backup held by a second trusted person under LIFE-02, an expiry and rotation schedule, and a published revocation path."
+rationale = "A key readable by build steps is a key any compromised dependency can use."
+verification = "Review checklist: key custody document current; backup holder named in the asset register"
+check = "Review"
+trigger = "first-release"
+who = "you"
+moments = ["release"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-17"
+level = "MUST"
+statement = "CI secrets live only in the forge's secret store or an external KMS, scoped per environment and job, unavailable to pull-request workflows, and rotated on a schedule and whenever a maintainer leaves. Every rotation is logged."
+rationale = "A secret a pull-request workflow can read is a secret any contributor can exfiltrate."
+verification = "Review checklist: secret inventory with scope and last rotation"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-18"
+level = "MUST"
+statement = "Each app has a security assessment and threat model: attack surface, trust boundaries, mitigations, and why common weaknesses are countered. Someone other than its author reviews it, and it is updated at each major release."
+rationale = "A threat model tells reviewers where the risk-tier paths are before the code is read."
+verification = "Release checklist: threat model reviewed by a second person and dated"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-19"
+level = "MUST"
+statement = "Crates with `unsafe` or FFI run their tests and fuzz targets under AddressSanitizer, under Miri where it can execute, and under `cargo careful`, in scheduled CI on a pinned nightly. Miri cannot execute C code behind FFI. Real-time audio crates can add RealtimeSanitizer."
+rationale = "Sanitizers and Miri catch undefined behavior that passing tests hide."
+verification = "CI: scheduled AddressSanitizer, Miri and cargo-careful jobs on the pinned nightly"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-20"
+level = "SHOULD"
+statement = "A dependency-update bot runs weekly for Cargo, CI actions and toolchains, groups related crates, and waits at least 7 days after an upstream release except for security fixes. Cargo's native minimum publish age goes into the template once it reaches stable Rust."
+rationale = "A 7-day cooldown gives a malicious crate release time to be reported and yanked before it is pulled in."
+verification = "CI: bot configuration in the template; weekly update pull requests"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-21"
+level = "SHOULD"
+statement = "Each project holds an OpenSSF Best Practices badge: Passing by first release, Silver by 1.0. Passing requires that at least one primary developer knows secure design and the common error classes for this kind of software."
+rationale = "The badge questionnaire is a public, itemized record of which practices the project actually meets."
+verification = "Release checklist: badge level link"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-22"
+level = "SHOULD"
+statement = "Embargoed pre-notification goes only to downstream packagers who ship the suite (Flathub, nixpkgs, distributions), 1 to 7 days before disclosure. An embargo list exists only once there is a real downstream ecosystem."
+rationale = "Packagers who learn of a fix with the public ship vulnerable builds for days afterward."
+verification = "Review checklist: embargo list membership and notification dates"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "SEC-23"
+level = "SHOULD"
+statement = "Release binaries keep the toolchain's default hardening, and overflow checks stay on in security-critical crates."
+rationale = "Disabling hardening or overflow checks turns a parser bug into silent wraparound or a memory-safety hole."
+verification = "CI: release profile flags checked against the template"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"

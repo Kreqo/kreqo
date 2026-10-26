@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Code review (REV): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "REV-01"
+level = "MUST"
+statement = "A reviewer approves a change once it clearly improves the codebase and meets every applicable MUST in this document. Perfection is not a merge criterion; further polish goes into a follow-up issue."
+rationale = "Review is the bottleneck, and \"better\" ships while \"perfect\" waits."
+verification = "Review checklist: approval states what improved; follow-ups filed"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REV-02"
+level = "SHOULD"
+statement = "Reviews follow an order: is the PR valid, is the problem real, does the approach fit, does it work, then the code itself. Every review ends with a summary of what was checked and what couldn't be. Comments use Conventional Comments labels, and only `issue`, `todo` or `(blocking)` comments block a merge. Reviewers never block on personal preference or on style these conventions don't set, and never widen a PR's scope. Details: CONTRIBUTING.md."
+rationale = "A fixed order finds the wrong problem before the wrong line, and labels say what blocks."
+verification = "Review checklist: summary present; blocking comments labeled"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "REV-03"
+level = "SHOULD"
+statement = "Maintainers give a first response to a PR within 3 business days: approve, request changes or hand over. Authors may ping after a week. A reviewer who can't follow up says so. Target review times by change type are published, and actual times are reported each release."
+rationale = "Silence is what drives contributors away; a stated time is a promise they can hold."
+verification = "Periodic audit: review-time report per release"
+check = "Periodic"
+trigger = "open-to-contributions"
+who = "you"
+moments = ["contributors"]
+added = "0.1.0"
+status = "active"
+history = ["2026-10-23 solo-first edit: waits for the trigger 'open-to-contributions' (was 'first-release')."]
+
+[[rule]]
+id = "REV-04"
+level = "MUST"
+statement = "Review disagreements are settled by data first, then by this document, then by the area owner, then by the decision-maker named in GOVERNANCE.md. A design dispute becomes an RFC, and the decision and its reason are recorded on the PR."
+rationale = "A known escalation path ends arguments; an unknown one ends contributions."
+verification = "Review checklist: decision recorded on the PR"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"

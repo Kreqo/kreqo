@@ -1,0 +1,126 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# What every pull request passes before it merges (CI-02): `cargo xtask
+# check`, split into jobs, with tests on the Tier 1 platforms (CI-04,
+# PLAT-03). The ruleset requires the `ci` job, which needs every other job
+# here, and the Description workflow's `description` job. Hardened as
+# CI-07, CI-08 and CI-09 ask; zizmor checks this file.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_PROFILE_DEV_DEBUG: "0" # A smaller build cache, without debug info.
+
+jobs:
+  checks:
+    name: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # Betterleaks scans the whole history (SEC-03).
+          persist-credentials: false
+      - name: Install the pinned toolchain (CI-16)
+        shell: bash
+        # The runner's own stable toolchain would otherwise enter the cache
+        # key, so every runner image update would empty the cache.
+        run: |
+          rustup toolchain install
+          rustup toolchain uninstall stable || true
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: checks # Shared with the daily scan, which builds the same.
+      - name: Read the pinned tool versions
+        id: tools
+        run: cargo xtask tools >> "$GITHUB_OUTPUT"
+      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # v2.87.31
+        with:
+          tool: ${{ steps.tools.outputs.cargo-deny }},${{ steps.tools.outputs.zizmor }}
+          fallback: none # Only installs that the pinned manifests verify.
+      - name: Install reuse
+        env:
+          VERSION: ${{ steps.tools.outputs.reuse }}
+        run: pipx install "reuse==$VERSION"
+      - name: Install Betterleaks
+        env:
+          VERSION: ${{ steps.tools.outputs.betterleaks }}
+          SHA256: ${{ steps.tools.outputs.betterleaks-sha256 }}
+        run: |
+          archive="betterleaks_${VERSION}_linux_x64.tar.gz"
+          curl --fail --silent --show-error --location --output "$RUNNER_TEMP/$archive" \
+            "https://github.com/betterleaks/betterleaks/releases/download/v$VERSION/$archive"
+          echo "$SHA256  $RUNNER_TEMP/$archive" | sha256sum --check --strict -
+          mkdir -p "$RUNNER_TEMP/bin"
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP/bin" betterleaks
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: Check
+        run: cargo xtask check fmt docs crates deny reuse secrets tool-tests
+      # Its own step, so that the Check step never sees the token (CI-08).
+      # xtask, which the pull request builds, runs zizmor with it here, and
+      # the token is read-only. It runs even when the Check step failed, so
+      # that one failure never hides another.
+      - name: Audit the workflows
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: cargo xtask check workflows
+
+  build:
+    name: build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install the pinned toolchain (CI-16)
+        shell: bash
+        # The runner's own stable toolchain would otherwise enter the cache
+        # key, so every runner image update would empty the cache.
+        run: |
+          rustup toolchain install
+          rustup toolchain uninstall stable || true
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: Check
+        run: cargo xtask check clippy test
+
+  ci:
+    name: ci
+    if: always()
+    needs: [checks, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Require every job to succeed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for result in $RESULTS; do
+            if [ "$result" != success ]; then
+              echo "A required job ended with: $result"
+              exit 1
+            fi
+          done

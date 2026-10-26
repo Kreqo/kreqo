@@ -1,0 +1,27 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# The root workspace (T1). Every crate inherits the lint table below with
+# `[lints] workspace = true`, which `cargo xtask check crates` confirms
+# (QA-01 as reworded).
+
+[workspace]
+resolver = "3" # REL-04
+members = ["xtask"]
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.97" # MSRV window: latest stable minus two (REL-04)
+repository = "https://github.com/Kreqo/kreqo"
+
+[workspace.lints.rust]
+unsafe_code = "deny" # SEC-01
+
+[workspace.lints.clippy]
+# QA-01: suppressions use #[expect(lint, reason = "…")], never an allow
+# attribute. Clippy skips inner ones, so `cargo xtask check crates` finds those.
+allow_attributes = "deny"
+allow_attributes_without_reason = "deny"
+# SEC-01: every unsafe block and unsafe function documents its safety.
+undocumented_unsafe_blocks = "deny"
+missing_safety_doc = "deny"

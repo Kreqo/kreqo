@@ -1,0 +1,136 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Business model and stewardship (BIZ): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "BIZ-01"
+level = "MUST"
+statement = "Licenses only get freer: no project, crate, format or release is ever relicensed under more restrictive or source-available terms, and license changes go through an RFC."
+rationale = "Permissive code can legally be closed; only a written promise stops it."
+verification = "Review checklist: license changes via RFC; CI: license file diff flagged"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["business"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "BIZ-02"
+level = "MUST"
+statement = "The open/paid boundary is public and versioned before anything is sold. A feature can be paid only if its likely buyer is an organization, not an individual (SSO, central deployment and admin policy, audit logs, SLAs, managed hosting), and paid code lives in separate, clearly labeled repositories. Because apps are GPL and contributions come under the DCO without a CLA, no proprietary license of the apps is ever sold; paid offerings are services, support, hosting, or paid builds of the same code (BIZ-05)."
+rationale = "A buyer-based test is the only open-core boundary that doesn't drift."
+verification = "Release checklist: boundary document versioned"
+check = "Review"
+trigger = "commercial"
+who = "you"
+moments = ["money"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "BIZ-03"
+level = "MUST"
+statement = "Nothing is ever taken from the open apps. A released feature is never moved to a paid tier, held back by a delay, time-limited or artificially capped (no limits on notes, decks, devices or sync size). The open apps download and run with no email, account or sign-in, and benchmarking is allowed."
+rationale = "Removing features from the open apps is how open-core companies lose their community."
+verification = "Review checklist; Release checklist: feature list diff against the last release"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["business"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "BIZ-04"
+level = "MUST NOT"
+statement = "Security, privacy, encryption, accessibility, localization, import, export or self-hosting is offered only as a paid feature."
+rationale = "Paywalling safety or exit turns users into hostages."
+verification = "Review checklist"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["business"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "BIZ-05"
+level = "MUST"
+statement = "The open apps contain no locked features, license-key unlocks, upsell prompts or promotion of proprietary add-ons. Any paid offering is disclosed up front in listings and READMEs, and an ADR checks each store's purchase rules (Apple forbids license-key unlocks for consumers; Flathub requires paid features to be disclosed and testable by reviewers). If an app is sold in a store, the store build is identical to the free download."
+rationale = "Stores and F-Droid flag upsells as anti-features, and users read them as bait."
+verification = "Release checklist: store rules ADR; build identity check"
+check = "Release"
+trigger = "commercial"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "BIZ-06"
+level = "MUST"
+statement = "Community contributions are judged on merit even when they overlap a paid feature. They are never refused or delayed to protect revenue, and such cases are decided in public."
+rationale = "Refusing a contribution to protect revenue is the fork trigger."
+verification = "Review checklist: overlap cases decided publicly"
+check = "Review"
+trigger = "open-to-contributions"
+who = "you"
+moments = ["contributors"]
+added = "0.1.0"
+status = "active"
+history = ["2026-10-23 solo-first edit: waits for the trigger 'open-to-contributions' (was 'first-release')."]
+
+[[rule]]
+id = "BIZ-07"
+level = "MUST"
+statement = "The non-profit owns the trademarks, domains, signing keys, store and developer accounts, app IDs and Flathub ownership; until it exists, they are held under LIFE-02 escrow. Code, designs and marks made by any affiliated company belong to the non-profit or are irrevocably licensed to it. The company works under a public, binding agreement with the non-profit that forbids relicensing, and lets the non-profit release under an open license any shared code the company stops developing in the open."
+rationale = "Whoever owns the identities owns the project; the commons must own them."
+verification = "Review checklist: ownership listed in the asset register; agreement published"
+check = "Review"
+trigger = "commercial"
+who = "you"
+moments = ["money"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "BIZ-08"
+level = "MUST"
+statement = "A public funding policy: sponsors get no decision rights over the roadmap, priorities or this document, and money speeds up planned work but never adds to the plan. Written donation-acceptance criteria list sponsor benefits (logo placement, contacts); sponsorships that may conflict with the principles are discussed publicly with contributors before acceptance. Income is balanced so no single sponsor exceeds a stated share. Money goes only through a fiscal host or the legal entity, never a personal account, and an accountant confirms tax treatment before any money is accepted."
+rationale = "Blender's 2026 patronage reversal shows a sponsor can cost more than it pays."
+verification = "Review checklist: policy published before the first payment"
+check = "Review"
+trigger = "funds"
+who = "you"
+moments = ["money"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "BIZ-09"
+level = "MUST"
+statement = "A yearly public report gives income by source, spending by category, and paid contributors and grants; funded work programs publish their budget and results; paid contributors publish short, regular work reports."
+rationale = "Public money needs public accounts (Principle 13)."
+verification = "Release checklist: yearly report published"
+check = "Periodic"
+trigger = "funds"
+who = "you"
+moments = ["money"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "BIZ-10"
+level = "MUST"
+statement = "An ADR decides the legal form before commercial use or recurring sponsorship. The default is a federal not-for-profit under the Canada Not-for-profit Corporations Act, registered in Quebec, holding the code copyrights, trademarks and domains, with any company operating under license from it. Details: vision document and statutes."
+rationale = "The structure must exist before money or sales, not after a dispute."
+verification = "Review checklist: ADR accepted"
+check = "Review"
+trigger = "commercial"
+who = "you"
+moments = ["money"]
+open = { question = "Legal form", leaning = "A federal not-for-profit registered in Quebec" }
+added = "0.1.0"
+status = "active"

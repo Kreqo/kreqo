@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# Build output never enters the repository (QA-14). Only the root's, so that
+# a source folder named target can't vanish from a commit; nested workspaces
+# add their own line once they're allowed (docs/decisions.md).
+/target/

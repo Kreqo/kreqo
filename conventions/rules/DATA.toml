@@ -1,0 +1,224 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Data and sync (DATA): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "DATA-01"
+level = "MUST"
+statement = "Every feature works offline; the network only adds sync and sharing."
+rationale = "A feature that needs a server stops working when the server does."
+verification = "CI: test suite passes with the network disabled"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-02"
+level = "MUST"
+statement = "File formats and schemas carry a version, and every version change ships an automatic, tested migration. Migration tests use real sample files from every released format version. A storage-model change ships an export path back to the previous open format, so no migration strands users."
+rationale = "Sample files from every released version are the only proof a migration handles data users actually have."
+verification = "CI: migration tests over the sample-file corpus, one file set per released format version"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-03"
+level = "MUST"
+statement = "Writes are crash-safe (atomic replace or journaling): a crash never corrupts saved data."
+rationale = "Atomic replace or a journal leaves either the old file or the new one after a crash, never a torn one."
+verification = "CI: crash-injection test on the write path"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-04"
+level = "SHOULD"
+statement = "Existing open formats (CommonMark, iCalendar) are preferred over new ones; any new format gets a written specification."
+rationale = "Existing formats already have readers in other tools; a specification is what lets others write one."
+verification = "Review checklist: format choice justified; specification linked for any new format"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["format"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-05"
+level = "SHOULD"
+statement = "CRDTs are used where concurrent edits have to merge, such as shared text; simpler append-only logs where they suffice."
+rationale = "CRDTs merge concurrent edits without a server deciding; logs are simpler where edits never conflict."
+verification = "Review checklist: merge strategy stated per data type"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["format"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-06"
+level = "MUST"
+statement = "No feature depends on the organization's servers to keep working; sync servers are self-hostable."
+rationale = "Self-hostable servers are what let data outlive the organization (LIFE-06)."
+verification = "Review checklist: no hard-coded organization endpoint; self-hosting instructions current"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-07"
+level = "MUST"
+statement = "Users can export all their data in a documented, open format at any time. Before any hosted service ships, that service exports, on request, the account data it holds about a user in a structured, commonly used format."
+rationale = "Export is the portability guarantee; Law 25 (s. 27) entitles users to their hosted data in a structured format."
+verification = "CI: export round-trip test; hosted-service export endpoint test"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-08"
+level = "MUST"
+statement = "Autosave is on by default. Destructive actions are undoable; only where undo is impossible are they confirmed, by a dialog whose button names the action and is never the default. Undo is multi-level, names the action, and stays available after any undo notice disappears."
+rationale = "People click through confirmations, and undo that outlives a timed notice meets the WCAG 2.2 timing criterion."
+verification = "Review checklist: destructive actions listed, each with undo or a justified confirmation"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-09"
+level = "SHOULD"
+statement = "Apps import data from the leading alternatives; for the learning app, Anki decks and Obsidian vaults."
+rationale = "Users switch only when their existing data comes with them."
+verification = "Release checklist: import test log against sample decks and vaults"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-10"
+level = "MUST"
+statement = "Sync is end-to-end encrypted with keys held only on user devices, and metadata such as file and deck names is in scope. Transport is always TLS, including on self-hosted servers. Operators never hold decryption keys and keep server metadata minimal and short-lived."
+rationale = "A server that cannot read the data cannot leak it or be compelled to disclose it."
+verification = "Review checklist: key material never leaves the device; TLS enforced; server metadata schema reviewed"
+check = "Review"
+trigger = "sync"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-11"
+level = "MUST"
+statement = "User content and learning history (notes, cards, review logs, scheduler parameters) live in documented open files that other tools can read. Any database or index is a cache that can be rebuilt from those files."
+rationale = "Files other tools can read outlive the app; a database only the app reads does not."
+verification = "Review checklist: every data type has a file representation; rebuild-from-files test present"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["format"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-12"
+level = "MUST"
+statement = "Adjacent releases (N and N−1) interoperate over sync and plugin APIs. Data from a newer version opens with a warning, unknown fields survive saves and sync, and overwriting newer data asks first. A newer format is never written to shared data until every participating device supports it."
+rationale = "Users update devices one at a time; like Rust editions, versions coexist without splitting the data."
+verification = "CI: cross-version sync test (N against N−1); unknown-field round-trip test"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-13"
+level = "MUST"
+statement = "The sync protocol is versioned. Servers support the previous minor protocol version for at least 12 months. Clients detect a version mismatch and explain it. A conformance test suite is published for third-party servers."
+rationale = "Self-hosted servers update slowly, and a conformance suite is what lets third parties implement the protocol."
+verification = "CI: conformance suite runs against the reference server on the current and previous protocol versions"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-14"
+level = "MUST"
+statement = "Derived data (search indexes, embeddings, thumbnails, caches) gets its source's protection: encrypted where the source is, deleted with it, kept out of logs, and never synced unencrypted."
+rationale = "An unprotected index leaks what the protected source contains, as Windows Recall showed."
+verification = "Review checklist: derived-data inventory with the protection applied to each item"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-15"
+level = "MUST"
+statement = "Any account, including a sync account, can be deleted in the app and through a direct web link, with its server-side data and without contacting support. The app says how long deletion takes and confirms when it is done. Local data stays unless the user asks otherwise."
+rationale = "Apple guideline 5.1.1(v) and Google Play require in-app account deletion; support-only deletion fails review."
+verification = "Release checklist: deletion walkthrough recording for both paths"
+check = "Release"
+trigger = "hosted-service"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-16"
+level = "MUST"
+statement = "Uninstalling removes everything the app installed or generated outside user data and never deletes user-created data unless asked. The docs say where data lives and how to remove it on each platform."
+rationale = "Store policies require a clean uninstall, and users expect their files to survive one."
+verification = "Release checklist: uninstall test per Tier 1 platform; data-location docs page linked"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-17"
+level = "MUST"
+statement = "Changing a default never changes the behavior of existing user data or settings. New defaults apply to new vaults and profiles, or ship with a migration (DATA-02) and a release-note entry."
+rationale = "A silently changed default is a behavior change the user never chose."
+verification = "Review checklist: default changes marked new-profile-only or paired with a migration and release note"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "DATA-18"
+level = "SHOULD"
+statement = "The last release before a format break can read the new format and save in the old one."
+rationale = "A bridge release lets users move data back when an upgrade fails them, as Blender's compatibility policy does."
+verification = "Release checklist: bridge-release read-and-save test log"
+check = "Release"
+trigger = "one-point-oh"
+who = "ai"
+added = "0.1.0"
+status = "active"

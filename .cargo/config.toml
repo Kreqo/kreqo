@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# Project tasks run as `cargo xtask` (ARCH-06), with the committed lockfile
+# (CI-16).
+[alias]
+xtask = "run --package xtask --locked --"

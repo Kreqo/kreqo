@@ -1,0 +1,113 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Websites (WEB): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "WEB-01"
+level = "MUST"
+statement = "Websites are static or server-rendered with semantic HTML, and their content works without JavaScript."
+rationale = "Content that renders without scripts reaches text browsers, assistive tools and script blockers."
+verification = "HTML validation and a crawl with JavaScript disabled"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "WEB-02"
+level = "MUST"
+statement = "Pages pass automated accessibility checks in CI, on top of the audit in A11Y-04."
+rationale = "Automated checks catch regressions between the manual audits."
+verification = "axe or pa11y over every page"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "WEB-03"
+level = "MUST"
+statement = "Pages have titles, descriptions, Open Graph metadata, a sitemap, and hreflang links for localized pages."
+rationale = "Metadata and hreflang let search engines and link previews show the right page in the right language."
+verification = "Metadata lint and sitemap check"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "WEB-04"
+level = "MUST"
+statement = "Websites carry no third-party trackers, and no cookie or other technology that identifies, locates or profiles visitors runs unless the visitor opts in. Analytics, if any, are privacy-respecting and self-hosted."
+rationale = "Law 25 s. 8.1 requires opt-in before any technology identifies, locates or profiles a person."
+verification = "Review checklist: no third-party requests; opt-in gate for identifying technology"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "WEB-05"
+level = "MUST"
+statement = "Websites use the shared design tokens (UX-01)."
+rationale = "One token source keeps the sites and the apps visibly one suite."
+verification = "Review checklist: styles generated from tokens"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "WEB-06"
+level = "MUST"
+statement = "Websites live under the organization's domain, kreqo.org."
+rationale = "One domain is what users and security researchers can verify as official."
+verification = "Review checklist: hosted under kreqo.org"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "WEB-07"
+level = "SHOULD"
+statement = "Pages meet the \"good\" Core Web Vitals thresholds."
+rationale = "The thresholds are measured budgets for load, interaction and layout stability."
+verification = "Lighthouse CI"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "WEB-08"
+level = "MUST"
+statement = "kreqo.org is fully bilingual, English and French on equal terms, including the privacy notice, terms and any purchase flow, with French as the baseline."
+rationale = "The Charter of the French Language applies on an establishment basis to an organization based in Quebec."
+verification = "Missing-translation check over pages and hreflang pairs"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "WEB-09"
+level = "MUST"
+statement = "Websites, the forge and download hosts use HTTPS only and send hardened security headers (HSTS, CSP, frame-ancestors, nosniff). Every site serves `/.well-known/security.txt` ([RFC 9116](https://www.rfc-editor.org/rfc/rfc9116)) linking SECURITY.md."
+rationale = "Hardened headers block injected scripts and framing; security.txt gives researchers the reporting path."
+verification = "Header scan and security.txt fetch in CI"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"

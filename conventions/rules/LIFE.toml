@@ -1,0 +1,92 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Lifecycle and continuity (LIFE): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "LIFE-01"
+level = "MUST"
+statement = "Every repository declares its stage in machine-readable metadata (incubating, in review, stable, unmaintained, archived), beside its declared conventions version, and in its README. Only stable projects publish stable-channel releases or carry the Kreqo name. Any stage can move to unmaintained, and an unmaintained project returns to incubating when someone takes it on."
+rationale = "Users and packagers need to know what is supported before they depend on it."
+verification = "CI: stage file present and valid; README badge generated from it"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LIFE-02"
+level = "MUST"
+statement = "An asset register lists the domains, DNS, trademarks, signing keys, registry names (crates.io, plus the GitHub accounts its login requires), Flathub IDs, store and developer accounts, the forge organization, and hosted services. Each has at least two holders, or a recovery path held by a second person, with credentials in escrow (sealed, or a lockbox, with a will for legal rights such as DNS). Nothing sits only in one personal account. The register is reviewed before each release, and losing any one person stops issues, merges or releases for at most a week. The escrow is tested by first release."
+rationale = "A solo project dies with its founder's password unless someone else can get in."
+verification = "Release checklist: register reviewed; escrow test record"
+check = "Release"
+trigger = "always"
+who = "you"
+moments = ["setup"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LIFE-03"
+level = "MUST"
+statement = "GOVERNANCE.md names at least two maintainers or states the bus-factor risk; every maintainer role has a named backup and a runbook; the founder's role has a written handover plan."
+rationale = "A runbook turns a crisis handover into a procedure."
+verification = "Review checklist: backups and runbooks linked from GOVERNANCE.md"
+check = "Review"
+trigger = "first-release"
+who = "you"
+moments = ["release"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LIFE-04"
+level = "MUST"
+statement = "A project with no release, merged change or maintainer reply for 12 months is stalled. Its maintainers are contacted; with no maintainer within 60 days, it becomes unmaintained and is archived read-only, its last release still downloadable. Whoever takes on its work may become maintainer after a trial period, and every handover of names or registry ownership is recorded publicly."
+rationale = "Stalled projects with the Kreqo name mislead users unless the stage changes."
+verification = "Periodic audit: activity per repository"
+check = "Periodic"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LIFE-05"
+level = "MUST"
+statement = "A project becomes stable only after a public admission review: an issue holding the admission checklist (every Release-check rule plus licensing, metadata, translations and packaging) stays open at least 14 days with evidence for each item; a review still failing after 60 days returns the project to incubating."
+rationale = "A public checklist with evidence is what the Kreqo name promises."
+verification = "Release checklist: admission issue linked with evidence"
+check = "Release"
+trigger = "first-release"
+who = "you"
+moments = ["release"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LIFE-06"
+level = "MUST"
+statement = "If an app, a hosted service or the organization winds down, users get public notice (at least one month for app channels, the Flathub minimum; 6 months for hosted services), a final release that can export everything, self-hosting instructions, permanently published source, and an end-of-life flag on every store."
+rationale = "Users who trusted the suite with their data must be able to leave with it."
+verification = "Release checklist: wind-down plan on file"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "LIFE-07"
+level = "MUST"
+statement = "The organization publishes the list of its official repositories, on kreqo.org and in the template."
+rationale = "Users and packagers need to tell official code from forks."
+verification = "CI: repository list generated and published"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"

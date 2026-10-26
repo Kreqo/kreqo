@@ -1,0 +1,151 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Accessibility (A11Y): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "A11Y-01"
+level = "MUST"
+statement = "Every control exposes a role, a name and a state to screen readers. Icon-only controls carry an accessible name and a tooltip (UX-23); a shortened label exposes its full text as the accessible name; a disabled control exposes why it is disabled; no label repeats within a window."
+rationale = "Screen readers and voice control reach only what the accessibility tree names, and only unambiguously."
+verification = "Review checklist: accessibility-tree inspection; no duplicate labels"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "A11Y-02"
+level = "MUST"
+statement = "Every action works from the keyboard, with visible focus and documented shortcuts. Focus looks different from selection, and focus returns to its origin when a dialog closes."
+rationale = "Keyboard users lose their place when focus and selection look alike or focus vanishes after a dialog."
+verification = "Review checklist: keyboard-only pass; focus return after dialogs"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "A11Y-03"
+level = "MUST"
+statement = "Color never carries meaning alone. Design tokens pass WCAG contrast of 4.5:1 for text and 3:1 for large text and non-text UI, focus indicators included, checked in the light, dark and high-contrast themes for every registered accent hue (BRAND-01, BRAND-05)."
+rationale = "Contrast varies up to about 12% across hues at equal lightness, so every hue and theme is checked."
+verification = "CI: contrast test over tokens, per theme and hue"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "A11Y-04"
+level = "MUST"
+statement = "Web content meets [WCAG 2.2](https://www.w3.org/TR/WCAG22/) AA. Apps meet the latest EN 301 549, including its clauses for non-web software; Canada adopted it unchanged as CAN/ASC-EN 301 549:2024, so one test pass serves the EU and Canada."
+rationale = "One standard sits behind the European Accessibility Act and Canada's ICT standard, so one test pass covers both."
+verification = "Release checklist: EN 301 549 test report"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "A11Y-05"
+level = "MUST"
+statement = "Releases are tested with Orca, NVDA, VoiceOver and TalkBack on their Tier 1 platforms, and under the KDE protocol: keyboard only, pointer and on-screen keyboard only, touch only, an unfamiliar color scheme, a large system font, speakers muted, and animations disabled."
+rationale = "Automated checks miss what only a real assistive-technology session reveals."
+verification = "Release checklist: screen-reader and protocol test log"
+check = "Release"
+trigger = "first-release"
+who = "you"
+moments = ["release"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "A11Y-06"
+level = "MUST"
+statement = "Text follows the system scale up to 200% without losing content or function. Bundled fonts honor the system's bold-text setting and fall back to fonts covering every shipped script."
+rationale = "System text settings are the user's accessibility choice, and a font missing a script shows boxes."
+verification = "Review checklist: 200% and bold-text pass; script fallback"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "A11Y-07"
+level = "MUST"
+statement = "Apps follow system settings for dark mode, high contrast and reduced motion."
+rationale = "Users set these once, system-wide, and expect every app to comply."
+verification = "Review checklist: system appearance settings honored"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "A11Y-08"
+level = "SHOULD"
+statement = "Touch targets meet WCAG 2.2's 24×24 px minimum, or the platform's larger guideline."
+rationale = "Small targets cause mis-taps for users with motor impairments and on touch screens."
+verification = "Review checklist: target sizes measured"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "A11Y-09"
+level = "MAY"
+statement = "Apps offer a Vim-like modal keyboard mode for power users."
+rationale = "Modal editing lets keyboard-centric users work without reaching for the pointer."
+verification = "Review checklist: mode and its shortcuts documented (A11Y-02)"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "A11Y-10"
+level = "MUST"
+statement = "Motion never carries information alone and never blocks input. Under reduced motion, animation is removed or replaced by a fade. Nothing flashes or blinks except the text cursor. Controls do not disappear on a timer without another way to reach them."
+rationale = "Flashing can trigger seizures, and timed or blocking motion fails WCAG 2.2's timing criteria."
+verification = "Review checklist: reduced-motion pass; no flashing or timed controls"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "A11Y-11"
+level = "SHOULD"
+statement = "Each app and website publishes an accessibility statement in English and French: the standard and level met, known gaps with target dates, and a feedback contact with a stated response time."
+rationale = "Users and regulators (SOR/2025-255) see what works, what does not, and where to report."
+verification = "Release checklist: statement link in both languages"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "A11Y-12"
+level = "MUST"
+statement = "Before selling or licensing to public-sector or federally regulated customers, the organization publishes an Accessibility Conformance Report against EN 301 549 for the version sold."
+rationale = "Public-sector and federally regulated buyers require a conformance report under SOR/2025-255."
+verification = "Release checklist: ACR for the sold version"
+check = "Release"
+trigger = "commercial"
+who = "you"
+moments = ["legal"]
+added = "0.1.0"
+status = "active"

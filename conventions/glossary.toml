@@ -1,0 +1,84 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# The glossary, sorted alphabetically (a leading "The" is ignored).
+
+[[term]]
+term = "ADR"
+definition = "an architecture decision record in `docs/adr/` (DOC-04)."
+
+[[term]]
+term = "AI-assisted change"
+definition = "a change in which any code, text or asset was produced or substantially edited by an AI tool."
+
+[[term]]
+term = "Deviation"
+definition = "a recorded, time-limited departure from a SHOULD or SHOULD NOT (DOC-06)."
+
+[[term]]
+term = "The forge"
+definition = "the service hosting the repositories, their pull requests and CI. GitHub today; the rules don't depend on it."
+
+[[term]]
+term = "Hosted service"
+definition = "any server the organization runs that holds other people's personal information."
+
+[[term]]
+term = "Maintainer"
+definition = "a person named in GOVERNANCE.md with merge rights on a project."
+
+[[term]]
+term = "Model-generated media"
+definition = "images, audio, video or other assets output by a generative model, including coordinates or samples a model writes directly (GOV-22, GOV-25)."
+
+[[term]]
+term = "The organization"
+definition = "Kreqo, today a project run by its founder, later the non-profit (BIZ-10)."
+
+[[term]]
+term = "The organization's servers"
+definition = "servers run by or for the organization, as opposed to a server the user chose or hosts."
+
+[[term]]
+term = "Outside contributions"
+definition = "issues, discussions or pull requests from anyone who isn't a maintainer. The project opens to them deliberately, and the rules marked for that trigger apply before it does."
+
+[[term]]
+term = "Procedural media"
+definition = "assets produced by a reviewable algorithm whose parameters are in the repository, whoever wrote the code (GOV-26)."
+
+[[term]]
+term = "Public interface"
+definition = "anything a third party can depend on: crate APIs, CLI flags, file formats, the sync protocol, the plugin API."
+
+[[term]]
+term = "RFC"
+definition = "a public proposal following the RFC process (GOV-01)."
+
+[[term]]
+term = "Risk-tier paths"
+definition = "the paths listed in a project's risk file whose changes get the strictest review (GOV-02): `unsafe` code, cryptography, data formats and migrations, sync, security-sensitive code, the plugin boundary, and the public API of shared crates."
+
+[[term]]
+term = "Sign-off list"
+definition = "the changes that need the founder's sign-off on top of review while there is one maintainer (CI-03)."
+
+[[term]]
+term = "Significant change"
+definition = "a new app, a new public interface, a new dependency on a C library, a license change, a change to this document, or anything a maintainer asks to see as an RFC."
+
+[[term]]
+term = "The suite"
+definition = "every app and shared crate the organization publishes."
+
+[[term]]
+term = "The template"
+definition = "the project template every repository starts from, which carries this document, the CI workflows, the checklists and the lint configuration."
+
+[[term]]
+term = "Tier 1"
+definition = "a platform tested in CI that blocks releases (PLAT-01)."
+
+[[term]]
+term = "User content"
+definition = "anything the user creates or imports: notes, cards, files, settings and the metadata around them."

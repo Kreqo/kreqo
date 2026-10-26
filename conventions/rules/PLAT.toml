@@ -1,0 +1,287 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Platforms, distribution and updates (PLAT): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "PLAT-01"
+level = "MUST"
+statement = "Platforms are tiered: Tier 1 is tested in CI and blocks releases, Tier 2 is built in CI, Tier 3 is best-effort."
+rationale = "Tier labels say which failures block a release and which are best-effort, so nobody argues it per bug."
+verification = "CI: Tier 1 matrix as required checks"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-02"
+level = "MUST"
+statement = "Linux is Tier 1 for every app, and each app is at its best on Linux."
+rationale = "Principle 1; the release checklist verifies the Linux build before any other platform's."
+verification = "Release checklist: Linux build verified first"
+check = "Release"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-03"
+level = "SHOULD"
+statement = "Default tiers: Linux, Windows and macOS are Tier 1, plus Android and iOS for mobile-first apps; Web is Tier 2; Redox is Tier 3."
+rationale = "Shared defaults set the template's CI matrix and spare each app a tier debate."
+verification = "Review checklist: tiers match the defaults or an ADR"
+check = "Review"
+trigger = "always"
+who = "you"
+moments = ["new-app"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-04"
+level = "SHOULD"
+statement = "Each repository ships a Nix flake with a development shell and a package; Nix stays optional, and cargo alone builds the project."
+rationale = "A flake pins the toolchain, which helps reproducible builds (SEC-09) without making Nix a prerequisite."
+verification = "CI: `nix flake check` and `cargo build` without Nix"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-05"
+level = "MUST"
+statement = "Apps integrate with each platform: system file dialogs, notifications, standard data directories, and on Linux the XDG portals and their settings (dark mode, accent, contrast)."
+rationale = "Portals and standard directories keep apps working inside sandboxes (PLAT-13) and following system settings."
+verification = "Review checklist: dialogs, notifications, directories, portals"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-06"
+level = "MUST"
+statement = "Linux builds ship on Flathub, then nixpkgs, then other distro packages; other platforms use winget, Homebrew, F-Droid and the app stores. Nightlies ship only through the organization's own channels (its own Flatpak repository and direct downloads); Flathub beta carries betas only (REL-08)."
+rationale = "Flathub forbids nightly or daily builds in its stable and beta repositories."
+verification = "Release checklist: channel list per release and channel"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-07"
+level = "MUST"
+statement = "Flathub submissions disclose AI-generated parts and their extent, compiled from `Co-Authored-By` trailers (GOV-03). Manifests, submission pull requests, commit messages, pull-request descriptions and review replies in Flathub repositories are written by hand."
+rationale = "Flathub forbids AI-assisted manifests even when disclosed, and AI-written commit messages, descriptions and review replies."
+verification = "Release checklist: disclosure statement; hand-written Flathub text"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-08"
+level = "MUST"
+statement = "Apps installed by a package manager or a store (Flathub, F-Droid, App Store, Play, Microsoft Store) never self-update. Direct-download builds ask at install or first run whether to install updates automatically, never install anything without that consent, and use signed update metadata. The update check is a declared endpoint (PRIV-07), and no build downloads code that changes the app's functionality."
+rationale = "Background updates installed without asking fall under CASL s. 8; consent at install or first run satisfies it."
+verification = "Review checklist: update consent, signed metadata, PRIV-07 endpoint"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-09"
+level = "MUST"
+statement = "Windows and macOS builds are code-signed, macOS builds are notarized, and CI verifies both."
+rationale = "The Microsoft Store requires signing, and Gatekeeper blocks unnotarized macOS binaries."
+verification = "CI: `signtool verify`, `spctl --assess`, `stapler validate`"
+check = "CI"
+trigger = "first-release"
+who = "you"
+moments = ["release"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-10"
+level = "SHOULD"
+statement = "No channel is a single point of failure: every app also has a direct download, and Linux apps ship on at least two package channels."
+rationale = "Flathub reviewers can reject a submission; a second channel keeps the release reachable."
+verification = "Release checklist: direct download plus two Linux channels"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-11"
+level = "MUST"
+statement = "Every app ships AppStream MetaInfo and a `.desktop` file that pass `appstreamcli validate`, `flatpak-builder-lint` and `desktop-file-validate` with zero warnings, containing: an SPDX license, developer id, OARS 1.1 rating, homepage, bugtracker and vcs-browser URLs, light and dark brand colors (from the BRAND tokens), captioned screenshots taken at a tag, supported inputs, minimum display size, and a release entry with notes for every release."
+rationale = "Flathub and KDE review check exactly these fields; the three validators catch omissions before a reviewer does."
+verification = "`appstreamcli validate`, `flatpak-builder-lint`, `desktop-file-validate`"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-12"
+level = "MUST"
+statement = "App IDs are `org.kreqo.<name>`, where `<name>` comes from the app's plain word (BRAND-02), in lowercase: letters and digits only, each segment starting with a letter, so one ID is valid on Flathub, Android and Apple platforms. IDs are fixed by ADR before first publication and never renamed. Only stable projects (LIFE-01) use the organization's name or ID prefix. Flathub listings are verified against kreqo.org."
+rationale = "Apple rejects underscores, Android rejects hyphens and Apple ignores case; a renamed ID orphans every existing install."
+verification = "CI: app ID format check; Review checklist: ADR linked, listing verified"
+check = "CI"
+trigger = "always"
+who = "you"
+moments = ["new-app"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-13"
+level = "MUST"
+statement = "Sandboxes follow least privilege: a portal is used wherever one exists. Default Flatpak permissions are `wayland`, `fallback-x11` and `dri`, plus `network` only for apps with sync or sharing. `home`, `host*`, `session-bus`, `system-bus` and `device=all` need an ADR, and a manifest comment justifies every permission. The same applies to Android permissions, Apple entitlements and MSIX capabilities. The docs explain opening an Obsidian vault outside the sandbox (document portal with persistent access)."
+rationale = "Flathub reviews every broad permission; a justified manifest answers the reviewer and the user."
+verification = "Review checklist: every manifest permission justified"
+check = "Review"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-14"
+level = "MUST"
+statement = "Store listings for every channel are generated from one metadata source per app plus the PRIV-07 manifest. Listings, screenshots and privacy labels change in the same release as the app; nothing is hidden or undocumented; release notes always say what changed, never only that bugs were fixed."
+rationale = "One source keeps every store's listing identical; Flathub rejects \"bug fixes\" as a release note."
+verification = "CI: listings generated from the metadata source; release-notes lint"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-15"
+level = "MUST"
+statement = "Every app qualifies for F-Droid's main repository with no anti-feature labels, and works fully without installing proprietary software beyond the operating system."
+rationale = "F-Droid's inclusion policy and anti-feature labels are a public check of Principles 2 and 4."
+verification = "Release checklist: F-Droid inclusion and anti-feature review"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-16"
+level = "SHOULD"
+statement = "Android builds are reproducible and signed with one organization key across F-Droid (developer-signed publishing), Play and direct download, so users can switch channels without reinstalling."
+rationale = "Android refuses an update signed by a different key, so one key per app keeps channels interchangeable."
+verification = "CI: reproducible-build check against the published APK"
+check = "CI"
+trigger = "android"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-17"
+level = "MUST"
+statement = "An ADR decides the response to Android developer verification (register or not, how F-Droid users install and update, how package names are protected), and is revisited when Google's global rollout starts in 2027."
+rationale = "Verification decides whether F-Droid users can install the app at all, and package names can be claimed by others."
+verification = "Review checklist: ADR present and dated"
+check = "Review"
+trigger = "android"
+who = "you"
+moments = ["legal"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-18"
+level = "MUST"
+statement = "Minimum OS versions per platform follow a written policy (for example, supported while the vendor supports them), rise only at the start of a release cycle, and meet each store's current target (Play requires API 36 for updates since 31 August 2026)."
+rationale = "Stores refuse updates below their target level, and a mid-cycle rise strands users without notice."
+verification = "Review checklist: minimums match the policy and store targets"
+check = "Review"
+trigger = "first-release"
+who = "you"
+moments = ["release"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-19"
+level = "MUST"
+statement = "Every release is published at an immutable, versioned HTTPS URL on organization-controlled hosting, with no redirects and with SHA-256 checksums. Windows installers support silent install and clean uninstall."
+rationale = "winget and the Microsoft Store require stable URLs, checksums and silent install to accept a manifest."
+verification = "CI: URL and checksum check; silent install and uninstall test"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-20"
+level = "MUST"
+statement = "Flatpak runtimes and platform SDKs stay off end-of-life versions. Dropping a platform, OS version or architecture is announced in the notes of at least one earlier release."
+rationale = "Flathub flags apps on end-of-life runtimes, and an announced drop gives users a release to migrate."
+verification = "Release checklist: runtime EOL check; dropped-platform notice"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-21"
+level = "SHOULD"
+statement = "Desktop apps run without administrator rights."
+rationale = "An app that needs elevation cannot be installed per user or run from a folder on managed machines."
+verification = "Release checklist: run as a standard user"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-22"
+level = "SHOULD"
+statement = "A release goes live on the website and every channel at the same time with identical binaries, and the release gate verifies that the previous version updates to the new one."
+rationale = "Simultaneous identical binaries stop channel drift, and the update test catches a broken upgrade before users do."
+verification = "Release checklist: update test from the previous version"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "PLAT-23"
+level = "MUST"
+statement = "An app that ships cryptography not provided by Apple's OS goes on the App Store in France only once the French encryption declaration is on file."
+rationale = "Apple requires the declaration for non-OS cryptography in France, as Rust end-to-end encryption is (SEC-11)."
+verification = "Release checklist: declaration on file"
+check = "Release"
+trigger = "app-store"
+who = "you"
+moments = ["legal"]
+added = "0.1.0"
+status = "active"

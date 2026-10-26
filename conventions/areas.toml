@@ -1,0 +1,158 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# The areas, in document order. Intro and notes are Markdown.
+
+[[area]]
+prefix = "ARCH"
+title = "Architecture"
+group = "Architecture and extensibility"
+intro = "Domain logic lives in a headless Rust core, and every interface over it (UI, CLI, API, plugins) is a replaceable shell. Shared code is extracted on evidence, stays reviewable in a plain diff, and stable releases build only on published dependencies."
+notes = ""
+
+[[area]]
+prefix = "EXT"
+title = "Extensibility"
+group = "Architecture and extensibility"
+intro = "Plugins extend apps through a sandboxed, versioned boundary designed before 1.0, with distribution decided per Tier 1 platform before that design starts; the official directory and any content the organization hosts follow published rules."
+notes = ""
+
+[[area]]
+prefix = "DATA"
+title = "Data and sync"
+group = "Data and sync"
+intro = "User data is local-first: it lives on the user's devices in open files that are the source of truth, works offline, and survives crashes, migrations, version skew across devices and the project itself. Sync adds nothing a server can read."
+notes = ""
+
+[[area]]
+prefix = "SEC"
+title = "Security"
+group = "Security and privacy"
+intro = "Security follows the [OpenSSF OSPS Baseline](https://baseline.openssf.org/), pinned by version and raised level by level as projects mature. Releases are built, attested and signed by the pipeline, and vulnerabilities follow a published response process."
+notes = ""
+
+[[area]]
+prefix = "PRIV"
+title = "Privacy"
+group = "Security and privacy"
+intro = "Privacy means collecting nothing by default: apps send nothing the user did not choose, every data flow is declared in a manifest that generates the privacy notice, and Quebec's Law 25 (LEGAL-05) sets the baseline duties for anything the organization hosts."
+notes = ""
+
+[[area]]
+prefix = "A11Y"
+title = "Accessibility"
+group = "Accessibility"
+intro = "Accessibility blocks releases: apps meet EN 301 549, the standard behind the European Accessibility Act and adopted unchanged in Canada, and websites meet WCAG 2.2 AA."
+notes = ""
+
+[[area]]
+prefix = "I18N"
+title = "Internationalization"
+group = "Internationalization"
+intro = "Every string, date and layout is localizable from the first commit, and French ships complete with every release; retrofitting internationalization costs far more than building it in."
+notes = ""
+
+[[area]]
+prefix = "UX"
+title = "Interface"
+group = "Interface, design and brand"
+intro = "Own look, native feel: every app shares the suite's tokens, components, words and interface guidelines, and behaves the way each platform's users expect. These rules fix the principles and what tooling can check; the interface guidelines hold the detail."
+notes = ""
+
+[[area]]
+prefix = "BRAND"
+title = "Brand"
+group = "Interface, design and brand"
+intro = "Every app is recognizably part of the suite: one accent system, one naming rule and one logo skeleton, with each app's own hue and symbol."
+notes = ""
+
+[[area]]
+prefix = "PERF"
+title = "Performance"
+group = "Performance"
+intro = "Each app sets explicit budgets and CI defends them: \"efficient\" means within budget, on hardware users actually own, not a feeling."
+notes = ""
+
+[[area]]
+prefix = "PLAT"
+title = "Platforms, distribution and updates"
+group = "Platforms, distribution and updates"
+intro = "Linux is always Tier 1 and every app is at its best there; other platforms are tiered, and no single distribution channel can block a release. Every channel's metadata, sandbox permissions and update path are defined once per app and verified before the release ships."
+notes = ""
+
+[[area]]
+prefix = "QA"
+title = "Code quality and testing"
+group = "Code quality, testing and documentation"
+intro = "Quality is enforced by CI, not by memory: formatting, lints and tests gate the merge, and every fix carries the test that proves it."
+notes = ""
+
+[[area]]
+prefix = "DOC"
+title = "Documentation"
+group = "Code quality, testing and documentation"
+intro = "Documentation gates the merge like code: public APIs, decisions and user-visible changes are documented when they land, in a form tooling can check."
+notes = ""
+
+[[area]]
+prefix = "REL"
+title = "Versioning and releases"
+group = "Versioning, releases and CI"
+intro = "Everything with a public interface follows semantic versioning; apps add a time-based target cadence with published freezes and support windows, and every release is built, noted and published by the pipeline."
+notes = ""
+
+[[area]]
+prefix = "CI"
+title = "Repository and CI"
+group = "Versioning, releases and CI"
+intro = "Nothing reaches the default branch without passing CI and human review, and workflows, runners and the forge itself are hardened so the pipeline can be trusted with releases."
+notes = ""
+
+[[area]]
+prefix = "REV"
+title = "Code review"
+group = "Review, governance and contribution"
+intro = "A review approves what improves the codebase and meets the rules; polish goes into follow-up issues, and disagreements have a written path to a decision."
+notes = ""
+
+[[area]]
+prefix = "GOV"
+title = "Governance and contribution"
+group = "Review, governance and contribution"
+intro = "Decisions are made in public and written down, and every contribution, human or AI-assisted, meets the same bar. Who decides is written in GOVERNANCE.md, and the model changes deliberately as the project grows."
+notes = "#### Upstream AI policies\n\nUpstream policies change fast; this table is dated 2026-10-16 and is re-checked before each upstream contribution (GOV-04). Entries without a date weren't re-verified in the benchmark and need checking before use.\n\n| Upstream | Policy (as of 2026-10-16) | Effect on us |\n|---|---|---|\n| [Bevy](https://bevy.org/learn/contribute/policies/ai/) | Rewritten 2026-08-11: AI-assisted code tolerated with disclosure of how AI was used; no AI prose, media, communication or commit authorship. | Disclose in Bevy's format; hand-written PR text; strip the trailer. |\n| [Rust project](https://forge.rust-lang.org/policies/llm-usage.html) | LLM policy adopted 2026-08-05 for rust-lang/rust, cargo, rust-clippy, rustfmt, mdBook and rustlings: LLM-created code only as a pre-arranged experiment; no LLM-written comments, PR descriptions or docs; disclosure kept out of git history. | Contribute by prior arrangement; no trailer. |\n| [Linebender](https://linebender.org/wiki/llm-policy/) | Policy of 2026-05-30: disclose ahead of time; no AI PR descriptions; no PRs generated end to end; no agent files merged; code following an LLM's outline counts as LLM code. | Human-planned design and hand-written PR text. |\n| [Flathub](https://docs.flathub.org/docs/for-app-authors/requirements) | Manifests may contain no AI-assisted content even if disclosed; AI may not write commit messages, descriptions or review comments in Flathub repositories. | PLAT-07: everything in Flathub repositories is hand-written. |\n| [COSMIC and Pop!_OS](https://github.com/pop-os/libcosmic/blob/master/.github/PULL_REQUEST_TEMPLATE.md) | All LLM content banned since 2026-09-30. | Hand-written contributions only. |\n| [Godot](https://contributing.godotengine.org/en/latest/development/contribution_rules.html) | Since 2026-08-17: substantial AI-generated code, AI media and AI communication banned; proposals can't be AI-written. | Hand-written contributions only. |\n| [Krita](https://github.com/KDE/krita/blob/master/README.md) | All AI use banned by a README moratorium since 2026-04-21. | Hand-written contributions only. |\n| [KDE](https://community.kde.org/Policies/Commit_Policy) | No KDE-wide policy; acceptance varies by project; code assistants may not appear in Co-authored-by or similar tags. | Check the project; never the trailer. |\n| GNOME ([Loupe](https://discourse.gnome.org/t/loupe-no-longer-allows-generative-ai-contributions/27327); [Calendar](https://discourse.gnome.org/t/gnome-calendar-takes-a-step-further-with-artificial-intelligence-ai-contributions/35952)) | Per repository: Loupe, libadwaita, libmanette, Highscore, Elastic and Calendar ban LLM contributions; extensions and Circle require code the author can justify. | Check the repository. |\n| [Blender](https://developer.blender.org/docs/handbook/contributing/ai_contributions/) | Higher bar for AI-assisted work; maintainers may close it unreviewed; only humans as authors. | Disclose in Blender's format; expect closure without review. |\n| [Nix](https://github.com/NixOS/nix/blob/master/CONTRIBUTING.md) (not re-verified) | An accountable human, and an `Assisted-by:` trailer naming the tool and model. | Use Nix's trailer format. |\n| [nixpkgs](https://discourse.nixos.org/t/llms-in-nixpkgs/78964?page=3) (not re-verified) | PRs with `Assisted-by:` trailers get a label; stricter rules under debate. | Re-check before each contribution. |\n| [Homebrew](https://github.com/Homebrew/brew/blob/HEAD/CONTRIBUTING.md) (not re-verified) | Disclosure, a full self-review, one AI-assisted PR open at a time. | Allowed with disclosure. |\n| [Servo](https://book.servo.org/contributing.html), [Redox](https://phoronix.com/news/redox-os-march-2026) (not re-verified) | No LLM-generated content. | Hand-written contributions only. |\n| [F-Droid](https://gitlab.com/fdroid/admin/-/work_items/699) (not re-verified) | No formal policy; an interim proposal neither endorses nor prohibits AI. | Re-check before submitting. |\n| [Slint](https://github.com/slint-ui/slint/blob/master/CONTRIBUTING.md) | No AI policy; contributions licensed under MIT-0 with a one-time acceptance; \"make sure you wrote the contribution yourself\". | Ask before an AI-assisted contribution. |\n| Dioxus (not re-verified) | No policy found. | Check before contributing. |"
+
+[[area]]
+prefix = "LEGAL"
+title = "Licensing and compliance"
+group = "Licensing and compliance"
+intro = "Every artifact has a clear license, and the organization knows its obligations under Quebec, Canadian and EU law before it runs a hosted service or ships anything commercial."
+notes = "The [Cyber Resilience Act](https://digital-strategy.ec.europa.eu/en/policies/cyber-resilience-act)'s reporting obligations apply since 11 September 2026, even to products placed on the market earlier, and its main obligations from 11 December 2027. Non-monetized open source is out of scope, but whoever places it on the market commercially becomes a manufacturer, which matters for an enterprise tier. A non-profit supporting the commons may qualify as an open-source steward, with light duties and no fines. These rules are a map, not legal advice: confirm them with a lawyer before incorporating."
+
+[[area]]
+prefix = "WEB"
+title = "Websites"
+group = "Websites"
+intro = "Websites are fast, accessible, private and secure, they are bilingual with French as the baseline, and they share the apps' design tokens."
+notes = ""
+
+[[area]]
+prefix = "LIFE"
+title = "Lifecycle and continuity"
+group = "Continuity and stewardship"
+intro = "Projects have a declared stage, the organization's assets survive the loss of any one person, and nothing winds down without notice and a way out for users."
+notes = ""
+
+[[area]]
+prefix = "BIZ"
+title = "Business model and stewardship"
+group = "Continuity and stewardship"
+intro = "These promises are worth most before a company exists, so most take effect on Day one even though nothing is being sold yet. The planned structure, a company beside a community project with an enterprise tier, is the profile that broke trust at Audacity and Elastic; these rules are what keeps it from doing so here."
+notes = ""
+
+[[area]]
+prefix = "AIF"
+title = "AI features in the apps"
+group = "AI features in the apps"
+intro = "The GOV rules cover AI in development. These rules cover AI features users meet in the apps, such as card generation, semantic search, graded recall and speech: off by default, on the device by default, and never trained on user content. Shipping AI features as plugins behind the EXT-01 permission model is a design option for the EXT-04 boundary ADR, not a rule."
+notes = ""

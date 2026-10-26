@@ -1,0 +1,276 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Repository and CI (CI): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "CI-01"
+level = "MUST"
+statement = "The default branch is protected: no direct pushes, changes land through pull requests, and force-pushing to or deleting protected branches and release tags is blocked. History is rewritten only through a documented expunging process that two maintainers approve. New collaborators start with read access."
+rationale = "Signatures, provenance and the review record all rest on a history nobody can rewrite."
+verification = "Settings audit: branch and tag protection; default collaborator role"
+check = "Settings"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-02"
+level = "MUST"
+statement = "Every pull request passes all required checks (format, lint, tests, cargo-deny, semver, docs) before merge."
+rationale = "Required checks make the rules in this document enforced rather than remembered."
+verification = "Settings audit: required checks list"
+check = "Settings"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-03"
+level = "MUST"
+statement = "Every change is reviewed by a reviewer other than its author before it merges. While there is one maintainer, an independent AI review counts: one run by a session or tool that didn't write the change, attached to the pull request. Changes on the sign-off list also need the founder's sign-off: anything that needs an ADR, risk-tier paths (GOV-02), licensing, user data formats and migrations, releases, and anything published in the project's name. The founder's hand-written changes get the same AI review."
+rationale = "A second look catches what the author can't see; with one maintainer, an independent AI review is the second look available."
+verification = "CI: an AI review report on every pull request; the founder's sign-off label on sign-off-list changes"
+check = "CI"
+trigger = "always"
+who = "you"
+moments = ["risky-change"]
+added = "0.1.0"
+status = "active"
+history = ["2026-10-23 solo-first edit: statement rewritten; rationale rewritten; verification rewritten; check rewritten; an adapted version of the original, shown below, replaces it at the trigger 'second-maintainer'."]
+
+[[rule.later]]
+trigger = "second-maintainer"
+statement = "Every change has a human reviewer other than its author; AI tools never count as reviewers (CI-18). Changes written by an AI agent are reviewed by a maintainer who didn't direct the agent, and risk-tier paths follow CI-15."
+rationale = "A second human catches what the author can't see; a bot approval is not that."
+verification = "Settings audit: required review"
+check = "Settings"
+
+[[rule]]
+id = "CI-04"
+level = "MUST"
+statement = "Tier 1 platforms build and test on every pull request; Tier 2 platforms build nightly."
+rationale = "A platform that isn't built on every PR breaks silently."
+verification = "Platform matrix job"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-05"
+level = "MUST"
+statement = "CI workflows come from the template and follow its updates."
+rationale = "Hand-copied workflows drift; the template is the single source for every project."
+verification = "Review checklist: workflow matches the template version"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-06"
+level = "SHOULD"
+statement = "Merges go through a merge queue, so the default branch is always green."
+rationale = "A queue tests each change against the branch it lands on, not the branch it was opened from."
+verification = "Settings audit: merge queue enabled"
+check = "Settings"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-07"
+level = "MUST"
+statement = "Workflow steps reference actions by their repository and full commit SHA, with the version as a comment, and container images by digest."
+rationale = "A mutable tag lets an upstream compromise replace the code a workflow runs."
+verification = "Pin check in the workflow analyzer (CI-09)"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+history = ["2026-10-26 first rule batch: statement rewritten, since a workflow's `uses:` names an action by its repository and can't take a URL."]
+
+[[rule]]
+id = "CI-08"
+level = "MUST"
+statement = "Every workflow runs with the least privilege it needs: read-only or no permissions by default, writes granted per job, and checkouts never persist credentials. Where the forge lacks per-workflow permissions, the same outcome is enforced through repository settings and scoped tokens."
+rationale = "A write token in a compromised step can push code or publish a release."
+verification = "Workflow analyzer: permissions block; credentials not persisted"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-09"
+level = "MUST"
+statement = "Workflows never run untrusted PR code with secrets or write tokens: no privileged-trigger checkout of the PR head. Untrusted event data (titles, branch names, commit messages) reaches scripts only through environment variables. CI configuration is linted by a workflow analyzer (zizmor where it covers the forge's syntax)."
+rationale = "A PR title interpolated into a shell line is code execution with the workflow's token."
+verification = "zizmor or an equivalent workflow analyzer"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-10"
+level = "MUST"
+statement = "Runners for PR or untrusted code are ephemeral and isolated in a container or VM: no host runners, no privileged containers, no host networking or Docker socket, no access to internal services. Workflows from non-members need a maintainer's approval to run. Release jobs run on separate dedicated runners that never run PR code."
+rationale = "A runner that survives a job, or shares a host, carries one PR's payload into the next job."
+verification = "Settings audit: runner labels and isolation; approval for outside workflows"
+check = "Settings"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-11"
+level = "MUST"
+statement = "The forge is hardened: 2FA is required for every account with write access (SEC-12), only the release bot creates release tags, the forge signs its own merges, webhooks authenticate with a secret, and admin accounts are separate from daily accounts. A self-hosted forge runs a supported release, is upgraded within 14 days of a security release, and has tested backups. Repositories stay publicly readable at stable URLs; one forge is canonical, with read-only mirrors elsewhere."
+rationale = "The forge holds the source, the review record and the release tags; its compromise is everyone's."
+verification = "Settings audit: forge hardening list"
+check = "Settings"
+trigger = "always"
+who = "you"
+moments = ["setup"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-12"
+level = "MUST"
+statement = "Every PR uses the template: problem and linked issue or RFC; solution and alternatives; how it was tested, including platforms tested and not tested; risks and compatibility impact; docs updated or not needed; how AI was used (GOV-03); before/after screenshots for UI changes. The description becomes the squash-commit body, and CI checks that the sections are filled in. Details: CONTRIBUTING.md and the template."
+rationale = "A reviewer reads the description first; a filled template is the review's input and the commit's record."
+verification = "PR template section check"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-13"
+level = "MUST"
+statement = "Each PR covers one topic: refactors and cleanups never mix with behavior changes. PRs are squash-merged only, with the forge's squash message set to the PR title and description (CI-12, REL-03), so branch commits stay scaffolding and every commit on the default branch builds and passes CI."
+rationale = "One commit per PR keeps history readable, bisectable and human-written, whatever wrote the branch commits."
+verification = "Settings audit: squash merge is the only merge method, with the title-and-description message; Review checklist: single topic"
+check = "Settings"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-14"
+level = "SHOULD"
+statement = "A merged change that breaks the default branch or a release is reverted first, then re-landed with a regression test. Its author and reviewer are notified."
+rationale = "A revert restores a green branch in minutes; a forward fix under pressure adds a second bug."
+verification = "Review checklist: revert PR links the regression test"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-15"
+level = "MUST"
+statement = "A CODEOWNERS file covers every path, including the risk-tier paths (GOV-02). Merging needs approval from an owner of each touched area, and approvals scale with risk: one for trivial changes, two qualified reviewers for normal ones, and the area owner or project lead for contested ones, recorded with a PR label. The merger is never the sole approver of their own PR."
+rationale = "Owners know their area's invariants, and the forge enforces their approval only when every path has one."
+verification = "Settings audit: owner approval required; Review checklist: risk label"
+check = "Settings"
+trigger = "second-maintainer"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-16"
+level = "MUST"
+statement = "CI and release builds use a pinned Rust toolchain (`rust-toolchain.toml`), bumped by deliberate PRs that fix new lints. Every workspace commits `Cargo.lock`, and CI, release and install instructions use `--locked`."
+rationale = "A floating toolchain or lockfile means two builds of the same commit can differ."
+verification = "`--locked` in workflows; toolchain file present"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-17"
+level = "MUST"
+statement = "Each package builds and passes Clippy for every feature on its own and with no default features (`cargo hack --each-feature`) on every PR, with `--feature-powerset --depth 2` on a schedule. Crates targeting the web also get a wasm32 check on every PR."
+rationale = "Feature combinations nobody builds are the ones that break downstream."
+verification = "cargo-hack job; wasm32 check job"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-18"
+level = "MUST"
+statement = "AI reviews run from a separate, clearly labeled bot identity and name the model that ran them. While there is one maintainer, an independent AI review counts as the review CI-03 requires, and a finding it marks as blocking holds the merge until it is fixed or the founder dismisses it with a reason."
+rationale = "A labeled bot keeps the record honest about who reviewed what; with one maintainer, its findings are the second opinion."
+verification = "Settings audit: bot identity labeled; CI: blocking findings fixed or dismissed with a reason"
+check = "Settings"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+history = ["2026-10-23 solo-first edit: statement rewritten; rationale rewritten; verification rewritten; its original version returns at the trigger 'second-maintainer'."]
+
+[[rule.later]]
+trigger = "second-maintainer"
+statement = "AI review bots run from a separate, clearly labeled bot account, never count as an approval, and block a PR only when a human endorses their comment."
+rationale = "A bot comment is advice; Scorecard and reviewers alike don't count it as code review."
+verification = "Settings audit: bot account excluded from required reviewers"
+check = "Settings"
+
+[[rule]]
+id = "CI-19"
+level = "SHOULD"
+statement = "CI runs a spell checker (typos) with a project dictionary and one English variant, skipping translations; Taplo for TOML formatting; markdownlint; and freshness checks on generated feature and example indexes."
+rationale = "Automated nits keep review comments about substance."
+verification = "typos, Taplo, markdownlint and freshness jobs"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-20"
+level = "SHOULD"
+statement = "One account system spans the forge, forum, translation platform and plugin directory."
+rationale = "One identity per contributor keeps attribution, moderation and access consistent across services."
+verification = "Review checklist: a new service joins the shared account system"
+check = "Review"
+trigger = "one-point-oh"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-21"
+level = "SHOULD"
+statement = "Release tags are signed (SSH or gitsign) and verified in CI before anything is built from them."
+rationale = "An unsigned tag lets anyone with push access start a release build from any commit."
+verification = "Tag signature verification job"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"

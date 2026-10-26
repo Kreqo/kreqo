@@ -1,0 +1,198 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Code quality and testing (QA): the rules of this area. Source of truth;
+# the views are generated from these files by compile.py.
+
+[[rule]]
+id = "QA-01"
+level = "MUST"
+statement = "Code is formatted with rustfmt and passes Clippy; warnings fail CI. Every crate inherits one lint table: crates in the root workspace through `[lints] workspace = true`, and a nested workspace or a repository outside the monorepo through a generated copy of the root's table, an outside repository's taken from the conventions version it names. CI checks the inheritance and each copy. Suppressions use `#[expect(lint, reason = \"…\")]`; an `allow` attribute, inner or outer, fails CI. The table enforces SEC-01: `unsafe_code`, `undocumented_unsafe_blocks` and `missing_safety_doc`. Parser, importer and sync crates, which their project's `project.toml` lists, add QA-02's `unwrap_used`, `expect_used`, `panic` and `indexing_slicing` as crate-level attributes, which CI checks. Bans for every crate use `disallowed-methods` in the root `clippy.toml`, each with a reason; any other `clippy.toml` repeats them, which CI checks."
+rationale = "One inherited table keeps lints identical across crates without copies that drift, and `expect` reports suppressions that no longer fire."
+verification = "CI: rustfmt; Clippy with `allow_attributes` and `allow_attributes_without_reason`; an `allow` grep, which also catches the inner attributes Clippy skips; checks that every crate inherits the workspace lints, that each copy matches the root's table, that listed crates carry their attributes, and that every `clippy.toml` repeats the root's bans"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+history = ["2026-10-24 first rule batch: statement, rationale and verification rewritten for the monorepo."]
+
+[[rule]]
+id = "QA-02"
+level = "MUST"
+statement = "Libraries return typed errors and never panic on bad input; apps never crash on a recoverable error."
+rationale = "Typed errors let callers recover; the panic lints (QA-01) catch `unwrap` where untrusted input arrives."
+verification = "Review checklist: error types, no panics on input"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "QA-03"
+level = "MUST"
+statement = "Core logic has unit and integration tests; invariants such as merges, scheduling and migrations have property-based tests."
+rationale = "Property tests generate merge, scheduling and migration inputs that no hand-written example list covers."
+verification = "CI: `cargo test` and proptest targets"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "QA-04"
+level = "MUST"
+statement = "Logging uses `tracing`, with structured, local, rotating logs."
+rationale = "Structured local logs keep diagnostics usable without sending anything off the device (PRIV-02)."
+verification = "Review checklist: `tracing` only, rotation configured"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "QA-05"
+level = "SHOULD"
+statement = "Public crate APIs follow the Rust API Guidelines."
+rationale = "The guidelines' checklist catches naming and trait mistakes before a 1.0 API freezes them."
+verification = "Review checklist: API guidelines checklist"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "QA-06"
+level = "SHOULD"
+statement = "UIs have end-to-end tests and snapshot tests against visual regressions."
+rationale = "Snapshot tests at the UX-12 sizes catch regressions a reviewer cannot eyeball on every pull request."
+verification = "CI: end-to-end and snapshot jobs"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "QA-07"
+level = "SHOULD"
+statement = "Coverage is reported on every pull request; core crates stay above 80% line coverage."
+rationale = "Coverage on each pull request shows untested core paths; no peer project mandates a threshold, so it stays SHOULD."
+verification = "CI: coverage report and threshold"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "QA-08"
+level = "SHOULD"
+statement = "Mutation testing (cargo-mutants) runs on a schedule for core crates."
+rationale = "Mutation testing finds tests that pass whatever the code does."
+verification = "CI: scheduled cargo-mutants"
+check = "CI"
+trigger = "one-point-oh"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "QA-09"
+level = "MUST"
+statement = "New functionality ships with tests, and every bug fix adds a test that fails without it, in the same pull request, unless the pull request explains why it cannot. While the default branch fails CI, only changes that fix it merge."
+rationale = "A test that fails without the fix proves the fix and blocks the regression from returning."
+verification = "Review checklist: tests in the same PR, or a stated reason"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "QA-10"
+level = "SHOULD"
+statement = "Every release candidate runs against a corpus of real-world inputs (public Markdown vaults, Anki decks, plugins), and every regression is triaged before release."
+rationale = "Real vaults, decks and plugins hit input combinations that unit fixtures never list (Rust's crater model)."
+verification = "Release checklist: corpus run log and triage"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "QA-11"
+level = "SHOULD"
+statement = "Custom synchronization (atomics, lock-free queues, audio-thread handoff, sync-engine concurrency) is tested with loom or shuttle."
+rationale = "loom and shuttle explore thread interleavings that ordinary test runs almost never reach."
+verification = "CI: loom or shuttle job"
+check = "CI"
+trigger = "first-release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "QA-12"
+level = "MAY"
+statement = "Small security- or data-critical pure functions (CRDT merge invariants, FSRS arithmetic, parser bounds) carry Kani proofs run in CI."
+rationale = "Kani proves a bound for every input where tests sample a few."
+verification = "CI: Kani job"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "QA-13"
+level = "SHOULD"
+statement = "Before each release, the template's pedantic and restriction lint pass runs, and each finding is fixed or carries an `expect` with a reason."
+rationale = "Pedantic and restriction lints are too noisy for every pull request but surface real findings once per release."
+verification = "Release checklist: lint pass log"
+check = "Release"
+trigger = "first-release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "QA-14"
+level = "MUST NOT"
+statement = "Repositories contain generated executables or unreviewable binaries. Binary assets such as fonts, images and test fixtures follow LEGAL-14."
+rationale = "A committed binary cannot be reviewed or rebuilt, which is how malicious code hides (OSPS-QA)."
+verification = "CI: binary-file check against the LEGAL-14 directory"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "QA-15"
+level = "SHOULD"
+statement = "CI fails on unused dependencies (cargo-shear or the `unused_crate_dependencies` lint)."
+rationale = "An unused dependency widens the supply-chain surface and slows builds for nothing."
+verification = "CI: cargo-shear"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "QA-16"
+level = "SHOULD"
+statement = "TODO comments reference an issue (`TODO(#123)`), so deferred work stays tracked."
+rationale = "A TODO tied to an issue stays visible; a bare TODO is forgotten by the next release."
+verification = "CI: TODO lint"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"

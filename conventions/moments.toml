@@ -1,0 +1,89 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# The moments when your decisions come up, in the order NOW.md shows them.
+
+[[moment]]
+id = "setup"
+title = "When you set up accounts, the forge and suite-wide choices"
+order = 0
+
+[[moment]]
+id = "new-app"
+title = "When you start a new app"
+order = 1
+
+[[moment]]
+id = "feature"
+title = "When you design a feature"
+order = 2
+
+[[moment]]
+id = "dependency"
+title = "When you add a dependency"
+order = 3
+
+[[moment]]
+id = "format"
+title = "When you create or change a file format or how user data is stored"
+order = 4
+
+[[moment]]
+id = "data-flow"
+title = "When you add a network call, data collection, service or vendor"
+order = 5
+
+[[moment]]
+id = "risky-change"
+title = "When a change is on your sign-off list"
+order = 6
+
+[[moment]]
+id = "media"
+title = "When you add art, icons or other media"
+order = 7
+
+[[moment]]
+id = "speaking"
+title = "When you write to people for yourself or the project"
+order = 8
+
+[[moment]]
+id = "upstream"
+title = "When you contribute to another project"
+order = 9
+
+[[moment]]
+id = "ai-feature"
+title = "When you add an AI feature"
+order = 10
+
+[[moment]]
+id = "business"
+title = "When you make a licensing or business decision"
+order = 11
+
+[[moment]]
+id = "release"
+title = "When you prepare a release"
+order = 12
+
+[[moment]]
+id = "legal"
+title = "When you take a legal or compliance step"
+order = 13
+
+[[moment]]
+id = "contributors"
+title = "When you work with contributors"
+order = 14
+
+[[moment]]
+id = "plugins"
+title = "When you design or run the plugin system"
+order = 15
+
+[[moment]]
+id = "money"
+title = "When money is involved"
+order = 16

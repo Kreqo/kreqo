@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# zizmor's settings: every action is pinned by its full commit SHA, GitHub's
+# own included (CI-07).
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "*": hash-pin

@@ -1,0 +1,69 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: CC-BY-4.0
+
+# The principles. When a case isn't covered, decide by them.
+
+[[principle]]
+number = 1
+name = "Linux first, everywhere else too."
+text = "Every app is at its best on Linux and runs well on every Tier 1 platform."
+
+[[principle]]
+number = 2
+name = "The user owns their data."
+text = "Data lives on the user's devices in open formats, works offline, and outlives the project."
+
+[[principle]]
+number = 3
+name = "Built for everyone."
+text = "Accessibility and internationalization start with the first commit, never later; French and English are both first languages."
+
+[[principle]]
+number = 4
+name = "Respect the user."
+text = "No telemetry without consent, no dark patterns, no manipulation of attention."
+
+[[principle]]
+number = 5
+name = "Own look, native feel."
+text = "Every app looks like the suite on every platform and behaves the way each platform's users expect."
+
+[[principle]]
+number = 6
+name = "Opinionated by default, customizable throughout."
+text = "Defaults are deliberate and simple, apps teach themselves, and depth and customization are revealed progressively."
+
+[[principle]]
+number = 7
+name = "Coherent."
+text = "One design language, one vocabulary, one way of doing each thing across the suite."
+
+[[principle]]
+number = 8
+name = "Efficient by budget."
+text = "Performance is measured against explicit budgets, not described with adjectives."
+
+[[principle]]
+number = 9
+name = "Stable without stagnation."
+text = "Everything evolves through versions, migrations and deprecations; nothing breaks silently."
+
+[[principle]]
+number = 10
+name = "Headless first."
+text = "Every capability lives in a UI-independent core, reachable by API and CLI; the UI is a thin shell."
+
+[[principle]]
+number = 11
+name = "Rust by default."
+text = "All logic is Rust; other languages appear only where a platform, format or tool requires them."
+
+[[principle]]
+number = 12
+name = "Verified, not promised."
+text = "Rules are enforced by tooling wherever possible, and a rule names how it is checked."
+
+[[principle]]
+number = 13
+name = "Transparent by default."
+text = "Decisions, funding, data flows and the use of AI are public and written down. The exceptions, security embargoes, conduct reports and legal requests, are themselves written down, with who may see what and for how long."
