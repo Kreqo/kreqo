@@ -7,7 +7,7 @@
 [[rule]]
 id = "PERF-01"
 level = "MUST"
-statement = "Each app documents budgets for cold start, idle CPU, memory and binary size."
+statement = "Each app documents budgets for cold start, idle CPU, memory, binary size and the amount of user content it stays responsive with."
 rationale = "Without a number, \"efficient\" is an adjective (Principle 8)."
 verification = "Review checklist: budget file present in the repository"
 check = "Review"
@@ -17,6 +17,7 @@ moments = ["new-app"]
 open = { question = "Default budgets per app category", leaning = "" }
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "PERF-02"
@@ -57,14 +58,15 @@ status = "active"
 [[rule]]
 id = "PERF-05"
 level = "SHOULD"
-statement = "Apps stay responsive with 100,000 items (notes, cards, files), verified by a scale test."
+statement = "Apps stay responsive with the amount of user content their budget names (PERF-01), verified by a scale test."
 rationale = "Collections grow for years, and a scale test finds linear-time paths early."
-verification = "CI: scale test at 100,000 items"
+verification = "CI: scale test at the budgeted amount"
 check = "CI"
 trigger = "first-release"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and verification rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "PERF-06"

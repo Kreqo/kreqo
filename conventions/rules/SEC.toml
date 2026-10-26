@@ -57,7 +57,7 @@ status = "active"
 [[rule]]
 id = "SEC-05"
 level = "MUST"
-statement = "Projects meet OSPS Baseline v2026.08.28, re-pinned deliberately on each Baseline release: Level 1 on Day one, Level 2 by first release, Level 3 by 1.0. Evidence is published through the Best Practices badge's Baseline levels or a Security Insights file. The practices behind Scorecard's checks are enforced by forge-neutral tools (CI-07 to CI-10, QA-14, SEC-20); a Scorecard score is not a target."
+statement = "Projects meet OSPS Baseline v2026.08.28, re-pinned deliberately on each Baseline release: Level 1 from the first commit, Level 2 by first release, Level 3 by 1.0. Evidence is published through the Best Practices badge's Baseline levels or a Security Insights file. The practices behind Scorecard's checks are enforced by forge-neutral tools (CI-07 to CI-10, QA-14, SEC-20); a Scorecard score is not a target."
 rationale = "Level 1 is mostly repository settings, and the Baseline tells new compliance efforts to use its current version."
 verification = "Release checklist: Baseline level evidence (badge or Security Insights file)"
 check = "Release"
@@ -65,18 +65,20 @@ trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; old phase name replaced."]
 
 [[rule]]
 id = "SEC-06"
 level = "MUST"
-statement = "Every parser and importer is fuzzed. Fuzz targets compile on every pull request, fuzzing runs on a schedule on Linux CI (cargo-fuzz does not support Windows), every crash becomes a regression test, and corpora are versioned."
-rationale = "Parsers take untrusted input, and a crash turned into a test cannot come back."
+statement = "Every parser and importer is fuzzed. Fuzz targets compile on every pull request, fuzzing runs on a schedule on Linux CI, every crash becomes a regression test, and corpora are versioned."
+rationale = "Parsers take untrusted input, and a crash turned into a test cannot come back. Fuzzing skips Windows because, as of 2026-10-16, [cargo-fuzz](https://github.com/rust-fuzz/cargo-fuzz/blob/main/README.md) runs only on Unix-like systems."
 verification = "CI: fuzz-build job on pull requests; scheduled fuzz job; corpus in version control"
 check = "CI"
 trigger = "first-release"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and rationale rewritten; outside fact moved to the rationale."]
 
 [[rule]]
 id = "SEC-07"
@@ -105,7 +107,7 @@ status = "active"
 [[rule]]
 id = "SEC-09"
 level = "SHOULD"
-statement = "Builds are reproducible: the same source and toolchain yield bit-identical artifacts. Becomes a MUST at 1.0 (SLSA Build Level 3)."
+statement = "Builds are reproducible: the same source and toolchain yield bit-identical artifacts. Becomes a MUST at 1.0."
 rationale = "A reproducible build lets anyone confirm that a published artifact matches its source."
 verification = "CI: rebuild of release artifacts with hash comparison"
 check = "CI"
@@ -113,6 +115,7 @@ trigger = "first-release"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; SLSA level reference removed."]
 
 [[rule]]
 id = "SEC-10"
@@ -143,15 +146,16 @@ status = "active"
 [[rule]]
 id = "SEC-12"
 level = "MUST"
-statement = "Every account with write, admin, release, publish or security-advisory access uses phishing-resistant MFA: hardware keys or passkeys, two registered per account with one kept offline. This covers the forge, the DNS registrar, crates.io and the account it logs in through, Flathub, app stores and signing infrastructure. SMS is not accepted, recovery codes are stored offline, and the forge requires 2FA for every user with write access."
+statement = "Every account with write, admin, release, publish or security-advisory access uses phishing-resistant MFA: hardware keys or passkeys, two registered per account with one kept offline. This covers the forge, the DNS registrar, crates.io and the account it logs in through, Flathub, app stores and signing infrastructure. SMS is not accepted, and recovery codes are stored offline."
 rationale = "A phished maintainer account is the shortest path to a malicious release."
-verification = "Settings audit: MFA method and key count per account in the asset register (LIFE-02)"
+verification = "Settings audit: MFA method and key count per account in the asset register"
 check = "Settings"
 trigger = "always"
 who = "you"
 moments = ["setup"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and verification rewritten; restated requirement removed, and glossary term replaces a rule ID."]
 
 [[rule]]
 id = "SEC-13"
@@ -168,14 +172,15 @@ status = "active"
 [[rule]]
 id = "SEC-14"
 level = "MUST"
-statement = "Every fixed vulnerability gets four things: a RustSec advisory for affected published crates, filed after the fix is public (RustSec handles no embargoes); an advisory page on kreqo.org with OSV JSON; a CVE ID for medium or higher severity, requested from MITRE; and an entry in the release notes (REL-13)."
-rationale = "Downstream scanners read the RustSec, OSV and CVE feeds; a fix missing from them never reaches users' tooling."
+statement = "Every fixed vulnerability gets four things: a RustSec advisory for affected published crates, filed after the fix is public; an advisory page on kreqo.org with OSV JSON; a CVE ID for medium or higher severity, requested from MITRE; and an entry in the release notes (REL-13)."
+rationale = "Downstream scanners read the RustSec, OSV and CVE feeds; a fix missing from them never reaches users' tooling. The RustSec advisory waits for the fix because, as of 2026-10-16, [RustSec](https://rustsec.org/contributing.html) handles no embargoes."
 verification = "Release checklist: RustSec advisory, OSV page, CVE ID and release-note entry linked"
 check = "Release"
 trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and rationale rewritten; outside fact moved to the rationale."]
 
 [[rule]]
 id = "SEC-15"
@@ -229,14 +234,15 @@ status = "active"
 [[rule]]
 id = "SEC-19"
 level = "MUST"
-statement = "Crates with `unsafe` or FFI run their tests and fuzz targets under AddressSanitizer, under Miri where it can execute, and under `cargo careful`, in scheduled CI on a pinned nightly. Miri cannot execute C code behind FFI. Real-time audio crates can add RealtimeSanitizer."
-rationale = "Sanitizers and Miri catch undefined behavior that passing tests hide."
+statement = "Crates with `unsafe` or FFI run their tests and fuzz targets under AddressSanitizer, under Miri where it can execute, and under `cargo careful`, in scheduled CI on a pinned nightly. Real-time crates, such as audio engines, can add RealtimeSanitizer."
+rationale = "Sanitizers and Miri catch undefined behavior that passing tests hide. AddressSanitizer also checks the C code behind FFI when that code is built with it, while [Miri](https://github.com/rust-lang/miri) doesn't check native code (as of 2026-10-25)."
 verification = "CI: scheduled AddressSanitizer, Miri and cargo-careful jobs on the pinned nightly"
 check = "CI"
 trigger = "first-release"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and rationale rewritten; outside fact moved to the rationale, and wording no longer names one app."]
 
 [[rule]]
 id = "SEC-20"
@@ -253,14 +259,15 @@ status = "active"
 [[rule]]
 id = "SEC-21"
 level = "SHOULD"
-statement = "Each project holds an OpenSSF Best Practices badge: Passing by first release, Silver by 1.0. Passing requires that at least one primary developer knows secure design and the common error classes for this kind of software."
-rationale = "The badge questionnaire is a public, itemized record of which practices the project actually meets."
+statement = "Each project holds an OpenSSF Best Practices badge: Passing by first release, Silver by 1.0."
+rationale = "The badge questionnaire is a public, itemized record of which practices the project actually meets. As of 2026-10-16, [Passing](https://www.bestpractices.dev/en/criteria/0) also asks that at least one primary developer knows secure design and the common error classes for this kind of software."
 verification = "Release checklist: badge level link"
 check = "Release"
 trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and rationale rewritten; outside fact moved to the rationale."]
 
 [[rule]]
 id = "SEC-22"

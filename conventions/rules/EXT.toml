@@ -95,7 +95,7 @@ status = "active"
 [[rule]]
 id = "EXT-08"
 level = "SHOULD"
-statement = "Content the organization hosts for sharing (decks, themes, plugins) declares a license, is original or openly licensed, discloses AI generation and third-party network use, and falls under the code of conduct."
+statement = "Content the organization hosts for sharing, such as decks, presets, themes and plugins, declares a license, is original or openly licensed, discloses AI generation and third-party network use, and falls under the code of conduct."
 rationale = "Hosted content carries the organization's name; license and disclosure are what let others reuse it safely."
 verification = "Review checklist: submission requires license, origin, AI and network disclosures"
 check = "Review"
@@ -103,3 +103,4 @@ trigger = "sharing"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; wording no longer names one app."]

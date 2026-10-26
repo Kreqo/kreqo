@@ -33,7 +33,7 @@ status = "active"
 [[rule]]
 id = "BIZ-03"
 level = "MUST"
-statement = "Nothing is ever taken from the open apps. A released feature is never moved to a paid tier, held back by a delay, time-limited or artificially capped (no limits on notes, decks, devices or sync size). The open apps download and run with no email, account or sign-in, and benchmarking is allowed."
+statement = "Nothing is ever taken from the open apps. A released feature is never moved to a paid tier, held back by a delay, time-limited or artificially capped (no limits on the amount of user content, devices or sync size). The open apps download and run with no email, account or sign-in, and benchmarking is allowed."
 rationale = "Removing features from the open apps is how open-core companies lose their community."
 verification = "Review checklist; Release checklist: feature list diff against the last release"
 check = "Review"
@@ -42,11 +42,12 @@ who = "you"
 moments = ["business"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "BIZ-04"
-level = "MUST NOT"
-statement = "Security, privacy, encryption, accessibility, localization, import, export or self-hosting is offered only as a paid feature."
+level = "MUST"
+statement = "Security, privacy, encryption, accessibility, localization, import, export and self-hosting are never offered only as paid features."
 rationale = "Paywalling safety or exit turns users into hostages."
 verification = "Review checklist"
 check = "Review"
@@ -55,18 +56,20 @@ who = "you"
 moments = ["business"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: level and statement rewritten; negative level replaced."]
 
 [[rule]]
 id = "BIZ-05"
 level = "MUST"
-statement = "The open apps contain no locked features, license-key unlocks, upsell prompts or promotion of proprietary add-ons. Any paid offering is disclosed up front in listings and READMEs, and an ADR checks each store's purchase rules (Apple forbids license-key unlocks for consumers; Flathub requires paid features to be disclosed and testable by reviewers). If an app is sold in a store, the store build is identical to the free download."
-rationale = "Stores and F-Droid flag upsells as anti-features, and users read them as bait."
+statement = "The open apps contain no locked features, license-key unlocks, upsell prompts or promotion of proprietary add-ons. Any paid offering is disclosed up front in listings and READMEs, and an ADR checks each store's current purchase rules. If an app is sold in a store, the store build is identical to the free download."
+rationale = "Stores and F-Droid flag upsells as anti-features, and users read them as bait. Store rules differ: as of 2026-10-16, [Apple](https://developer.apple.com/app-store/review/guidelines/) forbids license-key unlocks for consumers, and [Flathub](https://docs.flathub.org/docs/for-app-authors/requirements) requires paid features to be disclosed and testable by reviewers."
 verification = "Release checklist: store rules ADR; build identity check"
 check = "Release"
 trigger = "commercial"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and rationale rewritten; outside fact moved to the rationale."]
 
 [[rule]]
 id = "BIZ-06"

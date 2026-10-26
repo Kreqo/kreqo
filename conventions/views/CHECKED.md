@@ -34,10 +34,10 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 
 ### Privacy (PRIV)
 
-**PRIV-07** · MUST · Each app keeps a machine-readable data manifest of every endpoint and data flow: data sent, purpose, sensitivity category, default state, retention and review link (PRIV-08). CI fails when code, or an integration test run in a network sandbox, contacts an undeclared host; this gate applies from first release. The privacy notice (PRIV-05) and the store privacy labels (Apple privacy details, Play Data safety, Microsoft privacy URL) are generated from it.\
+**PRIV-07** · MUST · Each app keeps a machine-readable data manifest of every endpoint and data flow: data sent, purpose, sensitivity category, default state, retention and review link (PRIV-08). CI fails when code, or an integration test run in a network sandbox, contacts an undeclared host; this gate applies from first release.\
 *Verified by:* CI: manifest schema check; network-sandbox integration test fails on an undeclared host
 
-**PRIV-09** · MUST NOT · An app includes a third-party analytics, advertising, attribution, tracking or crash-reporting SDK. Permit, by ADR: an open-source client for a self-hostable, organization-run endpoint, sending only after the user's PRIV-04 approval.\
+**PRIV-09** · MUST · An app includes no third-party analytics, advertising, attribution, tracking or crash-reporting SDK. Permit, by ADR: an open-source client for a self-hostable, organization-run endpoint, sending only after the user's PRIV-04 approval.\
 *Verified by:* CI: cargo-deny ban list
 
 ### Accessibility (A11Y)
@@ -50,8 +50,8 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 **I18N-03** · MUST · CI runs a pseudo-localized build to catch hard-coded strings and truncation, expanding strings by 50% (I18N-11).\
 *Verified by:* CI: pseudo-locale build and screenshot check
 
-**I18N-11** · SHOULD · Sentences are never built from fragments or across several controls. Layouts tolerate text 50% longer than English, and the pseudo-localized build (I18N-03) expands strings to match. Access keys are translated together with their labels.\
-*Verified by:* CI: pseudo-locale expansion at 50%; Review checklist: no concatenated strings
+**I18N-11** · SHOULD · Sentences are never built from fragments or across several controls. Layouts tolerate text 50% longer than English. Access keys are translated together with their labels.\
+*Verified by:* CI: no clipped text in the pseudo-locale screenshots at 50% expansion; Review checklist: no concatenated strings
 
 ### Interface (UX)
 
@@ -84,7 +84,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 **QA-03** · MUST · Core logic has unit and integration tests; invariants such as merges, scheduling and migrations have property-based tests.\
 *Verified by:* CI: `cargo test` and proptest targets
 
-**QA-14** · MUST NOT · Repositories contain generated executables or unreviewable binaries. Binary assets such as fonts, images and test fixtures follow LEGAL-14.\
+**QA-14** · MUST · Repositories contain no generated executables or unreviewable binaries. Binary assets such as fonts, images and test fixtures follow LEGAL-14.\
 *Verified by:* CI: binary-file check against the LEGAL-14 directory
 
 **QA-15** · SHOULD · CI fails on unused dependencies (cargo-shear or the `unused_crate_dependencies` lint).\
@@ -121,7 +121,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 **REL-02** · MUST · cargo-semver-checks runs on every pull request to a library crate.\
 *Verified by:* cargo-semver-checks
 
-**REL-03** · MUST · Pull-request titles follow Conventional Commits and become the subjects of the squash commits on the default branch (CI-13); CI lints them. Subjects describe the change as users would see it, fixes reference their issue, and performance claims cite measurements. Changelogs are generated in the Keep a Changelog format; the generated changelog feeds the curated release notes (REL-13) and never replaces them.\
+**REL-03** · MUST · Pull-request titles follow Conventional Commits, and CI lints them. Titles describe the change as users would see it, fixes reference their issue, and performance claims cite measurements. Changelogs are generated in the Keep a Changelog format.\
 *Verified by:* CI: pull-request title lint; git-cliff
 
 **REL-04** · MUST · Each crate declares its MSRV, which follows a stated window (for example latest stable minus two). Workspaces use resolver 3. An MSRV job checks publishable crates with the committed lockfile, and each changelog release section states its MSRV. Raising the MSRV is a minor version bump.\
@@ -153,10 +153,10 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 **CI-10** · MUST · Runners for PR or untrusted code are ephemeral and isolated in a container or VM: no host runners, no privileged containers, no host networking or Docker socket, no access to internal services. Workflows from non-members need a maintainer's approval to run. Release jobs run on separate dedicated runners that never run PR code.\
 *Verified by:* Settings audit: runner labels and isolation; approval for outside workflows
 
-**CI-12** · MUST · Every PR uses the template: problem and linked issue or RFC; solution and alternatives; how it was tested, including platforms tested and not tested; risks and compatibility impact; docs updated or not needed; how AI was used (GOV-03); before/after screenshots for UI changes. The description becomes the squash-commit body, and CI checks that the sections are filled in. Details: CONTRIBUTING.md and the template.\
+**CI-12** · MUST · Every PR uses the template: problem and linked issue or RFC; solution and alternatives; how it was tested, including platforms tested and not tested; risks and compatibility impact; docs updated or not needed; how AI was used (GOV-03); before/after screenshots for UI changes. CI checks that the sections are filled in. Details: CONTRIBUTING.md and the template.\
 *Verified by:* PR template section check
 
-**CI-13** · MUST · Each PR covers one topic: refactors and cleanups never mix with behavior changes. PRs are squash-merged only, with the forge's squash message set to the PR title and description (CI-12, REL-03), so branch commits stay scaffolding and every commit on the default branch builds and passes CI.\
+**CI-13** · MUST · Each PR covers one topic: refactors and cleanups never mix with behavior changes. PRs are squash-merged only, with the forge's squash message set to the PR title as subject and the PR description as body, so branch commits stay scaffolding and every commit on the default branch builds and passes CI.\
 *Verified by:* Settings audit: squash merge is the only merge method, with the title-and-description message; Review checklist: single topic
 
 **CI-16** · MUST · CI and release builds use a pinned Rust toolchain (`rust-toolchain.toml`), bumped by deliberate PRs that fix new lints. Every workspace commits `Cargo.lock`, and CI, release and install instructions use `--locked`.\
@@ -165,7 +165,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 **CI-17** · MUST · Each package builds and passes Clippy for every feature on its own and with no default features (`cargo hack --each-feature`) on every PR, with `--feature-powerset --depth 2` on a schedule. Crates targeting the web also get a wasm32 check on every PR.\
 *Verified by:* cargo-hack job; wasm32 check job
 
-**CI-18** · MUST · AI reviews run from a separate, clearly labeled bot identity and name the model that ran them. While there is one maintainer, an independent AI review counts as the review CI-03 requires, and a finding it marks as blocking holds the merge until it is fixed or the founder dismisses it with a reason.\
+**CI-18** · MUST · AI reviews run from a separate, clearly labeled bot identity and name the model that ran them. While there is one maintainer, a finding the independent AI review (CI-03) marks as blocking holds the merge until it is fixed or the founder dismisses it with a reason.\
 *Verified by:* Settings audit: bot identity labeled; CI: blocking findings fixed or dismissed with a reason
 
 **CI-19** · SHOULD · CI runs a spell checker (typos) with a project dictionary and one English variant, skipping translations; Taplo for TOML formatting; markdownlint; and freshness checks on generated feature and example indexes.\
@@ -231,19 +231,19 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 
 ### Security (SEC)
 
-**SEC-05** · MUST · Projects meet OSPS Baseline v2026.08.28, re-pinned deliberately on each Baseline release: Level 1 on Day one, Level 2 by first release, Level 3 by 1.0. Evidence is published through the Best Practices badge's Baseline levels or a Security Insights file. The practices behind Scorecard's checks are enforced by forge-neutral tools (CI-07 to CI-10, QA-14, SEC-20); a Scorecard score is not a target.\
+**SEC-05** · MUST · Projects meet OSPS Baseline v2026.08.28, re-pinned deliberately on each Baseline release: Level 1 from the first commit, Level 2 by first release, Level 3 by 1.0. Evidence is published through the Best Practices badge's Baseline levels or a Security Insights file. The practices behind Scorecard's checks are enforced by forge-neutral tools (CI-07 to CI-10, QA-14, SEC-20); a Scorecard score is not a target.\
 *Verified by:* Release checklist: Baseline level evidence (badge or Security Insights file)
 
 ### Privacy (PRIV)
 
 **PRIV-01** · MUST · Telemetry and analytics are off by default and run only after explicit opt-in. Telemetry means any measurement that leaves the device: analytics, attribution, experiments, usage pings, diagnostics. Data kept only on the device and visible to the user is not telemetry.\
-*Verified by:* Review checklist: no measurement leaves the device without opt-in; PRIV-07 manifest entry
+*Verified by:* Review checklist: no measurement leaves the device without opt-in; data manifest entry
 
-**PRIV-02** · MUST NOT · Logs, crash reports, bug reports and diagnostic bundles contain secrets, or note, card or file content, titles or paths, unless the user adds them in the preview (PRIV-04).\
+**PRIV-02** · MUST · Logs, crash reports, bug reports and diagnostic bundles contain no secrets the app holds, and no content, titles or paths of the user's documents, such as notes, cards or recordings, unless the user adds them in the preview (PRIV-04).\
 *Verified by:* Review checklist: redaction of content, titles and paths in logs and bundles
 
 **PRIV-03** · MUST · Apps contact only servers the user chose. A chosen server means the user turned on the feature or started the action, and the host is named in the UI and in the privacy notice. Nothing is contacted because the app launched. On-demand downloads (dictionaries, models, fonts, the plugin directory) follow the same rule, and lookups send the minimum, not library contents.\
-*Verified by:* Review checklist: every host in the PRIV-07 manifest with its triggering action; nothing on launch
+*Verified by:* Review checklist: every host in the data manifest with its triggering action; nothing on launch
 
 **PRIV-06** · MUST · Every privacy-affecting setting ships at its most protective value. Sharing, sync, public profiles and diagnostics stay off until the user turns them on, and no update switches on a new data flow.\
 *Verified by:* Review checklist: new settings default to their protective value; no data flow enabled by an update
@@ -266,7 +266,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 **UX-02** · MUST · Every app is built from the suite's component library and bundled fonts, so it looks the same on every platform. New patterns are proposed to the library before they ship, may incubate in one app with Experimental status (UX-20), and are promoted when a second app needs them.\
 *Verified by:* Review checklist: library components only; incubating patterns marked Experimental
 
-**UX-05** · MUST NOT · Apps use dark patterns: streaks that punish missed days, fake urgency, nagging or hidden cancelation.\
+**UX-05** · MUST · Apps never use dark patterns: streaks that punish missed days, fake urgency, nagging or hidden cancelation.\
 *Verified by:* Review checklist: no dark patterns
 
 **UX-06** · MUST · Terminology follows the shared glossary in every app and language (I18N-10).\
@@ -278,7 +278,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 **UX-21** · MUST · The interface never blocks: long work runs in the background with progress and instant cancel, and no dialog asks for input before an action that has a sensible default.\
 *Verified by:* Review checklist: long operations cancellable; no pre-action dialogs
 
-**UX-25** · MUST NOT · Apps carry third-party advertising or promote cryptocurrencies or related services.\
+**UX-25** · MUST · Apps carry no third-party advertising and never promote cryptocurrencies or related services.\
 *Verified by:* Review checklist: no ads or cryptocurrency promotion
 
 ### Performance (PERF)
@@ -334,7 +334,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 
 ### Governance and contribution (GOV)
 
-**GOV-03** · MUST · AI assistance is disclosed. Every commit in which AI produced anything beyond single-line completion carries the `Co-Authored-By:` trailer naming the model, as emitted by the tooling, and the squash commit keeps every such trailer from the branch (CI-13). The pull request says how AI was used, what it produced, what the human verified, and the human creative input (design, selection, editing). Disclosure covers code, docs, RFCs, ADRs, issues and review comments.\
+**GOV-03** · MUST · AI assistance is disclosed. Every commit in which AI produced anything beyond single-line completion carries the `Co-Authored-By:` trailer naming the model, as emitted by the tooling, and the squash commit keeps every such trailer from the branch. The pull request says how AI was used, what it produced, what the human verified, and the human creative input (design, selection, editing). Disclosure covers code, docs, RFCs, ADRs, issues and review comments.\
 *Verified by:* CI: squash commit carries the branch's trailers; Review checklist: disclosure block present
 
 **GOV-06** · MUST · The code of conduct is [Contributor Covenant 3.0](https://www.contributor-covenant.org/version/3/0/code_of_conduct/), with a private reporting address; GOV-21 completes its reporting section before the project opens to outside contributions. Its scope covers the forge, chat, forum and events; app names, descriptions, screenshots and bundled content; and content an AI agent posts under a person's name.\
@@ -343,7 +343,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 **GOV-17** · MUST · AI-created code meets a higher test bar: every edge case the author or reviewer can name is tested, and no untested path merges. Generated code that isn't an extension or refactor of existing project code gets a provenance check (LEGAL-11) before merging.\
 *Verified by:* Review checklist: edge cases listed and tested; coverage diff on the PR
 
-**GOV-25** · SHOULD NOT · The organization ships model-generated functional media, such as UI icons or placeholder images. Any that ships is revised by a human, disclosed per file in REUSE metadata and license-checked.\
+**GOV-25** · SHOULD · The organization doesn't ship model-generated functional media, such as UI icons or placeholder images. Any that ships is revised by a human, disclosed per file in REUSE metadata and license-checked.\
 *Verified by:* Review checklist: provenance, disclosure and license check per file
 
 **GOV-26** · MUST · Procedural media, generated by a reviewable algorithm whose parameters are in the repository, is not model-generated media, whoever wrote the code. Its code is reviewed like any other (GOV-02, GOV-17), and its output is checked not to reproduce another work. Coordinates or samples a model writes directly, such as SVG path data, count as model-generated media.\
@@ -351,10 +351,10 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 
 ### Licensing and compliance (LEGAL)
 
-**LEGAL-09** · MUST NOT · An AI system is named as author or co-author in copyright notices, AUTHORS files or copyright registrations. Commit trailers (GOV-03) are not author fields.\
+**LEGAL-09** · MUST · No AI system is named as author or co-author in copyright notices, AUTHORS files or copyright registrations. Commit trailers (GOV-03) are not author fields.\
 *Verified by:* Review checklist: no AI in notices or AUTHORS
 
-**LEGAL-11** · MUST · Code copied from elsewhere, including AI output that reproduces it, keeps its license and attribution and is compatible with the target artifact; Anki is AGPL-3.0-or-later, so its code never enters permissive crates. Contributors never copy from, or consult, source-available or proprietary implementations of formats the suite imports; interoperability is built from public specifications and sample files.\
+**LEGAL-11** · MUST · Code copied from elsewhere, including AI output that reproduces it, keeps its license and attribution and is compatible with the target artifact. Contributors never copy from, or consult, source-available or proprietary implementations of formats the suite imports; interoperability is built from public specifications and sample files.\
 *Verified by:* Review checklist: provenance of new code (GOV-17)
 
 **LEGAL-14** · MUST · Every asset is committed in, or next to, its preferred modifiable form (SVG or design source for icons and logos, token sources for generated styles), with instructions to regenerate it. Binary assets (fonts, images, test fixtures) live in a declared directory with provenance notes.\

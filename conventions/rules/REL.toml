@@ -31,14 +31,15 @@ status = "active"
 [[rule]]
 id = "REL-03"
 level = "MUST"
-statement = "Pull-request titles follow Conventional Commits and become the subjects of the squash commits on the default branch (CI-13); CI lints them. Subjects describe the change as users would see it, fixes reference their issue, and performance claims cite measurements. Changelogs are generated in the Keep a Changelog format; the generated changelog feeds the curated release notes (REL-13) and never replaces them."
-rationale = "Tooling needs the type prefix; users need a subject that says what changed for them."
+statement = "Pull-request titles follow Conventional Commits, and CI lints them. Titles describe the change as users would see it, fixes reference their issue, and performance claims cite measurements. Changelogs are generated in the Keep a Changelog format."
+rationale = "The title becomes the squash commit's subject, where the changelog tooling reads the type prefix; users need a title that says what changed for them."
 verification = "CI: pull-request title lint; git-cliff"
 check = "CI"
 trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and rationale rewritten; restated requirement removed."]
 
 [[rule]]
 id = "REL-04"
@@ -91,14 +92,15 @@ status = "active"
 [[rule]]
 id = "REL-08"
 level = "SHOULD"
-statement = "Apps ship stable, beta and nightly channels. Nightlies ship only through the organization's own channels (its own Flatpak repository and direct downloads); Flathub beta carries betas only (PLAT-06)."
-rationale = "Flathub forbids nightly or daily builds in its stable and beta repositories."
+statement = "Apps ship stable, beta and nightly channels."
+rationale = "Betas and nightlies put changes in front of testers before they reach every user."
 verification = "Release checklist: channel map"
 check = "Release"
 trigger = "one-point-oh"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and rationale rewritten; restated requirement removed."]
 
 [[rule]]
 id = "REL-09"
@@ -190,7 +192,7 @@ status = "active"
 [[rule]]
 id = "REL-16"
 level = "MUST"
-statement = "Breaking changes to formats, the sync protocol and the plugin API are batched into announced major releases, tracked publicly at least one cycle ahead and approved by RFC with a compatibility section, and each ships an automatic migrator. Deprecated items carry `#[deprecated(since, note)]` plus a doc line naming the replacement, and are removed only in a major release."
+statement = "Breaking changes to formats, the sync protocol and the plugin API are batched into announced major releases, tracked publicly at least one cycle ahead and approved by RFC with a compatibility section; those to the sync protocol and the plugin API ship an automatic migrator. Deprecated items carry `#[deprecated(since, note)]` plus a doc line naming the replacement, and are removed only in a major release."
 rationale = "Batched, announced breaks give plugin and format consumers one migration per cycle, not many."
 verification = "Review checklist: RFC compatibility section; migrator present"
 check = "Review"
@@ -198,6 +200,7 @@ trigger = "one-point-oh"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; restated requirement removed."]
 
 [[rule]]
 id = "REL-17"

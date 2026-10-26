@@ -43,14 +43,15 @@ status = "active"
 [[rule]]
 id = "A11Y-04"
 level = "MUST"
-statement = "Web content meets [WCAG 2.2](https://www.w3.org/TR/WCAG22/) AA. Apps meet the latest EN 301 549, including its clauses for non-web software; Canada adopted it unchanged as CAN/ASC-EN 301 549:2024, so one test pass serves the EU and Canada."
-rationale = "One standard sits behind the European Accessibility Act and Canada's ICT standard, so one test pass covers both."
+statement = "Web content meets [WCAG 2.2](https://www.w3.org/TR/WCAG22/) AA. Apps meet the latest EN 301 549, including its clauses for non-web software."
+rationale = "One standard sits behind the European Accessibility Act and Canada's ICT standard, so one test pass covers both. As of 2026-10-16, Canada's is [CAN/ASC-EN 301 549:2024](https://accessible.canada.ca/creating-accessibility-standards/summary-can-asc-en-301-5492024-accessibility-requirements-ict-products-and-services-en-301-5492021-idt), an unchanged adoption of EN 301 549:2021."
 verification = "Release checklist: EN 301 549 test report"
 check = "Release"
 trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and rationale rewritten; outside fact moved to the rationale."]
 
 [[rule]]
 id = "A11Y-05"

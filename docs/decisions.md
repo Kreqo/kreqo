@@ -318,3 +318,48 @@ Approved from the first rule batch, since M1's workflows need it, as QA-01 and S
 The text it replaced:
 
 - **CI-07, statement:** Workflow steps reference actions by fully qualified URL and full commit SHA, with the version as a comment, and container images by digest.
+
+## 2026-10-26: the second rule batch
+
+### The second rule batch is approved
+
+Dara approved the second rule batch after two fresh-context reviews, whose findings were fixed first. It changes 67 rules, each with a history entry, in four groups:
+
+- Wording that names one app becomes general.
+- A requirement stated in two or three rules is stated in one. Three new glossary terms, *asset register*, *data manifest* and *squash commit*, replace the most-cited rule IDs.
+- Facts that change on someone else's schedule move from statements to rationales, dated and linked.
+- The ten rules with a negative level become MUST or SHOULD, with the prohibition in their statements.
+
+It also corrects LIFE-06's attribution of its one-month notice to Flathub, SEC-09's tie to SLSA Build Level 3, and the old phase names in SEC-05, LEGAL-05 and the BIZ intro. Summaries that drifted from the rules follow them again: seven area intros, four `state.toml` comments, a trigger title and a cell of the GOV area's notes. The guideline for writing rules and the new levels legend are in `conventions/README.md` until M3 brings "How this document works" into the conventions. The text each change replaced stays in the squash commit's diff; QA-01's and CI-07's entries copy theirs because those texts never reached the default branch.
+
+- **Why:** a rule should read correctly on its own and for every project in its scope. In the monorepo every rule applies to every project, and the AI review reads rules literally.
+- **Choices:**
+  - PRIV-02 covers the content of the user's documents, which keeps its scope, and the secrets the app holds, so what a user adds in the preview is theirs to add.
+  - "On intent" moves from GOV-02 into CI-03, where it covers the whole sign-off list.
+  - GOV-25's conditions for model-generated functional media that ships stay recommendations.
+  - The outside-contributions and plugin-design facts are set when Dara is about to open the project or design the plugin boundary, so their rules are in place in time.
+- **Rules:** A11Y-04, AIF-01, AIF-02, AIF-05, BIZ-03, BIZ-04, BIZ-05, BRAND-01, BRAND-02, CI-03, CI-12, CI-13, CI-15, CI-18, DATA-09, DATA-10, DATA-11, DATA-17, EXT-08, GOV-02, GOV-03, GOV-08, GOV-13, GOV-14, GOV-22, GOV-25, I18N-10, I18N-11, LEGAL-04, LEGAL-05, LEGAL-09, LEGAL-11, LEGAL-13, LIFE-06, PERF-01, PERF-05, PLAT-08, PLAT-13, PLAT-14, PLAT-17, PLAT-18, PRIV-01, PRIV-02, PRIV-03, PRIV-04, PRIV-05, PRIV-07, PRIV-09, PRIV-12, QA-10, QA-12, QA-14, REL-03, REL-08, REL-16, SEC-05, SEC-06, SEC-09, SEC-12, SEC-14, SEC-19, SEC-21, UX-03, UX-05, UX-16, UX-17, UX-25.
+
+### The learning app's own requirements
+
+Requirements only the learning app has leave the suite rules. They move to its README when `cargo xtask new` creates it.
+
+- It imports Anki decks and Obsidian vaults (from DATA-09).
+- Its PERF-01 budget names 100,000 items, such as notes or cards (from PERF-05).
+- Its docs explain opening an Obsidian vault outside the sandbox (from PLAT-13).
+- Its release corpus includes public Markdown vaults and Anki decks (from QA-10).
+- Anki is AGPL-3.0-or-later, so none of its code enters permissive crates (LEGAL-11's rationale).
+- **Rules:** DATA-09, LEGAL-11, PERF-05, PLAT-13, QA-10.
+
+### What the second rule batch leaves for later
+
+- **An issue, drafted for Dara first:** let a later version change a rule's level, so that SEC-09's "Becomes a MUST at 1.0" can leave its statement. It's the only level change written in prose.
+- **M3:**
+  - The AI review checklist shows each rule's rationale, since CHECKED.md shows only statements and verifications, and facts such as LEGAL-11's Anki warning now live in rationales.
+  - The review of the triggers catches BIZ-10, whose statement asks for its ADR before commercial use or recurring sponsorship while its trigger is only `commercial`.
+  - The open questions are generated from the rules' `open` fields instead of copied from the old document, which still says "GUI toolkit for the learning app" and carries undated tool facts.
+  - The field list in "How this document works" comes from M2's schema.
+  - The old References section's link to the benchmark artifact is dropped.
+- **M2:** the level type has three values: MUST, SHOULD and MAY.
+- **The first rule batch:** LIFE-02's solo version takes over its crates.io fact, and point 5's check covers the batch's changes.
+- **Rules:** SEC-09, BIZ-10, LIFE-02.

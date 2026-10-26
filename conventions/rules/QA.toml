@@ -116,14 +116,15 @@ status = "active"
 [[rule]]
 id = "QA-10"
 level = "SHOULD"
-statement = "Every release candidate runs against a corpus of real-world inputs (public Markdown vaults, Anki decks, plugins), and every regression is triaged before release."
-rationale = "Real vaults, decks and plugins hit input combinations that unit fixtures never list (Rust's crater model)."
+statement = "Every release candidate runs against a corpus of real-world inputs, such as plugins and public files in the formats the app reads, and every regression is triaged before release."
+rationale = "Real-world files and plugins hit input combinations that unit fixtures never list (Rust's crater model)."
 verification = "Release checklist: corpus run log and triage"
 check = "Release"
 trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and rationale rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "QA-11"
@@ -140,7 +141,7 @@ status = "active"
 [[rule]]
 id = "QA-12"
 level = "MAY"
-statement = "Small security- or data-critical pure functions (CRDT merge invariants, FSRS arithmetic, parser bounds) carry Kani proofs run in CI."
+statement = "Small security- or data-critical pure functions, such as CRDT merge invariants, scheduler arithmetic or parser bounds, carry Kani proofs run in CI."
 rationale = "Kani proves a bound for every input where tests sample a few."
 verification = "CI: Kani job"
 check = "CI"
@@ -148,6 +149,7 @@ trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "QA-13"
@@ -163,8 +165,8 @@ status = "active"
 
 [[rule]]
 id = "QA-14"
-level = "MUST NOT"
-statement = "Repositories contain generated executables or unreviewable binaries. Binary assets such as fonts, images and test fixtures follow LEGAL-14."
+level = "MUST"
+statement = "Repositories contain no generated executables or unreviewable binaries. Binary assets such as fonts, images and test fixtures follow LEGAL-14."
 rationale = "A committed binary cannot be reviewed or rebuilt, which is how malicious code hides (OSPS-QA)."
 verification = "CI: binary-file check against the LEGAL-14 directory"
 check = "CI"
@@ -172,6 +174,7 @@ trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: level and statement rewritten; negative level replaced."]
 
 [[rule]]
 id = "QA-15"
