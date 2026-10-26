@@ -22,7 +22,7 @@ history = ["2026-10-26 second rule batch: statement rewritten; restated requirem
 [[rule]]
 id = "BRAND-02"
 level = "MUST"
-statement = "Each app is named \"Kreqo\" followed by one plain, descriptive word, such as Kreqo Notes, under 15 characters in total. The word is chosen to read the same in English and French where possible; otherwise it is translated like any other string. \"Kreqo\" itself is never translated (I18N-10), and a transliteration of the app's name may be added. Before use, the word is checked against existing apps in the same category."
+statement = "Each app is named \"Kreqo\" followed by one plain, descriptive word, such as Kreqo Notes, under 15 characters in total. The word is chosen to read the same in English and French where possible; otherwise it is translated like any other string. \"Kreqo\" itself is never translated, and a transliteration of the app's name may be added. Before use, the word is checked against existing apps in the same category."
 rationale = "One trademark covers every app, and Quebec requires descriptive words in a trademark to appear in French on products."
 verification = "Review checklist: name form, length, French form and existing-app search"
 check = "Review"
@@ -31,7 +31,7 @@ who = "you"
 moments = ["new-app"]
 added = "0.1.0"
 status = "active"
-history = ["2026-10-26 second rule batch: statement rewritten; restated requirement removed."]
+history = ["2026-10-26 second rule batch: statement rewritten; received the transliteration permission from I18N-10, which now points here."]
 
 [[rule]]
 id = "BRAND-03"

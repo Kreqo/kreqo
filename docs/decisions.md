@@ -323,29 +323,33 @@ The text it replaced:
 
 ### The second rule batch is approved
 
-Dara approved the second rule batch after two fresh-context reviews, whose findings were fixed first. It changes 67 rules, each with a history entry, in four groups:
+Dara approved the second rule batch after two fresh-context reviews, and then each fix from the independent review of PR #21, one by one. It changes 71 rules, each with a history entry, in four groups:
 
 - Wording that names one app becomes general.
 - A requirement stated in two or three rules is stated in one. Three new glossary terms, *asset register*, *data manifest* and *squash commit*, replace the most-cited rule IDs.
 - Facts that change on someone else's schedule move from statements to rationales, dated and linked.
 - The ten rules with a negative level become MUST or SHOULD, with the prohibition in their statements.
 
-It also corrects LIFE-06's attribution of its one-month notice to Flathub, SEC-09's tie to SLSA Build Level 3, and the old phase names in SEC-05, LEGAL-05 and the BIZ intro. Summaries that drifted from the rules follow them again: seven area intros, four `state.toml` comments, a trigger title and a cell of the GOV area's notes. The guideline for writing rules and the new levels legend are in `conventions/README.md` until M3 brings "How this document works" into the conventions. The text each change replaced stays in the squash commit's diff; QA-01's and CI-07's entries copy theirs because those texts never reached the default branch.
+It also corrects LIFE-06's attribution of its one-month notice to Flathub, SEC-09's tie to SLSA Build Level 3, the claim in A11Y-04 and LEGAL-06 that one EN 301 549 test pass serves the EU and Canada, PLAT-18's tie of minimum OS versions to the level a store requires builds to target, and the old phase names in SEC-05, LEGAL-05 and the BIZ intro. The MAY rules say "may", so none reads as a requirement without its level. Summaries that drifted from the rules follow them again: eight area intros, four `state.toml` comments, a trigger title and a cell of the GOV area's notes. The guideline for writing rules and the new levels legend are in `conventions/README.md` until M3 brings "How this document works" into the conventions. The text each change replaced stays in the squash commit's diff; QA-01's and CI-07's entries copy theirs because those texts never reached the default branch.
 
 - **Why:** a rule should read correctly on its own and for every project in its scope. In the monorepo every rule applies to every project, and the AI review reads rules literally.
 - **Choices:**
-  - PRIV-02 covers the content of the user's documents, which keeps its scope, and the secrets the app holds, so what a user adds in the preview is theirs to add.
+  - PRIV-02 covers the content of the user's documents, which keeps its scope, and the secrets the app holds. Its preview exception comes first, so what a user adds in the preview is theirs to add, secrets included.
+  - PRIV-04 keeps its own limit: an automatic crash report sends no user content at all, settings and metadata included.
   - "On intent" moves from GOV-02 into CI-03, where it covers the whole sign-off list.
   - GOV-25's conditions for model-generated functional media that ships stay recommendations.
+  - PERF-05's scale target comes from each app's README and stays a SHOULD, out of PERF-04's build gate, so PERF-01's budgets stay as they were.
+  - SEC-19 runs Miri on the tests that don't call native code, whatever Miri's experimental support for native libraries allows.
+  - The MAY rules say "may", and the levels legend keeps its claim that a statement reads correctly without its level.
   - The outside-contributions and plugin-design facts are set when Dara is about to open the project or design the plugin boundary, so their rules are in place in time.
-- **Rules:** A11Y-04, AIF-01, AIF-02, AIF-05, BIZ-03, BIZ-04, BIZ-05, BRAND-01, BRAND-02, CI-03, CI-12, CI-13, CI-15, CI-18, DATA-09, DATA-10, DATA-11, DATA-17, EXT-08, GOV-02, GOV-03, GOV-08, GOV-13, GOV-14, GOV-22, GOV-25, I18N-10, I18N-11, LEGAL-04, LEGAL-05, LEGAL-09, LEGAL-11, LEGAL-13, LIFE-06, PERF-01, PERF-05, PLAT-08, PLAT-13, PLAT-14, PLAT-17, PLAT-18, PRIV-01, PRIV-02, PRIV-03, PRIV-04, PRIV-05, PRIV-07, PRIV-09, PRIV-12, QA-10, QA-12, QA-14, REL-03, REL-08, REL-16, SEC-05, SEC-06, SEC-09, SEC-12, SEC-14, SEC-19, SEC-21, UX-03, UX-05, UX-16, UX-17, UX-25.
+- **Rules:** A11Y-04, A11Y-09, AIF-01, AIF-02, AIF-05, ARCH-12, BIZ-03, BIZ-04, BIZ-05, BRAND-01, BRAND-02, CI-03, CI-12, CI-13, CI-15, CI-18, DATA-09, DATA-10, DATA-11, DATA-17, EXT-08, GOV-02, GOV-03, GOV-08, GOV-13, GOV-14, GOV-20, GOV-22, GOV-23, GOV-25, I18N-10, I18N-11, LEGAL-04, LEGAL-05, LEGAL-06, LEGAL-09, LEGAL-11, LEGAL-13, LIFE-06, PERF-05, PLAT-08, PLAT-13, PLAT-14, PLAT-17, PLAT-18, PRIV-01, PRIV-02, PRIV-03, PRIV-04, PRIV-05, PRIV-07, PRIV-09, PRIV-12, QA-10, QA-12, QA-14, REL-03, REL-08, REL-16, SEC-05, SEC-06, SEC-09, SEC-12, SEC-14, SEC-19, SEC-21, UX-03, UX-05, UX-16, UX-17, UX-25.
 
 ### The learning app's own requirements
 
 Requirements only the learning app has leave the suite rules. They move to its README when `cargo xtask new` creates it.
 
 - It imports Anki decks and Obsidian vaults (from DATA-09).
-- Its PERF-01 budget names 100,000 items, such as notes or cards (from PERF-05).
+- Its README names 100,000 items, such as notes or cards, as its scale target (from PERF-05).
 - Its docs explain opening an Obsidian vault outside the sandbox (from PLAT-13).
 - Its release corpus includes public Markdown vaults and Anki decks (from QA-10).
 - Anki is AGPL-3.0-or-later, so none of its code enters permissive crates (LEGAL-11's rationale).
@@ -360,6 +364,12 @@ Requirements only the learning app has leave the suite rules. They move to its R
   - The open questions are generated from the rules' `open` fields instead of copied from the old document, which still says "GUI toolkit for the learning app" and carries undated tool facts.
   - The field list in "How this document works" comes from M2's schema.
   - The old References section's link to the benchmark artifact is dropped.
+  - The views list the glossary terms they use, since CHECKED.md shows no definitions and GOV-03 no longer names CI-13 for where the squash commit's message comes from.
 - **M2:** the level type has three values: MUST, SHOULD and MAY.
 - **The first rule batch:** LIFE-02's solo version takes over its crates.io fact, and point 5's check covers the batch's changes.
-- **Rules:** SEC-09, BIZ-10, LIFE-02.
+- **A later batch:**
+  - EXT-06's iOS rule and REL-19's "cargo-dist … supports a single forge" are outside facts in statements this batch didn't touch, so the guideline lets them wait until those statements change.
+  - PLAT-08's "no build downloads code that changes the app's functionality" reads as covering plugins from the official directory; it means updates.
+  - AIF-01's "only at the user's request" words consent differently from PRIV-03.
+  - DATA-11, DATA-17, UX-17 and AIF-05 give examples from the learning app only, where a second kind of project could add one.
+- **Rules:** SEC-09, BIZ-10, LIFE-02, EXT-06, REL-19, PLAT-08, AIF-01, DATA-11, DATA-17, UX-17, AIF-05.

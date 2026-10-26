@@ -33,7 +33,7 @@ status = "active"
 [[rule]]
 id = "BIZ-03"
 level = "MUST"
-statement = "Nothing is ever taken from the open apps. A released feature is never moved to a paid tier, held back by a delay, time-limited or artificially capped (no limits on the amount of user content, devices or sync size). The open apps download and run with no email, account or sign-in, and benchmarking is allowed."
+statement = "Nothing is ever taken from the open apps. A released feature is never moved to a paid tier, held back by a delay, time-limited or artificially capped, such as by limits on the amount of user content, devices or sync size. The open apps download and run with no email, account or sign-in, and benchmarking is allowed."
 rationale = "Removing features from the open apps is how open-core companies lose their community."
 verification = "Review checklist; Release checklist: feature list diff against the last release"
 check = "Review"
@@ -42,7 +42,7 @@ who = "you"
 moments = ["business"]
 added = "0.1.0"
 status = "active"
-history = ["2026-10-26 second rule batch: statement rewritten; wording no longer names one app."]
+history = ["2026-10-26 second rule batch: statement rewritten; wording no longer names one app, and its limits are examples."]
 
 [[rule]]
 id = "BIZ-04"

@@ -234,15 +234,15 @@ status = "active"
 [[rule]]
 id = "SEC-19"
 level = "MUST"
-statement = "Crates with `unsafe` or FFI run their tests and fuzz targets under AddressSanitizer, under Miri where it can execute, and under `cargo careful`, in scheduled CI on a pinned nightly. Real-time crates, such as audio engines, can add RealtimeSanitizer."
-rationale = "Sanitizers and Miri catch undefined behavior that passing tests hide. AddressSanitizer also checks the C code behind FFI when that code is built with it, while [Miri](https://github.com/rust-lang/miri) doesn't check native code (as of 2026-10-25)."
+statement = "Crates with `unsafe` or FFI run their tests and fuzz targets under AddressSanitizer, under Miri for tests that don't call native code, and under `cargo careful`, in scheduled CI on a pinned nightly. Real-time crates, such as audio engines, can add RealtimeSanitizer."
+rationale = "Sanitizers and Miri catch undefined behavior that passing tests hide. AddressSanitizer also checks the C code behind FFI when that code is built with it. As of 2026-10-26, [Miri](https://github.com/rust-lang/miri)'s support for native libraries is experimental and Unix-only, and it doesn't check what native code does."
 verification = "CI: scheduled AddressSanitizer, Miri and cargo-careful jobs on the pinned nightly"
 check = "CI"
 trigger = "first-release"
 who = "tool"
 added = "0.1.0"
 status = "active"
-history = ["2026-10-26 second rule batch: statement and rationale rewritten; outside fact moved to the rationale, and wording no longer names one app."]
+history = ["2026-10-26 second rule batch: statement and rationale rewritten; outside fact moved to the rationale, Miri's scope is stated as Kreqo's, and wording no longer names one app."]
 
 [[rule]]
 id = "SEC-20"

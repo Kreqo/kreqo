@@ -59,7 +59,7 @@ status = "active"
 [[rule]]
 id = "UX-05"
 level = "MUST"
-statement = "Apps never use dark patterns: streaks that punish missed days, fake urgency, nagging or hidden cancelation."
+statement = "Apps never use dark patterns, such as streaks that punish missed days, fake urgency, nagging or hidden cancelation."
 rationale = "Manipulation of attention breaks Principle 4, and Flathub rejects manipulative patterns."
 verification = "Review checklist: no dark patterns"
 check = "Review"
@@ -67,7 +67,7 @@ trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
-history = ["2026-10-26 second rule batch: level and statement rewritten; negative level replaced."]
+history = ["2026-10-26 second rule batch: level and statement rewritten; negative level replaced, and its dark patterns are examples."]
 
 [[rule]]
 id = "UX-06"

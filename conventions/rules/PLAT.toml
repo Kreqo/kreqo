@@ -176,7 +176,7 @@ trigger = "first-release"
 who = "tool"
 added = "0.1.0"
 status = "active"
-history = ["2026-10-26 second rule batch: statement and verification rewritten; restated requirement removed, and glossary term replaces a rule ID."]
+history = ["2026-10-26 second rule batch: statement and verification rewritten; received the store privacy labels from PRIV-07, and glossary term replaces a rule ID."]
 
 [[rule]]
 id = "PLAT-15"
@@ -206,7 +206,7 @@ status = "active"
 id = "PLAT-17"
 level = "MUST"
 statement = "An ADR decides the response to Android developer verification (register or not, how F-Droid users install and update, how package names are protected), and is revisited when Google's global rollout starts."
-rationale = "Verification decides whether F-Droid users can install the app at all, and package names can be claimed by others. As of 2026-10-16, [Google](https://android-developers.googleblog.com/2026/06/android-developer-verification.html) planned the global rollout for 2027."
+rationale = "Verification decides how F-Droid users can install the app, and package names can be claimed by others. As of 2026-10-26, [Google](https://android-developers.googleblog.com/2026/06/android-developer-verification.html) planned the global rollout for 2027; where verification had started, unregistered apps could still be installed with adb or an advanced flow."
 verification = "Review checklist: ADR present and dated"
 check = "Review"
 trigger = "android"
@@ -219,16 +219,16 @@ history = ["2026-10-26 second rule batch: statement and rationale rewritten; out
 [[rule]]
 id = "PLAT-18"
 level = "MUST"
-statement = "Minimum OS versions per platform follow a written policy (for example, supported while the vendor supports them), rise only at the start of a release cycle, and meet each store's current target."
-rationale = "Stores refuse updates below their target level, and a mid-cycle rise strands users without notice. As of 2026-10-16, [Google Play](https://developer.android.com/google/play/requirements/target-sdk) requires updates to target API 36, apart from some device types such as Wear OS."
-verification = "Review checklist: minimums match the policy and store targets"
+statement = "Minimum OS versions per platform follow a written policy (for example, supported while the vendor supports them) and rise only at the start of a release cycle. Builds target the API or SDK level each store currently requires."
+rationale = "Stores refuse updates built for an older target level, and a mid-cycle rise in minimums strands users without notice. As of 2026-10-16, [Google Play](https://developer.android.com/google/play/requirements/target-sdk) requires updates to target API 36, apart from some device types such as Wear OS."
+verification = "Review checklist: minimums match the policy; builds target each store's current level"
 check = "Review"
 trigger = "first-release"
 who = "you"
 moments = ["release"]
 added = "0.1.0"
 status = "active"
-history = ["2026-10-26 second rule batch: statement and rationale rewritten; outside fact moved to the rationale."]
+history = ["2026-10-26 second rule batch: statement, rationale and verification rewritten; outside fact moved to the rationale, and minimums are kept apart from the level each store requires."]
 
 [[rule]]
 id = "PLAT-19"

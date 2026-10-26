@@ -141,7 +141,7 @@ status = "active"
 [[rule]]
 id = "QA-12"
 level = "MAY"
-statement = "Small security- or data-critical pure functions, such as CRDT merge invariants, scheduler arithmetic or parser bounds, carry Kani proofs run in CI."
+statement = "Small security- or data-critical pure functions, such as CRDT merge invariants, scheduler arithmetic or parser bounds, may carry Kani proofs run in CI."
 rationale = "Kani proves a bound for every input where tests sample a few."
 verification = "CI: Kani job"
 check = "CI"
@@ -149,7 +149,7 @@ trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
-history = ["2026-10-26 second rule batch: statement rewritten; wording no longer names one app."]
+history = ["2026-10-26 second rule batch: statement rewritten; wording no longer names one app, and its option says \"may\"."]
 
 [[rule]]
 id = "QA-13"

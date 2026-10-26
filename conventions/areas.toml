@@ -21,7 +21,7 @@ notes = ""
 prefix = "DATA"
 title = "Data and sync"
 group = "Data and sync"
-intro = "User data is local-first: it lives on the user's devices in open files that are the source of truth, works offline, and survives crashes, migrations, version skew across devices and the project itself. Sync is end-to-end encrypted, and servers keep only minimal, short-lived metadata."
+intro = "User data is local-first: it lives on the user's devices in open files that are the source of truth, works offline, and survives crashes, migrations, version skew across devices and the project itself. Sync is end-to-end encrypted, so servers can't read the user data they store, and they keep their own metadata minimal and short-lived."
 notes = ""
 
 [[area]]
@@ -42,7 +42,7 @@ notes = ""
 prefix = "A11Y"
 title = "Accessibility"
 group = "Accessibility"
-intro = "Accessibility blocks releases: apps meet EN 301 549, the standard behind the European Accessibility Act and adopted unchanged in Canada, and websites meet WCAG 2.2 AA."
+intro = "Accessibility blocks releases: apps meet EN 301 549, the standard behind the European Accessibility Act and Canada's ICT standard, and websites meet WCAG 2.2 AA."
 notes = ""
 
 [[area]]

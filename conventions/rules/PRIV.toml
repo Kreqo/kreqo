@@ -20,7 +20,7 @@ history = ["2026-10-26 second rule batch: verification rewritten; glossary term 
 [[rule]]
 id = "PRIV-02"
 level = "MUST"
-statement = "Logs, crash reports, bug reports and diagnostic bundles contain no secrets the app holds, and no content, titles or paths of the user's documents, such as notes, cards or recordings, unless the user adds them in the preview (PRIV-04)."
+statement = "Unless the user adds them in the preview (PRIV-04), logs, crash reports, bug reports and diagnostic bundles contain no secrets the app holds and no content, titles or paths of the user's documents, such as notes, cards or recordings."
 rationale = "A title or file path identifies what a user is working on as surely as its content."
 verification = "Review checklist: redaction of content, titles and paths in logs and bundles"
 check = "Review"
@@ -28,7 +28,7 @@ trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
-history = ["2026-10-26 second rule batch: level and statement rewritten; wording no longer names one app, and negative level replaced."]
+history = ["2026-10-26 second rule batch: level and statement rewritten; wording no longer names one app, its negative level is replaced, and its preview exception covers secrets the app holds."]
 
 [[rule]]
 id = "PRIV-03"
@@ -46,7 +46,7 @@ history = ["2026-10-26 second rule batch: verification rewritten; glossary term 
 [[rule]]
 id = "PRIV-04"
 level = "MUST"
-statement = "Crash reports stay local until the user previews and approves what is sent; reporting a bug takes one action. If a standing option to send every crash report automatically is ever offered, it is opt-in and revocable in one step from settings, and PRIV-02 still applies to what it sends."
+statement = "Crash reports stay local until the user previews and approves what is sent; reporting a bug takes one action. If a standing option to send every crash report automatically is ever offered, it is opt-in, revocable in one step from settings, and sends no user content."
 rationale = "The preview is the only way a user knows what a report holds; a standing consent needs an equally easy exit."
 verification = "Review checklist: preview before send; one-step revocation of any standing consent"
 check = "Review"
@@ -54,7 +54,7 @@ trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
-history = ["2026-10-26 second rule batch: statement rewritten; restated requirement removed."]
+history = ["2026-10-26 second rule batch: statement rewritten; its limit no longer points to PRIV-02, whose scope is narrower."]
 
 [[rule]]
 id = "PRIV-05"

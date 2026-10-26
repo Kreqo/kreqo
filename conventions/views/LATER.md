@@ -58,8 +58,8 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 **PLAT-09** · MUST · Windows and macOS builds are code-signed, macOS builds are notarized, and CI verifies both.\
 *Why:* The Microsoft Store requires signing, and Gatekeeper blocks unnotarized macOS binaries. · *Enforced by CI.*
 
-**PLAT-18** · MUST · Minimum OS versions per platform follow a written policy (for example, supported while the vendor supports them), rise only at the start of a release cycle, and meet each store's current target.\
-*Why:* Stores refuse updates below their target level, and a mid-cycle rise strands users without notice. As of 2026-10-16, [Google Play](https://developer.android.com/google/play/requirements/target-sdk) requires updates to target API 36, apart from some device types such as Wear OS. · *Checked in review.*
+**PLAT-18** · MUST · Minimum OS versions per platform follow a written policy (for example, supported while the vendor supports them) and rise only at the start of a release cycle. Builds target the API or SDK level each store currently requires.\
+*Why:* Stores refuse updates built for an older target level, and a mid-cycle rise in minimums strands users without notice. As of 2026-10-16, [Google Play](https://developer.android.com/google/play/requirements/target-sdk) requires updates to target API 36, apart from some device types such as Wear OS. · *Checked in review.*
 
 **DOC-14** · SHOULD · A public roadmap states current priorities per area and what the project will and will not do over the next year, without promised feature dates.\
 *Why:* Priorities without dates tell contributors where help lands and avoid deadlines that slip. · *Checked in review.*
@@ -99,7 +99,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 - **DATA-06** · MUST · No feature depends on the organization's servers to keep working; sync servers are self-hostable. *(AI review)*
 - **DATA-07** · MUST · Users can export all their data in a documented, open format at any time. *(tooling)*
 - **DATA-08** · MUST · Autosave is on by default. *(AI review)*
-- **DATA-09** · SHOULD · Apps import data from the leading alternatives in their category, which each app names in its README. *(AI review)*
+- **DATA-09** · SHOULD · Apps import data from the leading alternatives in their category, and each app's README names those alternatives. *(AI review)*
 - **DATA-12** · MUST · Adjacent releases (N and N−1) interoperate over sync and plugin APIs. *(tooling)*
 - **DATA-13** · MUST · The sync protocol is versioned. *(tooling)*
 - **DATA-14** · MUST · Derived data (search indexes, embeddings, thumbnails, caches) gets its source's protection: encrypted where the source is, deleted with it, kept out of logs, and never synced unencrypted. *(AI review)*
@@ -114,7 +114,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 - **SEC-15** · MUST · An incident playbook covers a compromised maintainer account, a leaked signing key or token, a compromised forge or runner, a malicious dependency and a malicious release. *(AI review)*
 - **SEC-17** · MUST · CI secrets live only in the forge's secret store or an external KMS, scoped per environment and job, unavailable to pull-request workflows, and rotated on a schedule and whenever a maintainer leaves. *(AI review)*
 - **SEC-18** · MUST · Each app has a security assessment and threat model: attack surface, trust boundaries, mitigations, and why common weaknesses are countered. *(AI review)*
-- **SEC-19** · MUST · Crates with `unsafe` or FFI run their tests and fuzz targets under AddressSanitizer, under Miri where it can execute, and under `cargo careful`, in scheduled CI on a pinned nightly. *(tooling)*
+- **SEC-19** · MUST · Crates with `unsafe` or FFI run their tests and fuzz targets under AddressSanitizer, under Miri for tests that don't call native code, and under `cargo careful`, in scheduled CI on a pinned nightly. *(tooling)*
 - **SEC-21** · SHOULD · Each project holds an OpenSSF Best Practices badge: Passing by first release, Silver by 1.0. *(AI review)*
 - **SEC-22** · SHOULD · Embargoed pre-notification goes only to downstream packagers who ship the suite (Flathub, nixpkgs, distributions), 1 to 7 days before disclosure. *(AI review)*
 - **SEC-23** · SHOULD · Release binaries keep the toolchain's default hardening, and overflow checks stay on in security-critical crates. *(tooling)*
@@ -147,7 +147,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 - **UX-23** · MUST · Every control has a tooltip: its name, a one-to-three-line imperative description that neither restates the name nor states default values, its shortcut, and for a disabled control the reason (A11Y-01). *(AI review)*
 - **UX-26** · SHOULD · Errors a user or developer can hit carry a stable code with a documentation page, linked from the message (UX-07). *(AI review)*
 - **PERF-04** · MUST · Benchmarks run in CI; a regression past the budget, or past 5% by default, fails the build. *(tooling)*
-- **PERF-05** · SHOULD · Apps stay responsive with the amount of user content their budget names (PERF-01), verified by a scale test. *(tooling)*
+- **PERF-05** · SHOULD · Apps stay responsive with the amount of user content their README names, verified by a scale test. *(tooling)*
 - **PLAT-05** · MUST · Apps integrate with each platform: system file dialogs, notifications, standard data directories, and on Linux the XDG portals and their settings (dark mode, accent, contrast). *(AI review)*
 - **PLAT-06** · MUST · Linux builds ship on Flathub, then nixpkgs, then other distro packages; other platforms use winget, Homebrew, F-Droid and the app stores. *(AI review)*
 - **PLAT-07** · MUST · Flathub submissions disclose AI-generated parts and their extent, compiled from `Co-Authored-By` trailers (GOV-03). *(AI review)*
@@ -205,7 +205,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 ### Needs you (1)
 
 **PLAT-17** · MUST · An ADR decides the response to Android developer verification (register or not, how F-Droid users install and update, how package names are protected), and is revisited when Google's global rollout starts.\
-*Why:* Verification decides whether F-Droid users can install the app at all, and package names can be claimed by others. As of 2026-10-16, [Google](https://android-developers.googleblog.com/2026/06/android-developer-verification.html) planned the global rollout for 2027. · *Checked in review.*
+*Why:* Verification decides how F-Droid users can install the app, and package names can be claimed by others. As of 2026-10-26, [Google](https://android-developers.googleblog.com/2026/06/android-developer-verification.html) planned the global rollout for 2027; where verification had started, unregistered apps could still be installed with adb or an advanced flow. · *Checked in review.*
 
 ### Checked for you (1)
 
@@ -468,7 +468,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 
 ### Needs you (1)
 
-**GOV-23** · MAY · Once the organization exists, contributor-members, non-code contributors included, elect a leadership body of 3–7 people; votes on a public list close after 7 days, and members who miss three consecutive votes are removed. Details: statutes.\
+**GOV-23** · MAY · Once the organization exists, contributor-members, non-code contributors included, may elect a leadership body of 3–7 people; votes on a public list close after 7 days, and members who miss three consecutive votes are removed. Details: statutes.\
 *Why:* An elected body gives contributors a say once there is an organization to run. · *Checked in review.*
 
 

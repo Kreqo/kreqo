@@ -239,7 +239,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 **PRIV-01** · MUST · Telemetry and analytics are off by default and run only after explicit opt-in. Telemetry means any measurement that leaves the device: analytics, attribution, experiments, usage pings, diagnostics. Data kept only on the device and visible to the user is not telemetry.\
 *Verified by:* Review checklist: no measurement leaves the device without opt-in; data manifest entry
 
-**PRIV-02** · MUST · Logs, crash reports, bug reports and diagnostic bundles contain no secrets the app holds, and no content, titles or paths of the user's documents, such as notes, cards or recordings, unless the user adds them in the preview (PRIV-04).\
+**PRIV-02** · MUST · Unless the user adds them in the preview (PRIV-04), logs, crash reports, bug reports and diagnostic bundles contain no secrets the app holds and no content, titles or paths of the user's documents, such as notes, cards or recordings.\
 *Verified by:* Review checklist: redaction of content, titles and paths in logs and bundles
 
 **PRIV-03** · MUST · Apps contact only servers the user chose. A chosen server means the user turned on the feature or started the action, and the host is named in the UI and in the privacy notice. Nothing is contacted because the app launched. On-demand downloads (dictionaries, models, fonts, the plugin directory) follow the same rule, and lookups send the minimum, not library contents.\
@@ -266,7 +266,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 **UX-02** · MUST · Every app is built from the suite's component library and bundled fonts, so it looks the same on every platform. New patterns are proposed to the library before they ship, may incubate in one app with Experimental status (UX-20), and are promoted when a second app needs them.\
 *Verified by:* Review checklist: library components only; incubating patterns marked Experimental
 
-**UX-05** · MUST · Apps never use dark patterns: streaks that punish missed days, fake urgency, nagging or hidden cancelation.\
+**UX-05** · MUST · Apps never use dark patterns, such as streaks that punish missed days, fake urgency, nagging or hidden cancelation.\
 *Verified by:* Review checklist: no dark patterns
 
 **UX-06** · MUST · Terminology follows the shared glossary in every app and language (I18N-10).\

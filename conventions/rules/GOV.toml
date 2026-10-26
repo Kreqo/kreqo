@@ -276,7 +276,7 @@ history = ["2026-10-23 solo-first edit: waits for the trigger 'open-to-contribut
 [[rule]]
 id = "GOV-20"
 level = "MAY"
-statement = "A public goals board lists approved, postponed and declined initiatives, each with completion criteria and a named owner. Once the community is large enough, contributors may rank suite-wide goals every two years."
+statement = "The project may keep a public goals board listing approved, postponed and declined initiatives, each with completion criteria and a named owner. Once the community is large enough, contributors may rank suite-wide goals every two years."
 rationale = "A public board shows what was declined, not only what was done."
 verification = "Review checklist"
 check = "Review"
@@ -285,6 +285,7 @@ who = "you"
 moments = ["feature"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; its option says \"may\"."]
 
 [[rule]]
 id = "GOV-21"
@@ -317,7 +318,7 @@ history = ["2026-10-26 second rule batch: level and statement rewritten; negativ
 [[rule]]
 id = "GOV-23"
 level = "MAY"
-statement = "Once the organization exists, contributor-members, non-code contributors included, elect a leadership body of 3–7 people; votes on a public list close after 7 days, and members who miss three consecutive votes are removed. Details: statutes."
+statement = "Once the organization exists, contributor-members, non-code contributors included, may elect a leadership body of 3–7 people; votes on a public list close after 7 days, and members who miss three consecutive votes are removed. Details: statutes."
 rationale = "An elected body gives contributors a say once there is an organization to run."
 verification = "Review checklist"
 check = "Review"
@@ -326,6 +327,7 @@ who = "you"
 moments = ["contributors"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; its option says \"may\"."]
 
 [[rule]]
 id = "GOV-24"

@@ -78,13 +78,13 @@ When a case isn't covered, decide by these.
 *Why:* The suite's own look is a deliberate departure from GNOME and KDE styling; Flathub promotion depends on the decorations choice. · *Checked in review.*\
 *Open decision:* Window decorations on Linux: client-side or system. Leaning: none yet.
 
-**BRAND-02** · MUST · Each app is named "Kreqo" followed by one plain, descriptive word, such as Kreqo Notes, under 15 characters in total. The word is chosen to read the same in English and French where possible; otherwise it is translated like any other string. "Kreqo" itself is never translated (I18N-10), and a transliteration of the app's name may be added. Before use, the word is checked against existing apps in the same category.\
+**BRAND-02** · MUST · Each app is named "Kreqo" followed by one plain, descriptive word, such as Kreqo Notes, under 15 characters in total. The word is chosen to read the same in English and French where possible; otherwise it is translated like any other string. "Kreqo" itself is never translated, and a transliteration of the app's name may be added. Before use, the word is checked against existing apps in the same category.\
 *Why:* One trademark covers every app, and Quebec requires descriptive words in a trademark to appear in French on products. · *Checked in review.*
 
 **BRAND-05** · SHOULD · App hues are registered with at least 30° spacing and kept clear of the error, warning and success hues; every new hue is reviewed visually, not only computed.\
 *Why:* Close hues blur apps together, and status hues carry a fixed meaning. · *Checked in review.*
 
-**PERF-01** · MUST · Each app documents budgets for cold start, idle CPU, memory, binary size and the amount of user content it stays responsive with.\
+**PERF-01** · MUST · Each app documents budgets for cold start, idle CPU, memory and binary size.\
 *Why:* Without a number, "efficient" is an adjective (Principle 8). · *Checked in review.*\
 *Open decision:* Default budgets per app category. Leaning: none yet.
 
@@ -175,7 +175,7 @@ When a case isn't covered, decide by these.
 **BIZ-01** · MUST · Licenses only get freer: no project, crate, format or release is ever relicensed under more restrictive or source-available terms, and license changes go through an RFC.\
 *Why:* Permissive code can legally be closed; only a written promise stops it. · *Checked in review.*
 
-**BIZ-03** · MUST · Nothing is ever taken from the open apps. A released feature is never moved to a paid tier, held back by a delay, time-limited or artificially capped (no limits on the amount of user content, devices or sync size). The open apps download and run with no email, account or sign-in, and benchmarking is allowed.\
+**BIZ-03** · MUST · Nothing is ever taken from the open apps. A released feature is never moved to a paid tier, held back by a delay, time-limited or artificially capped, such as by limits on the amount of user content, devices or sync size. The open apps download and run with no email, account or sign-in, and benchmarking is allowed.\
 *Why:* Removing features from the open apps is how open-core companies lose their community. · *Checked in review.*
 
 **BIZ-04** · MUST · Security, privacy, encryption, accessibility, localization, import, export and self-hosting are never offered only as paid features.\
@@ -186,16 +186,16 @@ When a case isn't covered, decide by these.
 
 These MAY rules are yours to take or leave.
 
-**ARCH-12** · MAY · A project defines a domain-specific language only when an app needs one, with a versioned grammar.\
+**ARCH-12** · MAY · A project may define a domain-specific language only when an app needs one, with a versioned grammar.\
 *Why:* A versioned grammar lets files written today parse under a later release (DATA-02). · *Checked in review.*
 
-**A11Y-09** · MAY · Apps offer a Vim-like modal keyboard mode for power users.\
+**A11Y-09** · MAY · Apps may offer a Vim-like modal keyboard mode for power users.\
 *Why:* Modal editing lets keyboard-centric users work without reaching for the pointer. · *Checked in review.*
 
-**QA-12** · MAY · Small security- or data-critical pure functions, such as CRDT merge invariants, scheduler arithmetic or parser bounds, carry Kani proofs run in CI.\
+**QA-12** · MAY · Small security- or data-critical pure functions, such as CRDT merge invariants, scheduler arithmetic or parser bounds, may carry Kani proofs run in CI.\
 *Why:* Kani proves a bound for every input where tests sample a few. · *Enforced by CI.*
 
-**GOV-20** · MAY · A public goals board lists approved, postponed and declined initiatives, each with completion criteria and a named owner. Once the community is large enough, contributors may rank suite-wide goals every two years.\
+**GOV-20** · MAY · The project may keep a public goals board listing approved, postponed and declined initiatives, each with completion criteria and a named owner. Once the community is large enough, contributors may rank suite-wide goals every two years.\
 *Why:* A public board shows what was declined, not only what was done. · *Checked in review.*
 
 

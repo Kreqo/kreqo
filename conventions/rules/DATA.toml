@@ -105,7 +105,7 @@ status = "active"
 [[rule]]
 id = "DATA-09"
 level = "SHOULD"
-statement = "Apps import data from the leading alternatives in their category, which each app names in its README."
+statement = "Apps import data from the leading alternatives in their category, and each app's README names those alternatives."
 rationale = "Users switch only when their existing data comes with them."
 verification = "Release checklist: import test log against sample data from each named alternative"
 check = "Release"
@@ -207,13 +207,13 @@ id = "DATA-17"
 level = "MUST"
 statement = "Changing a default never changes the behavior of existing user data or settings. New defaults apply only to new collections, such as vaults, and new profiles, or ship with a migration (DATA-02) and a release-note entry."
 rationale = "A silently changed default is a behavior change the user never chose."
-verification = "Review checklist: default changes marked new-profile-only or paired with a migration and release note"
+verification = "Review checklist: default changes apply only to new collections and new profiles, or come with a migration and release note"
 check = "Review"
 trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
-history = ["2026-10-26 second rule batch: statement rewritten; wording no longer names one app."]
+history = ["2026-10-26 second rule batch: statement and verification rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "DATA-18"
