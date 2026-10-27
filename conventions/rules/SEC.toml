@@ -247,14 +247,15 @@ history = ["2026-10-26 second rule batch: statement and rationale rewritten; out
 [[rule]]
 id = "SEC-20"
 level = "SHOULD"
-statement = "A dependency-update bot runs weekly for Cargo, CI actions and toolchains, groups related crates, and waits at least 7 days after an upstream release except for security fixes. Cargo's native minimum publish age goes into the template once it reaches stable Rust."
+statement = "A dependency-update bot runs weekly for Cargo, CI actions and toolchains, groups related crates, and waits at least 7 days after an upstream release except for security fixes. Cargo's native minimum publish age goes into the monorepo's configuration once it reaches stable Rust."
 rationale = "A 7-day cooldown gives a malicious crate release time to be reported and yanked before it is pulled in."
-verification = "CI: bot configuration in the template; weekly update pull requests"
+verification = "CI: bot configuration in the monorepo; weekly update pull requests"
 check = "CI"
 trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement and verification rewritten for the monorepo."]
 
 [[rule]]
 id = "SEC-21"
@@ -286,9 +287,10 @@ id = "SEC-23"
 level = "SHOULD"
 statement = "Release binaries keep the toolchain's default hardening, and overflow checks stay on in security-critical crates."
 rationale = "Disabling hardening or overflow checks turns a parser bug into silent wraparound or a memory-safety hole."
-verification = "CI: release profile flags checked against the template"
+verification = "CI: each workspace's release profile checked for the default hardening and overflow checks"
 check = "CI"
 trigger = "first-release"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: verification rewritten for the monorepo."]

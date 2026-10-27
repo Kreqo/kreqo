@@ -7,15 +7,15 @@
 [[rule]]
 id = "QA-01"
 level = "MUST"
-statement = "Code is formatted with rustfmt and passes Clippy; warnings fail CI. Every crate inherits one lint table: crates in the root workspace through `[lints] workspace = true`, and a nested workspace or a repository outside the monorepo through a generated copy of the root's table, an outside repository's taken from the conventions version it names. CI checks the inheritance and each copy. Suppressions use `#[expect(lint, reason = \"…\")]`; an `allow` attribute, inner or outer, fails CI. The table enforces SEC-01: `unsafe_code`, `undocumented_unsafe_blocks` and `missing_safety_doc`. Parser, importer and sync crates, which their project's `project.toml` lists, add QA-02's `unwrap_used`, `expect_used`, `panic` and `indexing_slicing` as crate-level attributes, which CI checks. Bans for every crate use `disallowed-methods` in the root `clippy.toml`, each with a reason; any other `clippy.toml` repeats them, which CI checks."
+statement = "Code is formatted with rustfmt and passes Clippy; warnings fail CI. Every crate inherits one lint table: crates in the root workspace through `[lints] workspace = true`, and a nested workspace or a repository outside the monorepo through a generated copy of the root's table, an outside repository's taken from the conventions version it names and an experiment's from the commit its `project.toml` names, as is its formatting configuration. CI checks the inheritance and each copy. Suppressions use `#[expect(lint, reason = \"…\")]`; an `allow` attribute, inner or outer, fails CI. The table enforces SEC-01: `unsafe_code`, `undocumented_unsafe_blocks` and `missing_safety_doc`. Parser, importer and sync crates, which their project's `project.toml` lists, add QA-02's `unwrap_used`, `expect_used`, `panic` and `indexing_slicing` as crate-level attributes, which CI checks. Bans for every crate use `disallowed-methods` in the root `clippy.toml`, each with a reason; any other `clippy.toml` repeats them, an experiment's as of its named commit, which CI checks."
 rationale = "One inherited table keeps lints identical across crates without copies that drift, and `expect` reports suppressions that no longer fire."
-verification = "CI: rustfmt; Clippy with `allow_attributes` and `allow_attributes_without_reason`; an `allow` grep, which also catches the inner attributes Clippy skips; checks that every crate inherits the workspace lints, that each copy matches the root's table, that listed crates carry their attributes, and that every `clippy.toml` repeats the root's bans"
+verification = "CI: rustfmt; Clippy with `allow_attributes` and `allow_attributes_without_reason`; an `allow` grep, which also catches the inner attributes Clippy skips; checks that every crate inherits the workspace lints, that listed crates carry their attributes, that each copy of the table matches the root's table, that each other `clippy.toml` repeats the root's bans and that an experiment's formatting configuration matches the root's, each as of the conventions version or commit its `project.toml` names, if any; and that an experiment's named commit has the root configuration of the default branch when its folder was created, or a later one"
 check = "CI"
 trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
-history = ["2026-10-24 first rule batch: statement, rationale and verification rewritten for the monorepo."]
+history = ["2026-10-24 first rule batch: statement, rationale and verification rewritten for the monorepo.", "2026-10-27 first rule batch: statement and verification rewritten; an experiment's copies of the lint and formatting configuration follow the commit it names."]
 
 [[rule]]
 id = "QA-02"
@@ -154,7 +154,7 @@ history = ["2026-10-26 second rule batch: statement rewritten; wording no longer
 [[rule]]
 id = "QA-13"
 level = "SHOULD"
-statement = "Before each release, the template's pedantic and restriction lint pass runs, and each finding is fixed or carries an `expect` with a reason."
+statement = "Before each release, the monorepo's pedantic and restriction lint pass runs over the released crates, and each finding is fixed or carries an `expect` with a reason."
 rationale = "Pedantic and restriction lints are too noisy for every pull request but surface real findings once per release."
 verification = "Release checklist: lint pass log"
 check = "Release"
@@ -162,6 +162,7 @@ trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement rewritten for the monorepo."]
 
 [[rule]]
 id = "QA-14"

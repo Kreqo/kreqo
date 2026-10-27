@@ -7,15 +7,23 @@
 [[rule]]
 id = "BIZ-01"
 level = "MUST"
-statement = "Licenses only get freer: no project, crate, format or release is ever relicensed under more restrictive or source-available terms, and license changes go through an RFC."
+statement = "Licenses only get freer: no project, crate, format or release is ever relicensed under more restrictive or source-available terms, and license changes go through an ADR."
 rationale = "Permissive code can legally be closed; only a written promise stops it."
-verification = "Review checklist: license changes via RFC; CI: license file diff flagged"
+verification = "Review checklist: license changes via ADR; CI: license file diff flagged"
 check = "Review"
 trigger = "always"
 who = "you"
 moments = ["business"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement and verification rewritten, an ADR standing in for the RFC; the original returns at the trigger 'open-to-contributions'."]
+
+[[rule.later]]
+trigger = "open-to-contributions"
+statement = "Licenses only get freer: no project, crate, format or release is ever relicensed under more restrictive or source-available terms, and license changes go through an RFC."
+rationale = "Permissive code can legally be closed; only a written promise stops it."
+verification = "Review checklist: license changes via RFC; CI: license file diff flagged"
+check = "Review"
 
 [[rule]]
 id = "BIZ-02"

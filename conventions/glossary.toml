@@ -24,6 +24,10 @@ term = "Deviation"
 definition = "a recorded, time-limited departure from a SHOULD (DOC-06)."
 
 [[term]]
+term = "Experiment"
+definition = "a project in `experiments/` that gathers evidence for specific ADRs under LIFE-08 and LIFE-09, such as a toolkit bake-off. Nothing ships from it."
+
+[[term]]
 term = "The forge"
 definition = "the service hosting the repositories, their pull requests and CI. GitHub today; the rules don't depend on it."
 
@@ -56,6 +60,10 @@ term = "Procedural media"
 definition = "assets produced by a reviewable algorithm whose parameters are in the repository, whoever wrote the code (GOV-26)."
 
 [[term]]
+term = "Project templates"
+definition = "the templates in the monorepo's `templates/` that `cargo xtask new` creates new projects from, such as those for a library, a tool or an app's core."
+
+[[term]]
 term = "Public interface"
 definition = "anything a third party can depend on: crate APIs, CLI flags, file formats, the sync protocol, the plugin API."
 
@@ -65,7 +73,7 @@ definition = "a public proposal following the RFC process (GOV-01)."
 
 [[term]]
 term = "Risk-tier paths"
-definition = "the paths listed in a project's risk file whose changes get the strictest review (GOV-02): `unsafe` code, cryptography, data formats and migrations, sync, security-sensitive code, the plugin boundary, and the public API of shared crates."
+definition = "the paths whose changes get the strictest review (GOV-02): `unsafe` code, cryptography, data formats and migrations, sync, security-sensitive code, the plugin boundary, the public API of shared crates, and the conventions with the workflows, checks and tool configuration that enforce them. Each project lists its own in its `project.toml`, and a file at the monorepo's root lists those outside every project."
 
 [[term]]
 term = "Sign-off list"
@@ -82,10 +90,6 @@ definition = "the single commit a pull request lands as on the default branch, w
 [[term]]
 term = "The suite"
 definition = "every app and shared crate the organization publishes."
-
-[[term]]
-term = "The template"
-definition = "the project template every repository starts from, which carries this document, the CI workflows, the checklists and the lint configuration."
 
 [[term]]
 term = "Tier 1"

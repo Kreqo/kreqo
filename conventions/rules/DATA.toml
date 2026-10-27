@@ -19,14 +19,15 @@ status = "active"
 [[rule]]
 id = "DATA-02"
 level = "MUST"
-statement = "File formats and schemas carry a version, and every version change ships an automatic, tested migration. Migration tests use real sample files from every released format version. A storage-model change ships an export path back to the previous open format, so no migration strands users."
-rationale = "Sample files from every released version are the only proof a migration handles data users actually have."
-verification = "CI: migration tests over the sample-file corpus, one file set per released format version"
+statement = "File formats and schemas carry a version, and every version change ships an automatic, tested migration. Each release that ships a new format version writes a set of sample files from the project's own content, never user content; migration tests run over every set, and a set never changes once committed. A storage-model change ships an export path back to the previous open format, so no migration strands users."
+rationale = "Files a release wrote share the quirks of users' files, which hand-written fixtures miss; the project's own content can be published, and users' files cannot."
+verification = "CI: one committed sample set per released format version; migration tests over every set; a check against the base branch that fails when a pull request changes or removes a file in a committed set"
 check = "CI"
 trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement, rationale and verification rewritten; sample files come from the project's own content."]
 
 [[rule]]
 id = "DATA-03"

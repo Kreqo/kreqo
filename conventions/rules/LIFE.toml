@@ -7,27 +7,36 @@
 [[rule]]
 id = "LIFE-01"
 level = "MUST"
-statement = "Every repository declares its stage in machine-readable metadata (incubating, in review, stable, unmaintained, archived), beside its declared conventions version, and in its README. Only stable projects publish stable-channel releases or carry the Kreqo name. Any stage can move to unmaintained, and an unmaintained project returns to incubating when someone takes it on."
+statement = "Each project declares its kind (library, tool, app, server, website or experiment) and its stage (incubating, in review, stable, unmaintained or archived) in a `project.toml` in its folder, and its README shows both. A project in a repository outside the monorepo keeps its `project.toml` at that repository's root and names in it the conventions version it follows. Only stable projects publish stable-channel releases or carry the Kreqo name, in an app's name (BRAND-02) or ID (PLAT-12). Any stage can move to unmaintained, and an unmaintained project returns to incubating when someone takes it on; an experiment (LIFE-08) moves only from incubating to archived. Archiving makes a repository read-only, or empties a folder on the monorepo's default branch down to its `project.toml`, its CHANGELOG if it released, and a README that links its last commit and release tags."
 rationale = "Users and packagers need to know what is supported before they depend on it."
-verification = "CI: stage file present and valid; README badge generated from it"
+verification = "CI: `project.toml` present and valid; README badge generated from it; an archived folder holds only those files"
 check = "CI"
 trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement and verification rewritten for the monorepo, its experiments and archiving."]
 
 [[rule]]
 id = "LIFE-02"
 level = "MUST"
-statement = "An asset register lists the domains, DNS, trademarks, signing keys, registry names (crates.io, plus the GitHub accounts its login requires), Flathub IDs, store and developer accounts, the forge organization, and hosted services. Each has at least two holders, or a recovery path held by a second person, with credentials in escrow (sealed, or a lockbox, with a will for legal rights such as DNS). Nothing sits only in one personal account. The register is reviewed before each release, and losing any one person stops issues, merges or releases for at most a week. The escrow is tested by first release."
-rationale = "A solo project dies with its founder's password unless someone else can get in."
-verification = "Release checklist: register reviewed; escrow test record"
+statement = "An asset register lists the domains, DNS, trademarks, signing keys, registry names and the accounts their logins depend on, Flathub IDs, store and developer accounts, the forge organization, and hosted services. Each has at least two holders, or a recovery path held by a second person, with credentials in escrow (sealed, or a lockbox, with a will for legal rights such as DNS). Nothing sits only in one personal account. While there is one maintainer, the escrow names who takes over the assets if the founder can't continue. The register is reviewed before each release, and the escrow is tested by first release."
+rationale = "A solo project dies with its founder's password unless someone else can get in. A registry's login can tie its names to another service's account: as of 2026-10-26, [crates.io](https://doc.rust-lang.org/cargo/reference/publishing.html) logs in only through GitHub."
+verification = "Release checklist: register reviewed; successor named in the escrow; escrow test record"
 check = "Release"
 trigger = "always"
 who = "you"
 moments = ["setup"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement, rationale and verification rewritten for one maintainer, the outside fact moved to the rationale; the original, with the same fix, returns at the trigger 'second-maintainer'."]
+
+[[rule.later]]
+trigger = "second-maintainer"
+statement = "An asset register lists the domains, DNS, trademarks, signing keys, registry names and the accounts their logins depend on, Flathub IDs, store and developer accounts, the forge organization, and hosted services. Each has at least two holders, or a recovery path held by a second person, with credentials in escrow (sealed, or a lockbox, with a will for legal rights such as DNS). Nothing sits only in one personal account. The register is reviewed before each release, and losing any one person stops issues, merges or releases for at most a week. The escrow is tested by first release."
+rationale = "A solo project dies with its founder's password unless someone else can get in. A registry's login can tie its names to another service's account: as of 2026-10-26, [crates.io](https://doc.rust-lang.org/cargo/reference/publishing.html) logs in only through GitHub."
+verification = "Release checklist: register reviewed; escrow test record"
+check = "Release"
 
 [[rule]]
 id = "LIFE-03"
@@ -45,14 +54,15 @@ status = "active"
 [[rule]]
 id = "LIFE-04"
 level = "MUST"
-statement = "A project with no release, merged change or maintainer reply for 12 months is stalled. Its maintainers are contacted; with no maintainer within 60 days, it becomes unmaintained and is archived read-only, its last release still downloadable. Whoever takes on its work may become maintainer after a trial period, and every handover of names or registry ownership is recorded publicly."
+statement = "A project with no release, merged change or maintainer reply for 12 months is stalled. Its maintainers are contacted; with no maintainer within 60 days, it becomes unmaintained and is archived (LIFE-01), its last release still downloadable. Whoever takes on its work may become maintainer after a trial period, and every handover of names or registry ownership is recorded publicly."
 rationale = "Stalled projects with the Kreqo name mislead users unless the stage changes."
-verification = "Periodic audit: activity per repository"
+verification = "Periodic audit: activity per project"
 check = "Periodic"
 trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement and verification rewritten for the monorepo."]
 
 [[rule]]
 id = "LIFE-05"
@@ -83,11 +93,39 @@ history = ["2026-10-26 second rule batch: statement rewritten; wrong Flathub att
 [[rule]]
 id = "LIFE-07"
 level = "MUST"
-statement = "The organization publishes the list of its official repositories, on kreqo.org and in the template."
+statement = "The organization publishes the list of its official projects and repositories, archived ones included, on kreqo.org and in the monorepo."
 rationale = "Users and packagers need to tell official code from forks."
-verification = "CI: repository list generated and published"
+verification = "CI: list of projects and repositories generated and published"
 check = "Review"
 trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement and verification rewritten for the monorepo."]
+
+[[rule]]
+id = "LIFE-08"
+level = "MUST"
+statement = "An experiment gathers evidence for specific ADRs, under a brief the founder approves before its folder is created in `experiments/`. Its `project.toml` records its questions, the ADRs they feed, its end date and any extension, the rule IDs its brief adopts and the commit its configuration comes from. Until it is archived, its crates sit in one or more workspaces of their own, apart from the root workspace, each with its own pinned toolchain and lockfile, and it carries its own lint, formatting and cargo-deny configuration, copied from the root's at that commit (QA-01), so changes to the root's toolchain, dependencies and configuration don't reach it. It takes no outside contributions. Of the rules for projects, it follows only LIFE-01, LIFE-09, QA-01, SEC-01, LEGAL-01, LEGAL-03, LEGAL-08, LEGAL-11 and CI-16, and those its brief adopts. Rules that apply across the repository reach it as they reach every folder, except that pull requests check it only when they change its folder, the scheduled advisory scan (SEC-02) opens an issue for it instead of failing, and the dependency-update bot (SEC-20) skips it."
+rationale = "Every project rule would bury a short experiment, but licensing, disclosure and security mistakes can't be undone afterward, and a frozen setup keeps the evidence comparable from start to end."
+verification = "CI: `project.toml` fields; folder under `experiments/`; until archived, its own workspaces, toolchains, lockfiles and lint, formatting and cargo-deny configuration; Review checklist: brief approved before the folder was created"
+check = "CI"
+trigger = "always"
+who = "you"
+moments = ["experiment"]
+added = "0.1.0"
+status = "active"
+history = ["2026-10-27 first rule batch: added."]
+
+[[rule]]
+id = "LIFE-09"
+level = "MUST"
+statement = "An experiment lasts at most 12 weeks from its folder's first commit, or 16 if the founder extends it before its end date; two weeks before that date, a scheduled job opens an issue to wrap it up. Its evidence is committed to its folder by the end date, and the ADRs it feeds link the evidence at a fixed commit. After the end date and until it is archived, CI fails any pull request that changes the folder except the one that archives the experiment (LIFE-01). It publishes no release, crate or package, and its CI artifacts are unannounced and expire within 30 days. Its code enters a project only through new pull requests under that project's rules."
+rationale = "Without an end date and a closed exit, an experiment becomes a product that skipped the rules."
+verification = "CI: end date at most 12 weeks after the folder's first commit, or 16 with the founder's extension in its `project.toml`; the reminder issue; the end-date check on pull requests; `publish = false` on every crate; retention of 30 days or less on each artifact upload; Review checklist: evidence committed by the end date and linked at a fixed commit"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+history = ["2026-10-27 first rule batch: added."]

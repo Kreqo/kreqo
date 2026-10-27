@@ -14,76 +14,81 @@ title = "When you start a new app"
 order = 1
 
 [[moment]]
+id = "experiment"
+title = "When you start an experiment"
+order = 2
+
+[[moment]]
 id = "feature"
 title = "When you design a feature"
-order = 2
+order = 3
 
 [[moment]]
 id = "dependency"
 title = "When you add a dependency"
-order = 3
+order = 4
 
 [[moment]]
 id = "format"
 title = "When you create or change a file format or how user data is stored"
-order = 4
+order = 5
 
 [[moment]]
 id = "data-flow"
 title = "When you add a network call, data collection, service or vendor"
-order = 5
+order = 6
 
 [[moment]]
 id = "risky-change"
 title = "When a change is on your sign-off list"
-order = 6
+order = 7
 
 [[moment]]
 id = "media"
 title = "When you add art, icons or other media"
-order = 7
+order = 8
 
 [[moment]]
 id = "speaking"
 title = "When you write to people for yourself or the project"
-order = 8
+order = 9
 
 [[moment]]
 id = "upstream"
 title = "When you contribute to another project"
-order = 9
+order = 10
 
 [[moment]]
 id = "ai-feature"
 title = "When you add an AI feature"
-order = 10
+order = 11
 
 [[moment]]
 id = "business"
 title = "When you make a licensing or business decision"
-order = 11
+order = 12
 
 [[moment]]
 id = "release"
 title = "When you prepare a release"
-order = 12
+order = 13
 
 [[moment]]
 id = "legal"
 title = "When you take a legal or compliance step"
-order = 13
+order = 14
 
 [[moment]]
 id = "contributors"
 title = "When you work with contributors"
-order = 14
+order = 15
 
 [[moment]]
 id = "plugins"
 title = "When you design or run the plugin system"
-order = 15
+order = 16
 
 [[moment]]
 id = "money"
 title = "When money is involved"
-order = 16
+order = 17

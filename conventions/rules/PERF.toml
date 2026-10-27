@@ -9,7 +9,7 @@ id = "PERF-01"
 level = "MUST"
 statement = "Each app documents budgets for cold start, idle CPU, memory and binary size."
 rationale = "Without a number, \"efficient\" is an adjective (Principle 8)."
-verification = "Review checklist: budget file present in the repository"
+verification = "Review checklist: budget file present in the app's folder"
 check = "Review"
 trigger = "always"
 who = "you"
@@ -17,6 +17,7 @@ moments = ["new-app"]
 open = { question = "Default budgets per app category", leaning = "" }
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: verification rewritten for the monorepo."]
 
 [[rule]]
 id = "PERF-02"

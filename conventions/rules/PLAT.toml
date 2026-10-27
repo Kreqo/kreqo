@@ -32,7 +32,7 @@ status = "active"
 id = "PLAT-03"
 level = "SHOULD"
 statement = "Default tiers: Linux, Windows and macOS are Tier 1, plus Android and iOS for mobile-first apps; Web is Tier 2; Redox is Tier 3."
-rationale = "Shared defaults set the template's CI matrix and spare each app a tier debate."
+rationale = "Shared defaults set each project's CI matrix and spare each app a tier debate."
 verification = "Review checklist: tiers match the defaults or an ADR"
 check = "Review"
 trigger = "always"
@@ -40,11 +40,12 @@ who = "you"
 moments = ["new-app"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: rationale rewritten for the monorepo."]
 
 [[rule]]
 id = "PLAT-04"
 level = "SHOULD"
-statement = "Each repository ships a Nix flake with a development shell and a package; Nix stays optional, and cargo alone builds the project."
+statement = "The monorepo ships one Nix flake, with a development shell and a package for each app and tool; Nix stays optional, and cargo alone builds every project."
 rationale = "A flake pins the toolchain, which helps reproducible builds (SEC-09) without making Nix a prerequisite."
 verification = "CI: `nix flake check` and `cargo build` without Nix"
 check = "CI"
@@ -52,6 +53,7 @@ trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement rewritten for the monorepo."]
 
 [[rule]]
 id = "PLAT-05"

@@ -5,9 +5,9 @@
 
 Generated for this state: maintainers = 1; every other fact is false.
 
-Of 316 rules, 136 apply now. Tooling enforces 52 and AI review checks 46; both are listed in CHECKED.md. The 34 below need you, and 4 are options. The other 180 wait for a trigger (LATER.md).
+Of 319 rules, 139 apply now. Tooling enforces 53 and AI review checks 47; both are listed in CHECKED.md. The 35 below need you, and 4 are options. The other 180 wait for a trigger (LATER.md).
 
-Read the principles, the open decisions and the first section now, about 1209 words. Read each later section when its moment comes.
+Read the principles, the open decisions and the first section now, about 1288 words. Read each later section when its moment comes.
 
 ## Principles
 
@@ -26,6 +26,7 @@ When a case isn't covered, decide by these.
 11. **Rust by default.** All logic is Rust; other languages appear only where a platform, format or tool requires them.
 12. **Verified, not promised.** Rules are enforced by tooling wherever possible, and a rule names how it is checked.
 13. **Transparent by default.** Decisions, funding, data flows and the use of AI are public and written down. The exceptions, security embargoes, conduct reports and legal requests, are themselves written down, with who may see what and for how long.
+14. **Defaults over decisions.** A default set by these conventions, an ADR or common practice applies without a decision until someone with the right to decide overrides it; nobody is asked to make a choice a default already makes.
 
 ## Open decisions
 
@@ -61,11 +62,11 @@ When a case isn't covered, decide by these.
 **CI-11** · MUST · The forge is hardened: 2FA is required for every account with write access (SEC-12), only the release bot creates release tags, the forge signs its own merges, webhooks authenticate with a secret, and admin accounts are separate from daily accounts. A self-hosted forge runs a supported release, is upgraded within 14 days of a security release, and has tested backups. Repositories stay publicly readable at stable URLs; one forge is canonical, with read-only mirrors elsewhere.\
 *Why:* The forge holds the source, the review record and the release tags; its compromise is everyone's. · *Enforced by forge settings.*
 
-**LEGAL-08** · MUST · Default licenses unless an ADR says otherwise (LEGAL-01): user documentation, art, icons and media CC BY 4.0 or CC BY-SA 4.0, one chosen by ADR; CC0-1.0 for small reusable assets, generated files and trivial data; translations take their source file's license; build and CI scripts take the code license; third-party data keeps its license. NonCommercial or NoDerivatives terms appear nowhere. Code licenses follow LEGAL-01.\
+**LEGAL-08** · MUST · Default licenses unless an ADR says otherwise (LEGAL-01): user documentation, art, icons and media CC BY 4.0 or CC BY-SA 4.0, one chosen by ADR; CC0-1.0 for small reusable assets, generated files and trivial data; translations take their source file's license; a project's build and CI scripts take its code license, and the monorepo's workflows and tool configuration are MIT OR Apache-2.0; third-party data keeps its license. NonCommercial or NoDerivatives terms appear nowhere. Code licenses follow LEGAL-01.\
 *Why:* Non-code artifacts without a declared license cannot be redistributed, and NC or ND terms are store anti-features. · *Enforced by CI.*
 
-**LIFE-02** · MUST · An asset register lists the domains, DNS, trademarks, signing keys, registry names (crates.io, plus the GitHub accounts its login requires), Flathub IDs, store and developer accounts, the forge organization, and hosted services. Each has at least two holders, or a recovery path held by a second person, with credentials in escrow (sealed, or a lockbox, with a will for legal rights such as DNS). Nothing sits only in one personal account. The register is reviewed before each release, and losing any one person stops issues, merges or releases for at most a week. The escrow is tested by first release.\
-*Why:* A solo project dies with its founder's password unless someone else can get in. · *Checked before each release.*
+**LIFE-02** · MUST · An asset register lists the domains, DNS, trademarks, signing keys, registry names and the accounts their logins depend on, Flathub IDs, store and developer accounts, the forge organization, and hosted services. Each has at least two holders, or a recovery path held by a second person, with credentials in escrow (sealed, or a lockbox, with a will for legal rights such as DNS). Nothing sits only in one personal account. While there is one maintainer, the escrow names who takes over the assets if the founder can't continue. The register is reviewed before each release, and the escrow is tested by first release.\
+*Why:* A solo project dies with its founder's password unless someone else can get in. A registry's login can tie its names to another service's account: as of 2026-10-26, [crates.io](https://doc.rust-lang.org/cargo/reference/publishing.html) logs in only through GitHub. · *Checked before each release.*
 
 
 ## When you start a new app
@@ -78,7 +79,7 @@ When a case isn't covered, decide by these.
 *Why:* The suite's own look is a deliberate departure from GNOME and KDE styling; Flathub promotion depends on the decorations choice. · *Checked in review.*\
 *Open decision:* Window decorations on Linux: client-side or system. Leaning: none yet.
 
-**BRAND-02** · MUST · Each app is named "Kreqo" followed by one plain, descriptive word, such as Kreqo Notes, under 15 characters in total. The word is chosen to read the same in English and French where possible; otherwise it is translated like any other string. "Kreqo" itself is never translated, and a transliteration of the app's name may be added. Before use, the word is checked against existing apps in the same category.\
+**BRAND-02** · MUST · Each app's name, which it carries once stable (LIFE-01), is "Kreqo" followed by one plain, descriptive word, such as Kreqo Notes, under 15 characters in total. The word is chosen to read the same in English and French where possible; otherwise it is translated like any other string. "Kreqo" itself is never translated, and a transliteration of the app's name may be added. Before use, the word is checked against existing apps in the same category.\
 *Why:* One trademark covers every app, and Quebec requires descriptive words in a trademark to appear in French on products. · *Checked in review.*
 
 **BRAND-05** · SHOULD · App hues are registered with at least 30° spacing and kept clear of the error, warning and success hues; every new hue is reviewed visually, not only computed.\
@@ -89,10 +90,16 @@ When a case isn't covered, decide by these.
 *Open decision:* Default budgets per app category. Leaning: none yet.
 
 **PLAT-03** · SHOULD · Default tiers: Linux, Windows and macOS are Tier 1, plus Android and iOS for mobile-first apps; Web is Tier 2; Redox is Tier 3.\
-*Why:* Shared defaults set the template's CI matrix and spare each app a tier debate. · *Checked in review.*
+*Why:* Shared defaults set each project's CI matrix and spare each app a tier debate. · *Checked in review.*
 
 **PLAT-12** · MUST · App IDs are `org.kreqo.<name>`, where `<name>` comes from the app's plain word (BRAND-02), in lowercase: letters and digits only, each segment starting with a letter, so one ID is valid on Flathub, Android and Apple platforms. IDs are fixed by ADR before first publication and never renamed. Only stable projects (LIFE-01) use the organization's name or ID prefix. Flathub listings are verified against kreqo.org.\
 *Why:* Apple rejects underscores, Android rejects hyphens and Apple ignores case; a renamed ID orphans every existing install. · *Enforced by CI.*
+
+
+## When you start an experiment
+
+**LIFE-08** · MUST · An experiment gathers evidence for specific ADRs, under a brief the founder approves before its folder is created in `experiments/`. Its `project.toml` records its questions, the ADRs they feed, its end date and any extension, the rule IDs its brief adopts and the commit its configuration comes from. Until it is archived, its crates sit in one or more workspaces of their own, apart from the root workspace, each with its own pinned toolchain and lockfile, and it carries its own lint, formatting and cargo-deny configuration, copied from the root's at that commit (QA-01), so changes to the root's toolchain, dependencies and configuration don't reach it. It takes no outside contributions. Of the rules for projects, it follows only LIFE-01, LIFE-09, QA-01, SEC-01, LEGAL-01, LEGAL-03, LEGAL-08, LEGAL-11 and CI-16, and those its brief adopts. Rules that apply across the repository reach it as they reach every folder, except that pull requests check it only when they change its folder, the scheduled advisory scan (SEC-02) opens an issue for it instead of failing, and the dependency-update bot (SEC-20) skips it.\
+*Why:* Every project rule would bury a short experiment, but licensing, disclosure and security mistakes can't be undone afterward, and a frozen setup keeps the evidence comparable from start to end. · *Enforced by CI.*
 
 
 ## When you design a feature
@@ -127,8 +134,8 @@ When a case isn't covered, decide by these.
 
 ## When you add a network call, data collection, service or vendor
 
-**PRIV-08** · MUST · Any new or changed data collection, network call, hosted service, vendor or transfer of personal information outside Canada needs a public privacy review from an ADR template. It answers: purpose, alternatives considered, fields and sensitivity, retention or expiry, default state and opt-out, third parties, and where data is processed. Someone other than the author approves it, and it is re-checked yearly. The template doubles as the privacy impact assessment Law 25 requires before an information-system project and before data leaves Quebec.\
-*Why:* Law 25 (s. 3.3) requires an impact assessment before any information-system project that handles personal information. · *Checked in review.*
+**PRIV-08** · MUST · Any new or changed data collection, network call, hosted service, vendor or transfer of personal information outside Canada needs a public privacy review from an ADR template. It answers: purpose, alternatives considered, fields and sensitivity, retention or expiry, default state and opt-out, third parties, and where data is processed. While there is one maintainer, the independent AI review (CI-03) checks each answer against the change it covers. The privacy review is re-checked yearly and doubles as the privacy impact assessment Law 25 requires before an information-system project and before data leaves Quebec.\
+*Why:* Law 25 (s. 3.3) requires an impact assessment before any information-system project that handles personal information; with one maintainer, the independent AI review is the second reader available. · *Checked in review.*
 
 
 ## When a change is on your sign-off list
@@ -136,7 +143,7 @@ When a case isn't covered, decide by these.
 **CI-03** · MUST · Every change is reviewed by a reviewer other than its author before it merges. While there is one maintainer, an independent AI review counts: one run by a session or tool that didn't write the change, attached to the pull request. Changes on the sign-off list also need the founder's sign-off on their intent: anything that needs an ADR, risk-tier paths, licensing, user data formats and migrations, releases, and anything published in the project's name. The founder's hand-written changes get the same AI review.\
 *Why:* A second look catches what the author can't see; with one maintainer, an independent AI review is the second look available. · *Enforced by CI.*
 
-**GOV-02** · MUST · The author of a change owns its intent, specification, tests and consequences, and can explain what it does and why, whether or not AI wrote the code; for an agent's change, the author is the person who directed it. While there is one maintainer, changes to risk-tier paths get a line-level AI review and other changes the AI review, on top of the automated gates every change passes (CI-02). Each project lists its risk-tier paths in a machine-readable risk file that the review tooling enforces.\
+**GOV-02** · MUST · The author of a change owns its intent, specification, tests and consequences, and can explain what it does and why, whether or not AI wrote the code; for an agent's change, the author is the person who directed it. While there is one maintainer, changes to risk-tier paths get a line-level AI review and other changes the AI review, on top of the automated gates every change passes (CI-02). Each project lists its risk-tier paths in its `project.toml`, a file at the monorepo's root lists those outside every project, and the review tooling enforces every list.\
 *Why:* Reading every line of AI-written code doesn't scale; owning intent and gating risk does. · *Checked in review.*
 
 
@@ -172,7 +179,7 @@ When a case isn't covered, decide by these.
 
 ## When you make a licensing or business decision
 
-**BIZ-01** · MUST · Licenses only get freer: no project, crate, format or release is ever relicensed under more restrictive or source-available terms, and license changes go through an RFC.\
+**BIZ-01** · MUST · Licenses only get freer: no project, crate, format or release is ever relicensed under more restrictive or source-available terms, and license changes go through an ADR.\
 *Why:* Permissive code can legally be closed; only a written promise stops it. · *Checked in review.*
 
 **BIZ-03** · MUST · Nothing is ever taken from the open apps. A released feature is never moved to a paid tier, held back by a delay, time-limited or artificially capped, such as by limits on the amount of user content, devices or sync size. The open apps download and run with no email, account or sign-in, and benchmarking is allowed.\
@@ -204,14 +211,14 @@ These MAY rules are yours to take or leave.
 - **ADR:** an architecture decision record in `docs/adr/` (DOC-04).
 - **Asset register:** the list of the organization's assets, such as domains, trademarks, signing keys, registry names, store and developer accounts, the forge organization and hosted services, with each one's holders or recovery path (LIFE-02).
 - **Data manifest:** the machine-readable list of every endpoint and data flow that each app keeps (PRIV-07).
+- **Experiment:** a project in `experiments/` that gathers evidence for specific ADRs under LIFE-08 and LIFE-09, such as a toolkit bake-off. Nothing ships from it.
 - **The forge:** the service hosting the repositories, their pull requests and CI. GitHub today; the rules don't depend on it.
 - **Hosted service:** any server the organization runs that holds other people's personal information.
 - **Maintainer:** a person named in GOVERNANCE.md with merge rights on a project.
 - **The organization:** Kreqo, today a project run by its founder, later the non-profit (BIZ-10).
-- **RFC:** a public proposal following the RFC process (GOV-01).
-- **Risk-tier paths:** the paths listed in a project's risk file whose changes get the strictest review (GOV-02): `unsafe` code, cryptography, data formats and migrations, sync, security-sensitive code, the plugin boundary, and the public API of shared crates.
+- **Outside contributions:** issues, discussions or pull requests from anyone who isn't a maintainer. The project opens to them deliberately, and the rules marked for that trigger apply before it does.
+- **Risk-tier paths:** the paths whose changes get the strictest review (GOV-02): `unsafe` code, cryptography, data formats and migrations, sync, security-sensitive code, the plugin boundary, the public API of shared crates, and the conventions with the workflows, checks and tool configuration that enforce them. Each project lists its own in its `project.toml`, and a file at the monorepo's root lists those outside every project.
 - **Sign-off list:** the changes that need the founder's sign-off on top of review while there is one maintainer (CI-03).
 - **The suite:** every app and shared crate the organization publishes.
-- **The template:** the project template every repository starts from, which carries this document, the CI workflows, the checklists and the lint configuration.
 - **Tier 1:** a platform tested in CI that blocks releases (PLAT-01).
 - **User content:** anything the user creates or imports, such as notes, cards, recordings, files and settings, and the metadata around them.

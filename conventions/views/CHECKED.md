@@ -3,17 +3,17 @@
 
 # Checked for you
 
-These 98 rules apply now, and tooling or an AI review checks them, so you don't need to read them in advance. A failed check names its rule; look it up here.
+These 100 rules apply now, and tooling or an AI review checks them, so you don't need to read them in advance. A failed check names its rule; look it up here.
 
-## Enforced by tooling (52)
+## Enforced by tooling (53)
 
 ### Data and sync (DATA)
 
 **DATA-01** · MUST · Every feature works offline; the network only adds sync and sharing.\
 *Verified by:* CI: test suite passes with the network disabled
 
-**DATA-02** · MUST · File formats and schemas carry a version, and every version change ships an automatic, tested migration. Migration tests use real sample files from every released format version. A storage-model change ships an export path back to the previous open format, so no migration strands users.\
-*Verified by:* CI: migration tests over the sample-file corpus, one file set per released format version
+**DATA-02** · MUST · File formats and schemas carry a version, and every version change ships an automatic, tested migration. Each release that ships a new format version writes a set of sample files from the project's own content, never user content; migration tests run over every set, and a set never changes once committed. A storage-model change ships an export path back to the previous open format, so no migration strands users.\
+*Verified by:* CI: one committed sample set per released format version; migration tests over every set; a check against the base branch that fails when a pull request changes or removes a file in a committed set
 
 **DATA-03** · MUST · Writes are crash-safe (atomic replace or journaling): a crash never corrupts saved data.\
 *Verified by:* CI: crash-injection test on the write path
@@ -29,8 +29,8 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 **SEC-03** · MUST · No secret enters the repository. A secret scanner the organization runs itself (Betterleaks or an equivalent) checks every push in CI and in a pre-receive or pre-commit hook. A leaked secret is revoked before it is removed from history.\
 *Verified by:* CI: secret-scanner job on every push; pre-receive hook on the forge
 
-**SEC-20** · SHOULD · A dependency-update bot runs weekly for Cargo, CI actions and toolchains, groups related crates, and waits at least 7 days after an upstream release except for security fixes. Cargo's native minimum publish age goes into the template once it reaches stable Rust.\
-*Verified by:* CI: bot configuration in the template; weekly update pull requests
+**SEC-20** · SHOULD · A dependency-update bot runs weekly for Cargo, CI actions and toolchains, groups related crates, and waits at least 7 days after an upstream release except for security fixes. Cargo's native minimum publish age goes into the monorepo's configuration once it reaches stable Rust.\
+*Verified by:* CI: bot configuration in the monorepo; weekly update pull requests
 
 ### Privacy (PRIV)
 
@@ -61,7 +61,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 ### Brand (BRAND)
 
 **BRAND-03** · MUST · Every crate published to crates.io is named `kreqo-` followed by one plain word, such as `kreqo-sync`; crates that are never published are exempt. Names are reserved on crates.io as soon as there is code to publish.\
-*Verified by:* CI: crate-name check over the workspace's publishable crates
+*Verified by:* CI: crate-name check over every workspace's publishable crates
 
 ### Performance (PERF)
 
@@ -73,13 +73,13 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 **PLAT-01** · MUST · Platforms are tiered: Tier 1 is tested in CI and blocks releases, Tier 2 is built in CI, Tier 3 is best-effort.\
 *Verified by:* CI: Tier 1 matrix as required checks
 
-**PLAT-04** · SHOULD · Each repository ships a Nix flake with a development shell and a package; Nix stays optional, and cargo alone builds the project.\
+**PLAT-04** · SHOULD · The monorepo ships one Nix flake, with a development shell and a package for each app and tool; Nix stays optional, and cargo alone builds every project.\
 *Verified by:* CI: `nix flake check` and `cargo build` without Nix
 
 ### Code quality and testing (QA)
 
-**QA-01** · MUST · Code is formatted with rustfmt and passes Clippy; warnings fail CI. Every crate inherits one lint table: crates in the root workspace through `[lints] workspace = true`, and a nested workspace or a repository outside the monorepo through a generated copy of the root's table, an outside repository's taken from the conventions version it names. CI checks the inheritance and each copy. Suppressions use `#[expect(lint, reason = "…")]`; an `allow` attribute, inner or outer, fails CI. The table enforces SEC-01: `unsafe_code`, `undocumented_unsafe_blocks` and `missing_safety_doc`. Parser, importer and sync crates, which their project's `project.toml` lists, add QA-02's `unwrap_used`, `expect_used`, `panic` and `indexing_slicing` as crate-level attributes, which CI checks. Bans for every crate use `disallowed-methods` in the root `clippy.toml`, each with a reason; any other `clippy.toml` repeats them, which CI checks.\
-*Verified by:* CI: rustfmt; Clippy with `allow_attributes` and `allow_attributes_without_reason`; an `allow` grep, which also catches the inner attributes Clippy skips; checks that every crate inherits the workspace lints, that each copy matches the root's table, that listed crates carry their attributes, and that every `clippy.toml` repeats the root's bans
+**QA-01** · MUST · Code is formatted with rustfmt and passes Clippy; warnings fail CI. Every crate inherits one lint table: crates in the root workspace through `[lints] workspace = true`, and a nested workspace or a repository outside the monorepo through a generated copy of the root's table, an outside repository's taken from the conventions version it names and an experiment's from the commit its `project.toml` names, as is its formatting configuration. CI checks the inheritance and each copy. Suppressions use `#[expect(lint, reason = "…")]`; an `allow` attribute, inner or outer, fails CI. The table enforces SEC-01: `unsafe_code`, `undocumented_unsafe_blocks` and `missing_safety_doc`. Parser, importer and sync crates, which their project's `project.toml` lists, add QA-02's `unwrap_used`, `expect_used`, `panic` and `indexing_slicing` as crate-level attributes, which CI checks. Bans for every crate use `disallowed-methods` in the root `clippy.toml`, each with a reason; any other `clippy.toml` repeats them, an experiment's as of its named commit, which CI checks.\
+*Verified by:* CI: rustfmt; Clippy with `allow_attributes` and `allow_attributes_without_reason`; an `allow` grep, which also catches the inner attributes Clippy skips; checks that every crate inherits the workspace lints, that listed crates carry their attributes, that each copy of the table matches the root's table, that each other `clippy.toml` repeats the root's bans and that an experiment's formatting configuration matches the root's, each as of the conventions version or commit its `project.toml` names, if any; and that an experiment's named commit has the root configuration of the default branch when its folder was created, or a later one
 
 **QA-03** · MUST · Core logic has unit and integration tests; invariants such as merges, scheduling and migrations have property-based tests.\
 *Verified by:* CI: `cargo test` and proptest targets
@@ -95,7 +95,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 
 ### Documentation (DOC)
 
-**DOC-01** · MUST · Every repository has README, CONTRIBUTING, SECURITY, CHANGELOG, LICENSE and CODE\_OF\_CONDUCT files, from the template.\
+**DOC-01** · MUST · Every repository has README, CONTRIBUTING, SECURITY, LICENSE and CODE\_OF\_CONDUCT files at its root, and the monorepo's LICENSE says which folders carry which license. Each project has a README, and a CHANGELOG from its first release.\
 *Verified by:* CI: required-files check
 
 **DOC-02** · MUST · Public crates set `#![deny(missing_docs)]`. Runnable examples live in the crate's `examples/` folder where they help; a doc example on every item is not required.\
@@ -132,7 +132,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 
 ### Repository and CI (CI)
 
-**CI-01** · MUST · The default branch is protected: no direct pushes, changes land through pull requests, and force-pushing to or deleting protected branches and release tags is blocked. History is rewritten only through a documented expunging process that two maintainers approve. New collaborators start with read access.\
+**CI-01** · MUST · The default branch is protected: no direct pushes, changes land through pull requests, and force-pushing to or deleting protected branches and release tags is blocked. History is rewritten only through a documented expunging process; while there is one maintainer, the founder approves each rewrite after an independent AI review of its plan. New collaborators start with read access.\
 *Verified by:* Settings audit: branch and tag protection; default collaborator role
 
 **CI-02** · MUST · Every pull request passes all required checks (format, lint, tests, cargo-deny, semver, docs) before merge.\
@@ -173,7 +173,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 
 ### Governance and contribution (GOV)
 
-**GOV-07** · MUST · GOVERNANCE.md states the decision model (GOV-09); who holds each decision right (RFC sign-off, releases, merges per area); who holds each sensitive access (forge admin, CI secrets, signing keys, registry ownership, DNS); how people join and leave each role; the escalation path (REV-04); and the module that owns the interface guidelines, tokens and component library. Names live only in GOVERNANCE.md; other documents link to it.\
+**GOV-07** · MUST · GOVERNANCE.md states the decision model (GOV-09, GOV-27); who holds each decision right (RFC sign-off, releases, merges per area); who holds each sensitive access (forge admin, CI secrets, signing keys, registry ownership, DNS); how people join and leave each role; the escalation path (REV-04); and the module that owns the interface guidelines, tokens and component library. Names live only in GOVERNANCE.md; other documents link to it.\
 *Verified by:* CI: GOVERNANCE.md present with required sections
 
 **GOV-16** · MUST · Only humans appear in the git author field, and only humans or the forge's merge identity in the committer field. AI tools appear only in the `Co-Authored-By` disclosure trailer (GOV-03) and never as a committer, account or reviewer of record. CI rejects commits that break this.\
@@ -187,15 +187,18 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 **LEGAL-02** · MUST · Every file carries an SPDX license header, following the REUSE specification.\
 *Verified by:* `reuse lint`
 
-**LEGAL-03** · MUST · Dependency licenses are compatible with the project's license, enforced by cargo-deny.\
-*Verified by:* cargo-deny `licenses`
+**LEGAL-03** · MUST · Dependency licenses are compatible with the license of each crate that depends on them, enforced by cargo-deny with an allow list per license group (LEGAL-01). No MIT OR Apache-2.0 crate depends on a GPL or AGPL crate.\
+*Verified by:* cargo-deny `licenses` with each group's allow list; CI: no MIT OR Apache-2.0 crate depends on a GPL or AGPL crate
 
 ### Lifecycle and continuity (LIFE)
 
-**LIFE-01** · MUST · Every repository declares its stage in machine-readable metadata (incubating, in review, stable, unmaintained, archived), beside its declared conventions version, and in its README. Only stable projects publish stable-channel releases or carry the Kreqo name. Any stage can move to unmaintained, and an unmaintained project returns to incubating when someone takes it on.\
-*Verified by:* CI: stage file present and valid; README badge generated from it
+**LIFE-01** · MUST · Each project declares its kind (library, tool, app, server, website or experiment) and its stage (incubating, in review, stable, unmaintained or archived) in a `project.toml` in its folder, and its README shows both. A project in a repository outside the monorepo keeps its `project.toml` at that repository's root and names in it the conventions version it follows. Only stable projects publish stable-channel releases or carry the Kreqo name, in an app's name (BRAND-02) or ID (PLAT-12). Any stage can move to unmaintained, and an unmaintained project returns to incubating when someone takes it on; an experiment (LIFE-08) moves only from incubating to archived. Archiving makes a repository read-only, or empties a folder on the monorepo's default branch down to its `project.toml`, its CHANGELOG if it released, and a README that links its last commit and release tags.\
+*Verified by:* CI: `project.toml` present and valid; README badge generated from it; an archived folder holds only those files
 
-## Checked by AI review (46)
+**LIFE-09** · MUST · An experiment lasts at most 12 weeks from its folder's first commit, or 16 if the founder extends it before its end date; two weeks before that date, a scheduled job opens an issue to wrap it up. Its evidence is committed to its folder by the end date, and the ADRs it feeds link the evidence at a fixed commit. After the end date and until it is archived, CI fails any pull request that changes the folder except the one that archives the experiment (LIFE-01). It publishes no release, crate or package, and its CI artifacts are unannounced and expire within 30 days. Its code enters a project only through new pull requests under that project's rules.\
+*Verified by:* CI: end date at most 12 weeks after the folder's first commit, or 16 with the founder's extension in its `project.toml`; the reminder issue; the end-date check on pull requests; `publish = false` on every crate; retention of 30 days or less on each artifact upload; Review checklist: evidence committed by the end date and linked at a fixed commit
+
+## Checked by AI review (47)
 
 ### Architecture (ARCH)
 
@@ -236,7 +239,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 
 ### Privacy (PRIV)
 
-**PRIV-01** · MUST · Telemetry and analytics are off by default and run only after explicit opt-in. Telemetry means any measurement that leaves the device: analytics, attribution, experiments, usage pings, diagnostics. Data kept only on the device and visible to the user is not telemetry.\
+**PRIV-01** · MUST · Telemetry and analytics are off by default and run only after explicit opt-in. Telemetry means any measurement that leaves the device: analytics, attribution, in-app experiments, usage pings, diagnostics. Data kept only on the device and visible to the user is not telemetry.\
 *Verified by:* Review checklist: no measurement leaves the device without opt-in; data manifest entry
 
 **PRIV-02** · MUST · Unless the user adds them in the preview (PRIV-04), logs, crash reports, bug reports and diagnostic bundles contain no secrets the app holds and no content, titles or paths of the user's documents, such as notes, cards or recordings.\
@@ -307,7 +310,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 
 ### Documentation (DOC)
 
-**DOC-04** · MUST · ADRs live in `docs/adr/NNNN-title.md`, numbered sequentially and never reused, using the MADR 4 minimal template plus a Confirmation section. Each opens with a Y-statement (in the context of…, facing…, we decided…, to achieve…, accepting…). Status is proposed, accepted, rejected, deprecated or superseded by ADR-NNNN. An accepted ADR is never rewritten except to change its status. Deviation ADRs carry machine-readable front matter (DOC-06).\
+**DOC-04** · MUST · Every ADR lives in `docs/adr/NNNN-title.md` at its repository's root, numbered sequentially and never reused, using the MADR 4 minimal template plus a Confirmation section. Each opens with a Y-statement (in the context of…, facing…, we decided…, to achieve…, accepting…). Status is proposed, accepted, rejected, deprecated or superseded by ADR-NNNN. An accepted ADR is never rewritten except to change its status. Deviation ADRs carry machine-readable front matter (DOC-06).\
 *Verified by:* Review checklist: template, number, status, Y-statement
 
 **DOC-13** · MUST · Agent instruction files (AGENTS.md, CLAUDE.md) only summarize human-facing docs; no rule or process exists only there.\
@@ -315,8 +318,8 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 
 ### Repository and CI (CI)
 
-**CI-05** · MUST · CI workflows come from the template and follow its updates.\
-*Verified by:* Review checklist: workflow matches the template version
+**CI-05** · MUST · CI workflows live once, in the monorepo, and cover every project in it. Each kind of repository outside the monorepo, such as a fork or the `rfcs` repository, has a profile, written when the first one is created, naming the rules and workflows that apply to it; anything it copies from the monorepo matches the conventions version it names (LIFE-01).\
+*Verified by:* Review checklist: workflows only in the monorepo; outside repositories follow their profiles; CI: copies match the conventions version named
 
 **CI-14** · SHOULD · A merged change that breaks the default branch or a release is reverted first, then re-landed with a regression test. Its author and reviewer are notified.\
 *Verified by:* Review checklist: revert PR links the regression test
@@ -329,7 +332,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 **REV-02** · SHOULD · Reviews follow an order: is the PR valid, is the problem real, does the approach fit, does it work, then the code itself. Every review ends with a summary of what was checked and what couldn't be. Comments use Conventional Comments labels, and only `issue`, `todo` or `(blocking)` comments block a merge. Reviewers never block on personal preference or on style these conventions don't set, and never widen a PR's scope. Details: CONTRIBUTING.md.\
 *Verified by:* Review checklist: summary present; blocking comments labeled
 
-**REV-04** · MUST · Review disagreements are settled by data first, then by this document, then by the area owner, then by the decision-maker named in GOVERNANCE.md. A design dispute becomes an RFC, and the decision and its reason are recorded on the PR.\
+**REV-04** · MUST · Review disagreements are settled by data first, then by this document, then by the area owner, then by the decision-maker named in GOVERNANCE.md. A design dispute becomes an ADR, and the decision and its reason are recorded on the PR.\
 *Verified by:* Review checklist: decision recorded on the PR
 
 ### Governance and contribution (GOV)
@@ -338,7 +341,7 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 *Verified by:* CI: squash commit carries the branch's trailers; Review checklist: disclosure block present
 
 **GOV-06** · MUST · The code of conduct is [Contributor Covenant 3.0](https://www.contributor-covenant.org/version/3/0/code_of_conduct/), with a private reporting address; GOV-21 completes its reporting section before the project opens to outside contributions. Its scope covers the forge, chat, forum and events; app names, descriptions, screenshots and bundled content; and content an AI agent posts under a person's name.\
-*Verified by:* CI: CODE_OF_CONDUCT.md from the template; Review checklist
+*Verified by:* CI: CODE_OF_CONDUCT.md is Contributor Covenant 3.0 with a reporting address; Review checklist
 
 **GOV-17** · MUST · AI-created code meets a higher test bar: every edge case the author or reviewer can name is tested, and no untested path merges. Generated code that isn't an extension or refactor of existing project code gets a provenance check (LEGAL-11) before merging.\
 *Verified by:* Review checklist: edge cases listed and tested; coverage diff on the PR
@@ -348,6 +351,9 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 
 **GOV-26** · MUST · Procedural media, generated by a reviewable algorithm whose parameters are in the repository, is not model-generated media, whoever wrote the code. Its code is reviewed like any other (GOV-02, GOV-17), and its output is checked not to reproduce another work. Coordinates or samples a model writes directly, such as SVG path data, count as model-generated media.\
 *Verified by:* Review checklist: generator in the repository; output provenance check
+
+**GOV-27** · MUST · Agents make the reversible choices their task leaves open and list each one, with the alternatives they weighed, in the description of the pull request that makes it, where the person who directed the agent can veto it. Rule changes, and choices that are costly or impossible to undo, such as a published name, a license or a released format, go first to the decision-maker named in GOVERNANCE.md (the founder while there is one maintainer), batched, each with a recommendation.\
+*Verified by:* Review checklist: the agent's choices listed with their alternatives; no rule change or irreversible choice made without the decision-maker
 
 ### Licensing and compliance (LEGAL)
 
@@ -362,5 +368,5 @@ These 98 rules apply now, and tooling or an AI review checks them, so you don't 
 
 ### Lifecycle and continuity (LIFE)
 
-**LIFE-07** · MUST · The organization publishes the list of its official repositories, on kreqo.org and in the template.\
-*Verified by:* CI: repository list generated and published
+**LIFE-07** · MUST · The organization publishes the list of its official projects and repositories, archived ones included, on kreqo.org and in the monorepo.\
+*Verified by:* CI: list of projects and repositories generated and published

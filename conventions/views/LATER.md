@@ -10,8 +10,8 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 | Before the first public release | `preparing_first_release or released` | 122 | 19 | 0 |
 | Before the first Android release | `android_release` | 2 | 1 | 0 |
 | Before the first App Store release | `app_store_release` | 1 | 1 | 0 |
-| Before opening to outside contributions | `open_to_contributions` | 13 | 12 | 1 |
-| Once a second maintainer joins | `maintainers >= 2` | 1 | 0 | 3 |
+| Before opening to outside contributions | `open_to_contributions` | 13 | 12 | 4 |
+| Once a second maintainer joins | `maintainers >= 2` | 1 | 0 | 6 |
 | Before 1.0 | `preparing_1_0` | 15 | 2 | 0 |
 | Before the plugin boundary is designed (EXT-04) | `plugin_design` | 1 | 1 | 0 |
 | Before sync ships | `sync` | 1 | 0 | 0 |
@@ -165,13 +165,13 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 - **QA-07** · SHOULD · Coverage is reported on every pull request; core crates stay above 80% line coverage. *(tooling)*
 - **QA-10** · SHOULD · Every release candidate runs against a corpus of real-world inputs, such as plugins and public files in the formats the app reads, and every regression is triaged before release. *(AI review)*
 - **QA-11** · SHOULD · Custom synchronization (atomics, lock-free queues, audio-thread handoff, sync-engine concurrency) is tested with loom or shuttle. *(tooling)*
-- **QA-13** · SHOULD · Before each release, the template's pedantic and restriction lint pass runs, and each finding is fixed or carries an `expect` with a reason. *(AI review)*
+- **QA-13** · SHOULD · Before each release, the monorepo's pedantic and restriction lint pass runs over the released crates, and each finding is fixed or carries an `expect` with a reason. *(AI review)*
 - **DOC-05** · MUST · User documentation follows Diátaxis: tutorials, how-to guides, reference and explanation. *(AI review)*
 - **DOC-07** · MUST · ARCHITECTURE.md describes components, actors, trust boundaries and external interfaces, and a security-model page says what users can and cannot expect from the software's security. *(AI review)*
 - **DOC-08** · MUST · Each app's download page documents how to verify signatures, provenance and SBOM (SEC-07), including the exact expected signer identity (key fingerprint, or Sigstore identity and issuer). *(AI review)*
 - **DOC-09** · MUST · A user-visible change merges only with its user documentation, or with a linked docs pull request due before the release; an undocumented feature is unfinished. *(AI review)*
 - **DOC-10** · SHOULD · User docs follow a house style: plain English and active voice, one new concept at a time, real examples, pages of about 1,000 words or fewer, never the words *simple*, *easy*, *just* or *obviously*. *(AI review)*
-- **REL-05** · MUST · Each release goes through a release pull request built from the template's checklist; every Release-check item links its evidence, and CI refuses to tag while one is unticked. *(tooling)*
+- **REL-05** · MUST · Each release goes through a release pull request built from the generated release checklist; every Release-check item links its evidence, and CI refuses to tag while one is unticked. *(tooling)*
 - **REL-06** · SHOULD · Releases are automated from the protected default branch. *(tooling)*
 - **REL-11** · MUST · Each app cycle publishes its freezes, and the README shows the current state. *(AI review)*
 - **REL-12** · MUST · Regressions from the current cycle, crashes affecting many users and any data loss block a release; when in doubt, flag a blocker. *(AI review)*
@@ -270,7 +270,13 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 
 ### Rules that change
 
+**REL-16** becomes: Breaking changes to formats, the sync protocol and the plugin API are batched into announced major releases, tracked publicly at least one cycle ahead and approved by RFC with a compatibility section; those to the sync protocol and the plugin API ship an automatic migrator. Deprecated items carry `#[deprecated(since, note)]` plus a doc line naming the replacement, and are removed only in a major release.
+
+**REV-04** becomes: Review disagreements are settled by data first, then by this document, then by the area owner, then by the decision-maker named in GOVERNANCE.md. A design dispute becomes an RFC, and the decision and its reason are recorded on the PR.
+
 **GOV-14** becomes: Text written for people (issues, PR titles and descriptions, reviews, RFCs, chat) is written by its human author. AI may translate or proofread, with disclosure, and quoted tool output is marked as such. Unedited AI output is never posted to a person. User documentation drafted with AI ships only after human revision, with disclosure (GOV-03). Branch commit messages are outside this rule, because the squash commit that lands carries the human-written PR title and description.
+
+**BIZ-01** becomes: Licenses only get freer: no project, crate, format or release is ever relicensed under more restrictive or source-available terms, and license changes go through an RFC.
 
 ### Reminders
 
@@ -287,11 +293,17 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 
 ### Rules that change
 
+**PRIV-08** becomes: Any new or changed data collection, network call, hosted service, vendor or transfer of personal information outside Canada needs a public privacy review from an ADR template. It answers: purpose, alternatives considered, fields and sensitivity, retention or expiry, default state and opt-out, third parties, and where data is processed. Someone other than the author approves it, and it is re-checked yearly. The privacy review doubles as the privacy impact assessment Law 25 requires before an information-system project and before data leaves Quebec.
+
+**CI-01** becomes: The default branch is protected: no direct pushes, changes land through pull requests, and force-pushing to or deleting protected branches and release tags is blocked. History is rewritten only through a documented expunging process that two maintainers approve. New collaborators start with read access.
+
 **CI-03** becomes: Every change has a human reviewer other than its author. Changes written by an AI agent are reviewed by a maintainer who didn't direct the agent, and risk-tier paths follow CI-15.
 
 **CI-18** becomes: AI review bots run from a separate, clearly labeled bot account, never count as an approval, and block a PR only when a human endorses their comment.
 
-**GOV-02** becomes: The author of a change owns its intent, specification, tests and consequences, and can explain what it does and why, whether or not AI wrote the code. Changes to risk-tier paths get line-level human review and other changes intent-level review, on top of the automated gates every change passes (CI-02). Each project lists its risk-tier paths in a machine-readable risk file that the review tooling enforces; once CI-15 applies, that file is CODEOWNERS.
+**GOV-02** becomes: The author of a change owns its intent, specification, tests and consequences, and can explain what it does and why, whether or not AI wrote the code. Changes to risk-tier paths get line-level human review and other changes intent-level review, on top of the automated gates every change passes (CI-02). Each project lists its risk-tier paths in its `project.toml`, a file at the monorepo's root lists those outside every project, and the review tooling enforces every list; CODEOWNERS (CI-15) takes its risk-tier entries from them.
+
+**LIFE-02** becomes: An asset register lists the domains, DNS, trademarks, signing keys, registry names and the accounts their logins depend on, Flathub IDs, store and developer accounts, the forge organization, and hosted services. Each has at least two holders, or a recovery path held by a second person, with credentials in escrow (sealed, or a lockbox, with a will for legal rights such as DNS). Nothing sits only in one personal account. The register is reviewed before each release, and losing any one person stops issues, merges or releases for at most a week. The escrow is tested by first release.
 
 
 ## Before 1.0
@@ -319,7 +331,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 - **QA-08** · SHOULD · Mutation testing (cargo-mutants) runs on a schedule for core crates. *(tooling)*
 - **REL-07** · MUST · Deprecated features live for at least one minor release, with a migration path, before removal. *(AI review)*
 - **REL-08** · SHOULD · Apps ship stable, beta and nightly channels. *(AI review)*
-- **REL-16** · MUST · Breaking changes to formats, the sync protocol and the plugin API are batched into announced major releases, tracked publicly at least one cycle ahead and approved by RFC with a compatibility section; those to the sync protocol and the plugin API ship an automatic migrator. *(AI review)*
+- **REL-16** · MUST · Breaking changes to formats, the sync protocol and the plugin API are batched into announced major releases, tracked publicly at least one cycle ahead and approved by ADR with a compatibility section; those to the sync protocol and the plugin API ship an automatic migrator. *(AI review)*
 - **CI-20** · SHOULD · One account system spans the forge, forum, translation platform and plugin directory. *(AI review)*
 
 
