@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: CC-BY-4.0
 
 # Accessibility (A11Y): the rules of this area. Source of truth;
-# the views are generated from these files by compile.py.
+# `cargo xtask rules generate` writes the views from these files.
 
 [[rule]]
 id = "A11Y-01"

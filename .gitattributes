@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# The views of the rules keep LF line endings in every checkout, Windows
+# included, so that `cargo xtask check rules` compares them byte for byte
+# with what the rules data generates (ARCH-06).
+conventions/views/*.md text eol=lf

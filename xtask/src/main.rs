@@ -9,6 +9,7 @@ mod crates;
 mod deny;
 mod git;
 mod hooks;
+mod rules;
 mod scratch;
 mod secrets;
 mod tools;
@@ -43,6 +44,11 @@ enum Command {
         /// The file that holds the message.
         file: PathBuf,
     },
+    /// The rules engine: checks the rules data and generates its views (ARCH-06).
+    Rules {
+        #[command(subcommand)]
+        command: rules::Command,
+    },
     /// Scans every branch's and tag's history for secrets; the daily scan runs it (SEC-03).
     ScanAllRefs,
     /// Scans a pull request's title and description, from PULL_REQUEST_TITLE and
@@ -72,6 +78,7 @@ fn run() -> Result<bool> {
         Command::Hooks => hooks::install(&root).map(|()| true),
         Command::PreCommit => hooks::pre_commit(&root).map(|()| true),
         Command::CommitMsg { file } => hooks::commit_msg(&root, &file).map(|()| true),
+        Command::Rules { command } => rules::run(&root, command).map(|()| true),
         Command::ScanAllRefs => secrets::scan_all_refs(&root).map(|()| true),
         Command::ScanPullRequest => secrets::scan_pull_request(&root).map(|()| true),
         Command::Tools => {

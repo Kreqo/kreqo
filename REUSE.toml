@@ -11,8 +11,8 @@ path = "Cargo.lock"
 SPDX-FileCopyrightText = "Kreqo contributors"
 SPDX-License-Identifier = "CC0-1.0"
 
-# Generated from the rules, which are CC BY 4.0, by a generator that doesn't
-# write headers yet (M2 ports it).
+# Generated from the rules, which are CC BY 4.0, by `cargo xtask rules
+# generate`, which writes no headers into them.
 [[annotations]]
 path = "conventions/views/**"
 SPDX-FileCopyrightText = "Kreqo contributors"

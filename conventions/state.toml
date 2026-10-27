@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: Kreqo contributors
 # SPDX-License-Identifier: CC-BY-4.0
 
-# Facts about Kreqo today. Change a fact, run compile.py, and the views follow.
+# Facts about Kreqo today. Change a fact, run `cargo xtask rules generate`,
+# and the views follow.
 
 maintainers = 1  # People with merge rights, you included
 open_to_contributions = false  # You're about to accept issues, discussions or pull requests from outside

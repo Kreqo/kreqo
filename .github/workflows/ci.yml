@@ -70,7 +70,7 @@ jobs:
           tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP/bin" betterleaks
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
       - name: Check
-        run: cargo xtask check fmt docs crates deny reuse secrets tool-tests
+        run: cargo xtask check fmt docs crates rules deny reuse secrets tool-tests
       # Its own step, so that the Check step never sees the token (CI-08).
       # xtask, which the pull request builds, runs zizmor with it here, and
       # the token is read-only. It runs even when the Check step failed, so

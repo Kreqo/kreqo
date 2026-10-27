@@ -14,7 +14,7 @@ use std::process::Command;
 use anyhow::{Context, Result, bail};
 use clap::ValueEnum;
 
-use crate::{crates, deny, git, secrets, tools};
+use crate::{crates, deny, git, rules, secrets, tools};
 
 /// A step of `cargo xtask check`.
 #[derive(Clone, Copy, ValueEnum)]
@@ -29,6 +29,9 @@ pub enum Step {
     Docs,
     /// Each crate's project, license and lints (T2, LEGAL-01, QA-01).
     Crates,
+    /// The rules data, and its committed views, which must be what the data
+    /// generates (ARCH-06, principle 12).
+    Rules,
     /// cargo-deny: advisories, bans, licenses and sources (SEC-02, PRIV-09, LEGAL-03, ARCH-13).
     Deny,
     /// reuse lint (LEGAL-02).
@@ -51,6 +54,7 @@ impl Step {
             Self::Test => "test",
             Self::Docs => "docs",
             Self::Crates => "crates",
+            Self::Rules => "rules",
             Self::Deny => "deny",
             Self::Reuse => "reuse",
             Self::Secrets => "secrets",
@@ -106,6 +110,7 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
         Step::Test => cargo(root, &["test", "--workspace", "--all-features", "--locked"]),
         Step::Docs => run_command(root, &mut docs()),
         Step::Crates => crates::check(root),
+        Step::Rules => rules::check(root),
         Step::Deny => {
             tools::require(root, &tools::CARGO_DENY)?;
             // Both run, so that a problem in deny.toml, such as an expired
