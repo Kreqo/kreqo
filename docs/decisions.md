@@ -373,3 +373,49 @@ Requirements only the learning app has leave the suite rules. They move to its R
   - AIF-01's "only at the user's request" words consent differently from PRIV-03.
   - DATA-11, DATA-17, UX-17 and AIF-05 give examples from the learning app only, where a second kind of project could add one.
 - **Rules:** SEC-09, BIZ-10, LIFE-02, EXT-06, REL-19, PLAT-08, AIF-01, DATA-11, DATA-17, UX-17, AIF-05.
+
+## 2026-10-27: the first rule batch
+
+### The first rule batch is approved
+
+Dara approved the rest of the first rule batch, every choice as recommended, after two fresh-context reviews whose findings were fixed first. It changes 30 rules and adds GOV-27, LIFE-08 and LIFE-09, each with a history entry; QA-01, SEC-01 and CI-07 landed earlier from the same batch.
+
+- **DATA-02:** each release that ships a new format version writes a set of sample files from the project's own content, never user content, and CI fails a pull request that changes or removes a file in a committed set.
+- **The monorepo:** a project is a folder with its own `project.toml`, which declares its kind and stage (LIFE-01). The required files, the ADRs, the workflows, the flake and the release lint pass exist once, at the root, and only a project in a repository outside the monorepo names a conventions version; each kind of such repository follows a profile (CI-05). Licenses are checked per license group, and no MIT OR Apache-2.0 crate depends on a GPL or AGPL crate (LEGAL-03). Each project lists its risk-tier paths in its `project.toml`, and a file at the root lists those outside every project, such as the conventions and the workflows, checks and tool configuration that enforce them. The glossary's "The template" becomes *project templates*, which `cargo xtask new` uses. The new Source, Scope and Adoption items of "How this document works" are in `conventions/README.md` until M3.
+- **Solo versions:** LIFE-02's escrow names who takes over the assets if the founder can't continue, and its crates.io fact moves to the rationale, as the second batch planned; the independent AI review checks each answer of a privacy review (PRIV-08); and the founder approves a history rewrite after an independent AI review of its plan (CI-01). Each original returns with a second maintainer.
+- **An ADR stands in for the RFC** in BIZ-01, REV-04 and REL-16 until the project opens to outside contributions. REL-16 goes beyond the two rules named in "An ADR stands in for an RFC while the project is closed".
+- **The two policies:** principle 14, *Defaults over decisions*, and GOV-27, which the next entry describes.
+- **Experiments:** LIFE-08 and LIFE-09 support experiments in `experiments/`: a brief the founder approves; workspaces of their own whose toolchain, lockfiles and lint, formatting and cargo-deny configuration stay frozen; a short list of rules for projects; at most 12 weeks, or 16 with one extension; and a closed exit. QA-01 checks an experiment's copied lint and formatting configuration against the commit it names. The glossary gains *experiment*, and LIFE-08 a moment of its own.
+
+- **Why:** the conventions were written for one repository per project and for more than one person. In the monorepo, and while Kreqo has one maintainer, these rules couldn't be followed as written or meant something else.
+- **Choices:**
+  - DATA-02's check compares a pull request with its base branch, since the pull request that regenerates a sample set could update a hash list too.
+  - Only an app's name and ID carry the Kreqo name, so published `kreqo-` crates release at any stage; an app carries its name once stable (BRAND-02).
+  - Archiving empties a folder down to its `project.toml`, its CHANGELOG if it released, and a README that links its last commit and release tags.
+  - While there is one maintainer, the founder approves a history rewrite after an independent AI review of its plan.
+  - Both policies apply now.
+  - An experiment's copies of the root's lint and formatting configuration follow the commit its `project.toml` names.
+  - Experiment is a kind, and there are no private experiments. Pull requests check an experiment only when they change its folder, the scheduled advisory scan opens an issue for it instead of failing, and the dependency bot skips it. It follows GOV-17 and CI-17 only if its brief adopts them, and it keeps its own cargo-deny configuration, whose suppressions may run to its end date.
+- **Rules:** ARCH-14, BIZ-01, BRAND-02, BRAND-03, CI-01, CI-05, DATA-02, DOC-01, DOC-04, GOV-02, GOV-06, GOV-07, GOV-27, LEGAL-03, LEGAL-08, LIFE-01, LIFE-02, LIFE-04, LIFE-07, LIFE-08, LIFE-09, PERF-01, PLAT-03, PLAT-04, PRIV-01, PRIV-08, QA-01, QA-13, REL-05, REL-16, REV-04, SEC-20, SEC-23.
+
+Two earlier records give CI-01's old reading as a reason: "Setup material is never committed" ("With one maintainer, CI-01 allows no history rewrite") and "The secret scan has no escape hatches" ("CI-01 rules out removing it from history"). Both decisions stand, since a rewrite stays exceptional and the forge keeps a pull request's commits, but a leaked, revoked secret could now be expunged instead of getting the ignore file the second one anticipates.
+
+### Agents make the reversible choices
+
+This supersedes "Every design choice goes to Dara" (2026-10-24). Under GOV-27, agents make the reversible choices their task leaves open, including under rules that NOW.md lists for Dara, and list each, with the alternatives they weighed, in the pull request's description, where the person who directed them can veto it before merging or later. Rule changes, and choices that are costly or impossible to undo, such as a published name, a license or a released format, go to Dara first, batched, each with a recommendation, and anything that needs an ADR still needs Dara's sign-off (CI-03). Under principle 14, a default from the conventions, an ADR or common practice applies unless Dara overrides it, and nobody asks Dara to make a choice a default already makes.
+
+- **Why:** Dara's decision load. The pull request's description is the log: Dara reads every pull request before merging it (T10), and the description becomes the squash commit.
+- **Rules:** GOV-27, GOV-07, CI-03.
+
+### What the first rule batch leaves for later
+
+- **An issue, drafted for Dara first:** solo versions of REL-17 (crates owned by at least two humans), SEC-18 (a threat model reviewed by someone other than its author) and PRIV-13 (telemetry signed off by two maintainers other than the author), each before its trigger.
+- **An issue, drafted for Dara first:** whether the Best Practices site takes several projects from one repository, as SEC-21's badge for each project needs, before the first release.
+- **Issue edits, drafted for Dara first:** #4 keeps only the README badge for projects in the monorepo, and #7 also checks an experiment's copied lint and formatting configuration against the commit it names.
+- **M3:**
+  - "Changes" in "How this document works" still routes rule changes through an RFC (GOV-01); it gets the same stand-in, or the batches Dara approves.
+  - "Documents this one depends on" and the appendix's title still name the project template.
+- **M4 and #4:** xtask's README, which DOC-01 and LIFE-01 now ask of every project.
+- **M5:** the experiment kind and its checks; **M6:** whether the forge's terms let one person keep a separate admin account (CI-11), with a solo version if not; **M7:** the root's list of risk-tier paths; **M8:** a project template for experiments.
+- **The batch for issues #22 and #23:** the AIF-04 reminder for issues #19 and #20, and LEGAL-12's wording for a new kind of app. LIFE-02's rationale now holds a link and a date for #22 to move.
+- **Rules:** REL-17, SEC-18, PRIV-13, SEC-21, LIFE-01, QA-01, DOC-01, CI-11, AIF-04, LEGAL-12, LIFE-02.

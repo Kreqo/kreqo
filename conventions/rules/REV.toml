@@ -45,7 +45,7 @@ history = ["2026-10-23 solo-first edit: waits for the trigger 'open-to-contribut
 [[rule]]
 id = "REV-04"
 level = "MUST"
-statement = "Review disagreements are settled by data first, then by this document, then by the area owner, then by the decision-maker named in GOVERNANCE.md. A design dispute becomes an RFC, and the decision and its reason are recorded on the PR."
+statement = "Review disagreements are settled by data first, then by this document, then by the area owner, then by the decision-maker named in GOVERNANCE.md. A design dispute becomes an ADR, and the decision and its reason are recorded on the PR."
 rationale = "A known escalation path ends arguments; an unknown one ends contributions."
 verification = "Review checklist: decision recorded on the PR"
 check = "Review"
@@ -53,3 +53,11 @@ trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement rewritten, an ADR standing in for the RFC; the original returns at the trigger 'open-to-contributions'."]
+
+[[rule.later]]
+trigger = "open-to-contributions"
+statement = "Review disagreements are settled by data first, then by this document, then by the area owner, then by the decision-maker named in GOVERNANCE.md. A design dispute becomes an RFC, and the decision and its reason are recorded on the PR."
+rationale = "A known escalation path ends arguments; an unknown one ends contributions."
+verification = "Review checklist: decision recorded on the PR"
+check = "Review"

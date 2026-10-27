@@ -67,3 +67,8 @@ text = "Rules are enforced by tooling wherever possible, and a rule names how it
 number = 13
 name = "Transparent by default."
 text = "Decisions, funding, data flows and the use of AI are public and written down. The exceptions, security embargoes, conduct reports and legal requests, are themselves written down, with who may see what and for how long."
+
+[[principle]]
+number = 14
+name = "Defaults over decisions."
+text = "A default set by these conventions, an ADR or common practice applies without a decision until someone with the right to decide overrides it; nobody is asked to make a choice a default already makes."

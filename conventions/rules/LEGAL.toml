@@ -35,14 +35,15 @@ status = "active"
 [[rule]]
 id = "LEGAL-03"
 level = "MUST"
-statement = "Dependency licenses are compatible with the project's license, enforced by cargo-deny."
-rationale = "An incompatible dependency makes a release undistributable."
-verification = "cargo-deny `licenses`"
+statement = "Dependency licenses are compatible with the license of each crate that depends on them, enforced by cargo-deny with an allow list per license group (LEGAL-01). No MIT OR Apache-2.0 crate depends on a GPL or AGPL crate."
+rationale = "An incompatible dependency makes a release undistributable, and a GPL or AGPL dependency would bind a permissive crate's users to copyleft terms."
+verification = "cargo-deny `licenses` with each group's allow list; CI: no MIT OR Apache-2.0 crate depends on a GPL or AGPL crate"
 check = "CI"
 trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement, rationale and verification rewritten for the monorepo."]
 
 [[rule]]
 id = "LEGAL-04"
@@ -101,7 +102,7 @@ status = "active"
 [[rule]]
 id = "LEGAL-08"
 level = "MUST"
-statement = "Default licenses unless an ADR says otherwise (LEGAL-01): user documentation, art, icons and media CC BY 4.0 or CC BY-SA 4.0, one chosen by ADR; CC0-1.0 for small reusable assets, generated files and trivial data; translations take their source file's license; build and CI scripts take the code license; third-party data keeps its license. NonCommercial or NoDerivatives terms appear nowhere. Code licenses follow LEGAL-01."
+statement = "Default licenses unless an ADR says otherwise (LEGAL-01): user documentation, art, icons and media CC BY 4.0 or CC BY-SA 4.0, one chosen by ADR; CC0-1.0 for small reusable assets, generated files and trivial data; translations take their source file's license; a project's build and CI scripts take its code license, and the monorepo's workflows and tool configuration are MIT OR Apache-2.0; third-party data keeps its license. NonCommercial or NoDerivatives terms appear nowhere. Code licenses follow LEGAL-01."
 rationale = "Non-code artifacts without a declared license cannot be redistributed, and NC or ND terms are store anti-features."
 verification = "`reuse lint` with the allowed-license list"
 check = "CI"
@@ -110,7 +111,7 @@ who = "you"
 moments = ["setup"]
 added = "0.1.0"
 status = "active"
-history = ["2026-10-24 open question closed: CC BY 4.0, which an ADR will record (docs/decisions.md)."]
+history = ["2026-10-24 open question closed: CC BY 4.0, which an ADR will record (docs/decisions.md).", "2026-10-27 first rule batch: statement rewritten for the monorepo."]
 
 [[rule]]
 id = "LEGAL-09"

@@ -169,12 +169,13 @@ id = "ARCH-14"
 level = "SHOULD"
 statement = "Shared crates declare a dependency tier, and each tier depends only on lower tiers."
 rationale = "Tiers keep the dependency graph acyclic and tell users what a crate pulls in."
-verification = "CI: tier check over the workspace dependency graph (cargo xtask)"
+verification = "CI: tier check over each workspace's dependency graph (cargo xtask)"
 check = "CI"
 trigger = "first-release"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: verification rewritten for the monorepo."]
 
 [[rule]]
 id = "ARCH-15"

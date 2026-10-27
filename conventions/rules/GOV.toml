@@ -21,22 +21,22 @@ history = ["2026-10-23 solo-first edit: waits for the trigger 'open-to-contribut
 [[rule]]
 id = "GOV-02"
 level = "MUST"
-statement = "The author of a change owns its intent, specification, tests and consequences, and can explain what it does and why, whether or not AI wrote the code; for an agent's change, the author is the person who directed it. While there is one maintainer, changes to risk-tier paths get a line-level AI review and other changes the AI review, on top of the automated gates every change passes (CI-02). Each project lists its risk-tier paths in a machine-readable risk file that the review tooling enforces."
+statement = "The author of a change owns its intent, specification, tests and consequences, and can explain what it does and why, whether or not AI wrote the code; for an agent's change, the author is the person who directed it. While there is one maintainer, changes to risk-tier paths get a line-level AI review and other changes the AI review, on top of the automated gates every change passes (CI-02). Each project lists its risk-tier paths in its `project.toml`, a file at the monorepo's root lists those outside every project, and the review tooling enforces every list."
 rationale = "Reading every line of AI-written code doesn't scale; owning intent and gating risk does."
-verification = "Review checklist: author statement of intent; risk file enforced through the sign-off label (CI-03)"
+verification = "Review checklist: author statement of intent; risk-tier lists enforced through the sign-off label (CI-03)"
 check = "Review"
 trigger = "always"
 who = "you"
 moments = ["risky-change"]
 added = "0.1.0"
 status = "active"
-history = ["2026-10-23 solo-first edit: statement rewritten; verification rewritten; its original version returns at the trigger 'second-maintainer'.", "2026-10-26 second rule batch: statement and later version's statement rewritten; restated text removed, and the sign-off on intent moved to CI-03."]
+history = ["2026-10-23 solo-first edit: statement rewritten; verification rewritten; its original version returns at the trigger 'second-maintainer'.", "2026-10-26 second rule batch: statement and later version's statement rewritten; restated text removed, and the sign-off on intent moved to CI-03.", "2026-10-27 first rule batch: statement, verification and later version's statement and verification rewritten for the monorepo."]
 
 [[rule.later]]
 trigger = "second-maintainer"
-statement = "The author of a change owns its intent, specification, tests and consequences, and can explain what it does and why, whether or not AI wrote the code. Changes to risk-tier paths get line-level human review and other changes intent-level review, on top of the automated gates every change passes (CI-02). Each project lists its risk-tier paths in a machine-readable risk file that the review tooling enforces; once CI-15 applies, that file is CODEOWNERS."
+statement = "The author of a change owns its intent, specification, tests and consequences, and can explain what it does and why, whether or not AI wrote the code. Changes to risk-tier paths get line-level human review and other changes intent-level review, on top of the automated gates every change passes (CI-02). Each project lists its risk-tier paths in its `project.toml`, a file at the monorepo's root lists those outside every project, and the review tooling enforces every list; CODEOWNERS (CI-15) takes its risk-tier entries from them."
 rationale = "Reading every line of AI-written code doesn't scale; owning intent and gating risk does."
-verification = "Review checklist: author statement of intent; risk file enforced by required reviewers"
+verification = "Review checklist: author statement of intent; risk-tier lists enforced by required reviewers"
 check = "Review"
 
 [[rule]]
@@ -85,18 +85,18 @@ id = "GOV-06"
 level = "MUST"
 statement = "The code of conduct is [Contributor Covenant 3.0](https://www.contributor-covenant.org/version/3/0/code_of_conduct/), with a private reporting address; GOV-21 completes its reporting section before the project opens to outside contributions. Its scope covers the forge, chat, forum and events; app names, descriptions, screenshots and bundled content; and content an AI agent posts under a person's name."
 rationale = "A code of conduct without named scope and enforcement is decoration."
-verification = "CI: CODE_OF_CONDUCT.md from the template; Review checklist"
+verification = "CI: CODE_OF_CONDUCT.md is Contributor Covenant 3.0 with a reporting address; Review checklist"
 check = "Review"
 trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
-history = ["2026-10-23 solo-first edit: statement rewritten."]
+history = ["2026-10-23 solo-first edit: statement rewritten.", "2026-10-27 first rule batch: verification rewritten for the monorepo."]
 
 [[rule]]
 id = "GOV-07"
 level = "MUST"
-statement = "GOVERNANCE.md states the decision model (GOV-09); who holds each decision right (RFC sign-off, releases, merges per area); who holds each sensitive access (forge admin, CI secrets, signing keys, registry ownership, DNS); how people join and leave each role; the escalation path (REV-04); and the module that owns the interface guidelines, tokens and component library. Names live only in GOVERNANCE.md; other documents link to it."
+statement = "GOVERNANCE.md states the decision model (GOV-09, GOV-27); who holds each decision right (RFC sign-off, releases, merges per area); who holds each sensitive access (forge admin, CI secrets, signing keys, registry ownership, DNS); how people join and leave each role; the escalation path (REV-04); and the module that owns the interface guidelines, tokens and component library. Names live only in GOVERNANCE.md; other documents link to it."
 rationale = "Hand-copied names drift; one file keeps roles and access current."
 verification = "CI: GOVERNANCE.md present with required sections"
 check = "CI"
@@ -104,6 +104,7 @@ trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement rewritten; the decision model includes GOV-27."]
 
 [[rule]]
 id = "GOV-08"
@@ -366,3 +367,16 @@ trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+
+[[rule]]
+id = "GOV-27"
+level = "MUST"
+statement = "Agents make the reversible choices their task leaves open and list each one, with the alternatives they weighed, in the description of the pull request that makes it, where the person who directed the agent can veto it. Rule changes, and choices that are costly or impossible to undo, such as a published name, a license or a released format, go first to the decision-maker named in GOVERNANCE.md (the founder while there is one maintainer), batched, each with a recommendation."
+rationale = "A reversible choice costs little to undo after a veto, so asking first costs more than it saves; the decision-maker's attention goes to the choices that can't be undone."
+verification = "Review checklist: the agent's choices listed with their alternatives; no rule change or irreversible choice made without the decision-maker"
+check = "Review"
+trigger = "always"
+who = "ai"
+added = "0.1.0"
+status = "active"
+history = ["2026-10-27 first rule batch: added."]

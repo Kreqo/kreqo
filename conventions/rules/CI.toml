@@ -7,7 +7,7 @@
 [[rule]]
 id = "CI-01"
 level = "MUST"
-statement = "The default branch is protected: no direct pushes, changes land through pull requests, and force-pushing to or deleting protected branches and release tags is blocked. History is rewritten only through a documented expunging process that two maintainers approve. New collaborators start with read access."
+statement = "The default branch is protected: no direct pushes, changes land through pull requests, and force-pushing to or deleting protected branches and release tags is blocked. History is rewritten only through a documented expunging process; while there is one maintainer, the founder approves each rewrite after an independent AI review of its plan. New collaborators start with read access."
 rationale = "Signatures, provenance and the review record all rest on a history nobody can rewrite."
 verification = "Settings audit: branch and tag protection; default collaborator role"
 check = "Settings"
@@ -15,6 +15,14 @@ trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement rewritten for one maintainer; the original returns at the trigger 'second-maintainer'."]
+
+[[rule.later]]
+trigger = "second-maintainer"
+statement = "The default branch is protected: no direct pushes, changes land through pull requests, and force-pushing to or deleting protected branches and release tags is blocked. History is rewritten only through a documented expunging process that two maintainers approve. New collaborators start with read access."
+rationale = "Signatures, provenance and the review record all rest on a history nobody can rewrite."
+verification = "Settings audit: branch and tag protection; default collaborator role"
+check = "Settings"
 
 [[rule]]
 id = "CI-02"
@@ -64,14 +72,15 @@ status = "active"
 [[rule]]
 id = "CI-05"
 level = "MUST"
-statement = "CI workflows come from the template and follow its updates."
-rationale = "Hand-copied workflows drift; the template is the single source for every project."
-verification = "Review checklist: workflow matches the template version"
+statement = "CI workflows live once, in the monorepo, and cover every project in it. Each kind of repository outside the monorepo, such as a fork or the `rfcs` repository, has a profile, written when the first one is created, naming the rules and workflows that apply to it; anything it copies from the monorepo matches the conventions version it names (LIFE-01)."
+rationale = "Copied workflows drift; one set in the monorepo is the single source for every project, and a profile says what a repository outside it follows."
+verification = "Review checklist: workflows only in the monorepo; outside repositories follow their profiles; CI: copies match the conventions version named"
 check = "Review"
 trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement, rationale and verification rewritten for the monorepo."]
 
 [[rule]]
 id = "CI-06"

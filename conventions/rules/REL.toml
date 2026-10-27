@@ -56,7 +56,7 @@ status = "active"
 [[rule]]
 id = "REL-05"
 level = "MUST"
-statement = "Each release goes through a release pull request built from the template's checklist; every Release-check item links its evidence, and CI refuses to tag while one is unticked. The release generates a compliance summary listing each applicable rule as met (with evidence), deviation (with an ADR link) or not applicable (with a reason)."
+statement = "Each release goes through a release pull request built from the generated release checklist; every Release-check item links its evidence, and CI refuses to tag while one is unticked. The release generates a compliance summary listing each applicable rule as met (with evidence), deviation (with an ADR link) or not applicable (with a reason)."
 rationale = "An unenforced checklist is a form; a gate with linked evidence is a record."
 verification = "Release checklist: evidence links; compliance summary generated"
 check = "CI"
@@ -64,6 +64,7 @@ trigger = "first-release"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement rewritten for the monorepo."]
 
 [[rule]]
 id = "REL-06"
@@ -192,15 +193,22 @@ status = "active"
 [[rule]]
 id = "REL-16"
 level = "MUST"
-statement = "Breaking changes to formats, the sync protocol and the plugin API are batched into announced major releases, tracked publicly at least one cycle ahead and approved by RFC with a compatibility section; those to the sync protocol and the plugin API ship an automatic migrator. Deprecated items carry `#[deprecated(since, note)]` plus a doc line naming the replacement, and are removed only in a major release."
+statement = "Breaking changes to formats, the sync protocol and the plugin API are batched into announced major releases, tracked publicly at least one cycle ahead and approved by ADR with a compatibility section; those to the sync protocol and the plugin API ship an automatic migrator. Deprecated items carry `#[deprecated(since, note)]` plus a doc line naming the replacement, and are removed only in a major release."
 rationale = "Batched, announced breaks give plugin and format consumers one migration per cycle, not many."
-verification = "Review checklist: RFC compatibility section; migrator present"
+verification = "Review checklist: ADR compatibility section; migrator present"
 check = "Review"
 trigger = "one-point-oh"
 who = "ai"
 added = "0.1.0"
 status = "active"
-history = ["2026-10-26 second rule batch: statement rewritten; restated requirement removed."]
+history = ["2026-10-26 second rule batch: statement rewritten; restated requirement removed.", "2026-10-27 first rule batch: statement and verification rewritten, an ADR standing in for the RFC; the original returns at the trigger 'open-to-contributions'."]
+
+[[rule.later]]
+trigger = "open-to-contributions"
+statement = "Breaking changes to formats, the sync protocol and the plugin API are batched into announced major releases, tracked publicly at least one cycle ahead and approved by RFC with a compatibility section; those to the sync protocol and the plugin API ship an automatic migrator. Deprecated items carry `#[deprecated(since, note)]` plus a doc line naming the replacement, and are removed only in a major release."
+rationale = "Batched, announced breaks give plugin and format consumers one migration per cycle, not many."
+verification = "Review checklist: RFC compatibility section; migrator present"
+check = "Review"
 
 [[rule]]
 id = "REL-17"

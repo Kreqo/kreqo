@@ -7,15 +7,15 @@
 [[rule]]
 id = "PRIV-01"
 level = "MUST"
-statement = "Telemetry and analytics are off by default and run only after explicit opt-in. Telemetry means any measurement that leaves the device: analytics, attribution, experiments, usage pings, diagnostics. Data kept only on the device and visible to the user is not telemetry."
-rationale = "A definition that covers attribution and experiments closes the loophole Firefox's PPA relied on."
+statement = "Telemetry and analytics are off by default and run only after explicit opt-in. Telemetry means any measurement that leaves the device: analytics, attribution, in-app experiments, usage pings, diagnostics. Data kept only on the device and visible to the user is not telemetry."
+rationale = "A definition that covers attribution and in-app experiments closes the loophole Firefox's PPA relied on."
 verification = "Review checklist: no measurement leaves the device without opt-in; data manifest entry"
 check = "Review"
 trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
-history = ["2026-10-26 second rule batch: verification rewritten; glossary term replaces a rule ID."]
+history = ["2026-10-26 second rule batch: verification rewritten; glossary term replaces a rule ID.", "2026-10-27 first rule batch: statement and rationale rewritten; 'in-app experiments' keeps the word apart from the glossary's Experiment."]
 
 [[rule]]
 id = "PRIV-02"
@@ -97,15 +97,23 @@ history = ["2026-10-26 second rule batch: statement rewritten; restated requirem
 [[rule]]
 id = "PRIV-08"
 level = "MUST"
-statement = "Any new or changed data collection, network call, hosted service, vendor or transfer of personal information outside Canada needs a public privacy review from an ADR template. It answers: purpose, alternatives considered, fields and sensitivity, retention or expiry, default state and opt-out, third parties, and where data is processed. Someone other than the author approves it, and it is re-checked yearly. The template doubles as the privacy impact assessment Law 25 requires before an information-system project and before data leaves Quebec."
-rationale = "Law 25 (s. 3.3) requires an impact assessment before any information-system project that handles personal information."
-verification = "Review checklist: privacy review ADR approved by a second person; yearly re-check dated"
+statement = "Any new or changed data collection, network call, hosted service, vendor or transfer of personal information outside Canada needs a public privacy review from an ADR template. It answers: purpose, alternatives considered, fields and sensitivity, retention or expiry, default state and opt-out, third parties, and where data is processed. While there is one maintainer, the independent AI review (CI-03) checks each answer against the change it covers. The privacy review is re-checked yearly and doubles as the privacy impact assessment Law 25 requires before an information-system project and before data leaves Quebec."
+rationale = "Law 25 (s. 3.3) requires an impact assessment before any information-system project that handles personal information; with one maintainer, the independent AI review is the second reader available."
+verification = "Review checklist: each answer checked by the independent AI review; privacy review ADR approved by the founder; yearly re-check dated"
 check = "Review"
 trigger = "always"
 who = "you"
 moments = ["data-flow"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement, rationale and verification rewritten for one maintainer; the original, naming the privacy review instead of the template, returns at the trigger 'second-maintainer'."]
+
+[[rule.later]]
+trigger = "second-maintainer"
+statement = "Any new or changed data collection, network call, hosted service, vendor or transfer of personal information outside Canada needs a public privacy review from an ADR template. It answers: purpose, alternatives considered, fields and sensitivity, retention or expiry, default state and opt-out, third parties, and where data is processed. Someone other than the author approves it, and it is re-checked yearly. The privacy review doubles as the privacy impact assessment Law 25 requires before an information-system project and before data leaves Quebec."
+rationale = "Law 25 (s. 3.3) requires an impact assessment before any information-system project that handles personal information."
+verification = "Review checklist: privacy review ADR approved by a second person; yearly re-check dated"
+check = "Review"
 
 [[rule]]
 id = "PRIV-09"

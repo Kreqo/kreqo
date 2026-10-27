@@ -22,7 +22,7 @@ history = ["2026-10-26 second rule batch: statement rewritten; restated requirem
 [[rule]]
 id = "BRAND-02"
 level = "MUST"
-statement = "Each app is named \"Kreqo\" followed by one plain, descriptive word, such as Kreqo Notes, under 15 characters in total. The word is chosen to read the same in English and French where possible; otherwise it is translated like any other string. \"Kreqo\" itself is never translated, and a transliteration of the app's name may be added. Before use, the word is checked against existing apps in the same category."
+statement = "Each app's name, which it carries once stable (LIFE-01), is \"Kreqo\" followed by one plain, descriptive word, such as Kreqo Notes, under 15 characters in total. The word is chosen to read the same in English and French where possible; otherwise it is translated like any other string. \"Kreqo\" itself is never translated, and a transliteration of the app's name may be added. Before use, the word is checked against existing apps in the same category."
 rationale = "One trademark covers every app, and Quebec requires descriptive words in a trademark to appear in French on products."
 verification = "Review checklist: name form, length, French form and existing-app search"
 check = "Review"
@@ -31,19 +31,20 @@ who = "you"
 moments = ["new-app"]
 added = "0.1.0"
 status = "active"
-history = ["2026-10-26 second rule batch: statement rewritten; received the transliteration permission from I18N-10, which now points here."]
+history = ["2026-10-26 second rule batch: statement rewritten; received the transliteration permission from I18N-10, which now points here.", "2026-10-27 first rule batch: statement rewritten; an app carries its name once stable, as LIFE-01 has it."]
 
 [[rule]]
 id = "BRAND-03"
 level = "MUST"
 statement = "Every crate published to crates.io is named `kreqo-` followed by one plain word, such as `kreqo-sync`; crates that are never published are exempt. Names are reserved on crates.io as soon as there is code to publish."
 rationale = "crates.io names are first-come, and the prefix marks every crate as part of the suite."
-verification = "CI: crate-name check over the workspace's publishable crates"
+verification = "CI: crate-name check over every workspace's publishable crates"
 check = "CI"
 trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: verification rewritten for the monorepo."]
 
 [[rule]]
 id = "BRAND-04"

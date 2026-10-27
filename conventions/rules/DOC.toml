@@ -7,14 +7,15 @@
 [[rule]]
 id = "DOC-01"
 level = "MUST"
-statement = "Every repository has README, CONTRIBUTING, SECURITY, CHANGELOG, LICENSE and CODE\\_OF\\_CONDUCT files, from the template."
-rationale = "The template files answer a contributor's or reporter's first questions in a known place."
+statement = "Every repository has README, CONTRIBUTING, SECURITY, LICENSE and CODE\\_OF\\_CONDUCT files at its root, and the monorepo's LICENSE says which folders carry which license. Each project has a README, and a CHANGELOG from its first release."
+rationale = "These files answer a contributor's or reporter's first questions in a known place."
 verification = "CI: required-files check"
 check = "CI"
 trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement and rationale rewritten for the monorepo."]
 
 [[rule]]
 id = "DOC-02"
@@ -43,7 +44,7 @@ status = "active"
 [[rule]]
 id = "DOC-04"
 level = "MUST"
-statement = "ADRs live in `docs/adr/NNNN-title.md`, numbered sequentially and never reused, using the MADR 4 minimal template plus a Confirmation section. Each opens with a Y-statement (in the context of…, facing…, we decided…, to achieve…, accepting…). Status is proposed, accepted, rejected, deprecated or superseded by ADR-NNNN. An accepted ADR is never rewritten except to change its status. Deviation ADRs carry machine-readable front matter (DOC-06)."
+statement = "Every ADR lives in `docs/adr/NNNN-title.md` at its repository's root, numbered sequentially and never reused, using the MADR 4 minimal template plus a Confirmation section. Each opens with a Y-statement (in the context of…, facing…, we decided…, to achieve…, accepting…). Status is proposed, accepted, rejected, deprecated or superseded by ADR-NNNN. An accepted ADR is never rewritten except to change its status. Deviation ADRs carry machine-readable front matter (DOC-06)."
 rationale = "ADRs are the exception mechanism (SEC-01, ARCH-10, LEGAL-01); status and supersession keep that log trustworthy."
 verification = "Review checklist: template, number, status, Y-statement"
 check = "Review"
@@ -51,6 +52,7 @@ trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-27 first rule batch: statement rewritten for the monorepo."]
 
 [[rule]]
 id = "DOC-05"

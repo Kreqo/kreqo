@@ -7,7 +7,7 @@ SPDX-License-Identifier: CC-BY-4.0
 
 The TOML files are the source of truth; the views are generated from them. The `trigger`, `who` and `moments` values are a first pass that Dara hasn't reviewed yet.
 
-- `rules/*.toml`: the 316 rules, one file per area. Each rule has `trigger` (when it starts to apply), `who` (`tool`, `ai` or `you`), and for `you` rules, `moments` (when they come up). `[[rule.later]]` holds a version that replaces the rule at a later trigger; `[[rule.reminder]]` holds a note for one.
+- `rules/*.toml`: the 319 rules, one file per area. Each rule has `trigger` (when it starts to apply), `who` (`tool`, `ai` or `you`), and for `you` rules, `moments` (when they come up). `[[rule.later]]` holds a version that replaces the rule at a later trigger; `[[rule.reminder]]` holds a note for one.
 - `state.toml`: facts about Kreqo today. Change one, regenerate the views, and rules move between them.
 - `triggers.toml`, `moments.toml`, `principles.toml`, `glossary.toml`, `areas.toml`: the rest of the data.
 - `views/NOW.md`, `views/CHECKED.md` and `views/LATER.md`: generated, never edited by hand. A Python prototype kept outside the repository checks the data and writes them until M2 ports it to `cargo xtask`; the port's output must match these files exactly.
@@ -28,3 +28,15 @@ These points go into "How this document works" when M3 brings that section into 
 The "Levels" item of "How this document works", worded so that no level hides a negation in its statement. M3 brings it in with that section, after the standard BCP 14 sentence.
 
 > **Levels.** MUST, SHOULD and MAY. A statement says what holds, prohibitions included ("never", "no"), so it reads correctly without its level. Deviating from a SHOULD requires a deviation record (DOC-06); a MUST changes only through this document. Imperatives are used sparingly: before 1.0, every MUST passes two questions, whether anyone would break it without the rule, and whether tooling could enforce it instead.
+
+## Source, scope and adoption
+
+The items of "How this document works" that the first rule batch rewrote for the monorepo, and the sentence that follows the document's opening one, which gives its version. M3 brings them in with that section, and they apply until then.
+
+> It is generated from the rules in the monorepo's `conventions/`, the one copy every project follows.
+
+> **Source.** The rules live once, as data in the monorepo's `conventions/`: `rules/*.toml`, one file per area, beside the principles, glossary, areas, triggers, moments and state they use. This document, the views of what applies now and what waits for a trigger, the release checklist (REL-05), the pull-request checklist and each project's compliance summary are generated from that source, and CI validates it: no reused IDs, a verification for every rule, every Release check present in the checklist.
+>
+> **Scope.** Every crate, tool, app, server, website and experiment in the organization. In the monorepo, a project is a folder with its own `project.toml` (LIFE-01), every crate belongs to exactly one project, and "the project", with no project named before it, means Kreqo. Rules about the organization or the repository itself, such as accounts, the forge's settings, reviews, merges, commits, workflows and checks over every file, apply across the repository; the others, the rules for projects, apply to the projects they concern. An experiment follows the rules that apply across the repository and, of the rules for projects, only those LIFE-08 names. A repository outside the monorepo follows the profile for its kind (CI-05). A project may add stricter rules in its README or `project.toml`, never weaker ones.
+>
+> **Adoption.** Every project in the monorepo follows the current version, which the monorepo's CI enforces, and every new project starts from a project template through `cargo xtask new`; an experiment keeps the lint and formatting configuration its `project.toml` pins (LIFE-08). Deviations (DOC-06) cover only SHOULDs, so a new or stricter MUST lands together with the fixes it needs in every project, or waits for a trigger that phases it in. A repository outside the monorepo names the version it follows in its `project.toml` (LIFE-01), and upgrading it is a deliberate pull request.
