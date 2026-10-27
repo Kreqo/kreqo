@@ -7,7 +7,7 @@ Generated for this state: maintainers = 1; every other fact is false.
 
 Of 316 rules, 136 apply now. Tooling enforces 52 and AI review checks 46; both are listed in CHECKED.md. The 34 below need you, and 4 are options. The other 180 wait for a trigger (LATER.md).
 
-Read the principles, the open decisions and the first section now, about 1234 words. Read each later section when its moment comes.
+Read the principles, the open decisions and the first section now, about 1209 words. Read each later section when its moment comes.
 
 ## Principles
 
@@ -43,7 +43,7 @@ When a case isn't covered, decide by these.
 **SEC-04** · MUST · SECURITY.md states: the private intake (a security@kreqo.org mailbox, plus the forge's confidential reports where it supports them); acknowledgement within 2 business days; assessment within 7 days; status updates at least weekly; supported versions (REL-09); a default embargo of up to 90 days, shorter when exploited; and credit for reporters who want it.\
 *Why:* Reporters need one address to write to and a timeline they can hold the project to. · *Enforced by CI.*
 
-**SEC-12** · MUST · Every account with write, admin, release, publish or security-advisory access uses phishing-resistant MFA: hardware keys or passkeys, two registered per account with one kept offline. This covers the forge, the DNS registrar, crates.io and the account it logs in through, Flathub, app stores and signing infrastructure. SMS is not accepted, recovery codes are stored offline, and the forge requires 2FA for every user with write access.\
+**SEC-12** · MUST · Every account with write, admin, release, publish or security-advisory access uses phishing-resistant MFA: hardware keys or passkeys, two registered per account with one kept offline. This covers the forge, the DNS registrar, crates.io and the account it logs in through, Flathub, app stores and signing infrastructure. SMS is not accepted, and recovery codes are stored offline.\
 *Why:* A phished maintainer account is the shortest path to a malicious release. · *Enforced by forge settings.*
 
 **I18N-01** · MUST · No user-facing string is hard-coded; all go through the localization system (Fluent proposed, confirmed by ADR).\
@@ -54,7 +54,7 @@ When a case isn't covered, decide by these.
 *Why:* Consistent wording across apps is Principle 7, and a lint catches the mechanical part. · *Enforced by CI.*\
 *Open decision:* Capitalization style per element type, and when an ellipsis is used. Leaning: none yet.
 
-**BRAND-01** · MUST · Each app has one registered accent hue (BRAND-05). Lightness and chroma are fixed suite-wide for each accent role (text, fill, focus ring) in each theme (light, dark, increased contrast). CI checks WCAG contrast for every registered hue in every role and theme (A11Y-03). An ADR chooses one of: (a) the muted chroma every hue can share in sRGB; (b) fixed lightness with each hue at its own maximum chroma up to a cap; (c) accents defined in Display P3 with gamut mapping to sRGB as fallback. Starting points: L ≈ 0.50–0.55 for fills and text in the light theme and L ≈ 0.65–0.75 for accent text in the dark theme; yellows and oranges are reviewed visually. The AppStream light and dark brand colors (PLAT-11) are generated from these tokens.\
+**BRAND-01** · MUST · Each app has one registered accent hue (BRAND-05). Lightness and chroma are fixed suite-wide for each accent role (text, fill, focus ring) in each theme (light, dark, increased contrast). An ADR chooses one of: (a) the muted chroma every hue can share in sRGB; (b) fixed lightness with each hue at its own maximum chroma up to a cap; (c) accents defined in Display P3 with gamut mapping to sRGB as fallback. Starting points: L ≈ 0.50–0.55 for fills and text in the light theme and L ≈ 0.65–0.75 for accent text in the dark theme; yellows and oranges are reviewed visually. The AppStream light and dark brand colors (PLAT-11) are generated from these tokens.\
 *Why:* No single lightness passes 4.5:1 on both white and black, and contrast varies about 12% across hues. · *Enforced by CI.*\
 *Open decision:* Accent colors: muted shared chroma, uneven chroma under a cap, or Display P3 with sRGB fallback. Leaning: none yet.
 
@@ -74,11 +74,11 @@ When a case isn't covered, decide by these.
 *Why:* The toolkit choice stays reversible only while no core crate depends on it. · *Checked in review.*\
 *Open decision:* Which UI toolkit: Slint or Dioxus. Leaning: Slint.
 
-**UX-03** · MUST NOT · Apps ship a toolkit's default theme or a platform-native widget style, or ship on Linux before an ADR has decided client-side versus system window decorations, the Flathub presentation question (BRAND-04 covers icon styles).\
+**UX-03** · MUST · Apps never ship a toolkit's default theme or a platform-native widget style, and never ship on Linux before an ADR has decided client-side versus system window decorations, the Flathub presentation question (BRAND-04 covers icon styles).\
 *Why:* The suite's own look is a deliberate departure from GNOME and KDE styling; Flathub promotion depends on the decorations choice. · *Checked in review.*\
 *Open decision:* Window decorations on Linux: client-side or system. Leaning: none yet.
 
-**BRAND-02** · MUST · Each app is named "Kreqo" followed by one plain, descriptive word, such as Kreqo Notes, under 15 characters in total. The word is chosen to read the same in English and French where possible; otherwise it is translated like any other string, while "Kreqo" never is (I18N-10). Before use, the word is checked against existing apps in the same category.\
+**BRAND-02** · MUST · Each app is named "Kreqo" followed by one plain, descriptive word, such as Kreqo Notes, under 15 characters in total. The word is chosen to read the same in English and French where possible; otherwise it is translated like any other string. "Kreqo" itself is never translated, and a transliteration of the app's name may be added. Before use, the word is checked against existing apps in the same category.\
 *Why:* One trademark covers every app, and Quebec requires descriptive words in a trademark to appear in French on products. · *Checked in review.*
 
 **BRAND-05** · SHOULD · App hues are registered with at least 30° spacing and kept clear of the error, warning and success hues; every new hue is reviewed visually, not only computed.\
@@ -121,7 +121,7 @@ When a case isn't covered, decide by these.
 **DATA-05** · SHOULD · CRDTs are used where concurrent edits have to merge, such as shared text; simpler append-only logs where they suffice.\
 *Why:* CRDTs merge concurrent edits without a server deciding; logs are simpler where edits never conflict. · *Checked in review.*
 
-**DATA-11** · MUST · User content and learning history (notes, cards, review logs, scheduler parameters) live in documented open files that other tools can read. Any database or index is a cache that can be rebuilt from those files.\
+**DATA-11** · MUST · User content, and the records an app keeps of the user's work and the parameters it fits to them, such as review logs and scheduler parameters, live in documented open files that other tools can read. Any database or index is a cache that can be rebuilt from those files.\
 *Why:* Files other tools can read outlive the app; a database only the app reads does not. · *Checked in review.*
 
 
@@ -133,16 +133,16 @@ When a case isn't covered, decide by these.
 
 ## When a change is on your sign-off list
 
-**CI-03** · MUST · Every change is reviewed by a reviewer other than its author before it merges. While there is one maintainer, an independent AI review counts: one run by a session or tool that didn't write the change, attached to the pull request. Changes on the sign-off list also need the founder's sign-off: anything that needs an ADR, risk-tier paths (GOV-02), licensing, user data formats and migrations, releases, and anything published in the project's name. The founder's hand-written changes get the same AI review.\
+**CI-03** · MUST · Every change is reviewed by a reviewer other than its author before it merges. While there is one maintainer, an independent AI review counts: one run by a session or tool that didn't write the change, attached to the pull request. Changes on the sign-off list also need the founder's sign-off on their intent: anything that needs an ADR, risk-tier paths, licensing, user data formats and migrations, releases, and anything published in the project's name. The founder's hand-written changes get the same AI review.\
 *Why:* A second look catches what the author can't see; with one maintainer, an independent AI review is the second look available. · *Enforced by CI.*
 
-**GOV-02** · MUST · The author of a change owns its intent, specification, tests and consequences, and can explain what it does and why, whether or not AI wrote the code; for an agent's change, the author is the person who directed it. Every change passes CI and review (CI-03). While there is one maintainer, changes to risk-tier paths get a line-level AI review and the founder's sign-off on intent; other changes get the AI review plus the automated gates. Each project lists its risk-tier paths in a machine-readable risk file that the review tooling enforces.\
+**GOV-02** · MUST · The author of a change owns its intent, specification, tests and consequences, and can explain what it does and why, whether or not AI wrote the code; for an agent's change, the author is the person who directed it. While there is one maintainer, changes to risk-tier paths get a line-level AI review and other changes the AI review, on top of the automated gates every change passes (CI-02). Each project lists its risk-tier paths in a machine-readable risk file that the review tooling enforces.\
 *Why:* Reading every line of AI-written code doesn't scale; owning intent and gating risk does. · *Checked in review.*
 
 
 ## When you add art, icons or other media
 
-**GOV-22** · MUST NOT · The organization ships model-generated logos, brand assets, illustrations, animation, music, sound design, voices or demo content. This rule covers what the organization ships, not what users generate in the apps (AIF).\
+**GOV-22** · MUST · The organization never ships model-generated logos, brand assets, illustrations, animation, music, sound design, voices or demo content. This rule covers what the organization ships, not what users generate in the apps (AIF).\
 *Why:* Art is valued as human expression, and the models were trained on artists' work without their consent. · *Checked in review.*
 
 
@@ -160,11 +160,11 @@ When a case isn't covered, decide by these.
 
 ## When you add an AI feature
 
-**AIF-01** · MUST · AI features are optional, off by default and run on the device by default. Models are downloaded only at the user's request, from a named source with checksum and license shown, and are declared in the PRIV-07 manifest. Only models whose license and training-data provenance are documented and compatible are used.\
+**AIF-01** · MUST · AI features are optional, off by default and run on the device by default. Models are downloaded only at the user's request, from a named source with checksum and license shown, and are declared in the data manifest. Only models whose license and training-data provenance are documented and compatible are used.\
 *Why:* A model download is a network flow and a license; both need consent and a record. · *Checked in review.*
 
 **AIF-02** · MUST · Sending user content to a remote model needs a per-feature opt-in that names the provider and what is sent. Users choose the provider, including a local runtime or their own endpoint, and nothing goes to a default third party.\
-*Why:* Users must know who reads their notes before anyone does. · *Checked in review.*
+*Why:* Users must know who reads their content before anyone does. · *Checked in review.*
 
 **AIF-03** · MUST · User content is never used to train or fine-tune models, by Kreqo or by any integrated provider, and never read by humans for model evaluation; integrations use only providers that contractually exclude training.\
 *Why:* Training on user content is the breach of trust users fear most from AI features. · *Checked in review.*
@@ -175,10 +175,10 @@ When a case isn't covered, decide by these.
 **BIZ-01** · MUST · Licenses only get freer: no project, crate, format or release is ever relicensed under more restrictive or source-available terms, and license changes go through an RFC.\
 *Why:* Permissive code can legally be closed; only a written promise stops it. · *Checked in review.*
 
-**BIZ-03** · MUST · Nothing is ever taken from the open apps. A released feature is never moved to a paid tier, held back by a delay, time-limited or artificially capped (no limits on notes, decks, devices or sync size). The open apps download and run with no email, account or sign-in, and benchmarking is allowed.\
+**BIZ-03** · MUST · Nothing is ever taken from the open apps. A released feature is never moved to a paid tier, held back by a delay, time-limited or artificially capped, such as by limits on the amount of user content, devices or sync size. The open apps download and run with no email, account or sign-in, and benchmarking is allowed.\
 *Why:* Removing features from the open apps is how open-core companies lose their community. · *Checked in review.*
 
-**BIZ-04** · MUST NOT · Security, privacy, encryption, accessibility, localization, import, export or self-hosting is offered only as a paid feature.\
+**BIZ-04** · MUST · Security, privacy, encryption, accessibility, localization, import, export and self-hosting are never offered only as paid features.\
 *Why:* Paywalling safety or exit turns users into hostages. · *Checked in review.*
 
 
@@ -186,22 +186,24 @@ When a case isn't covered, decide by these.
 
 These MAY rules are yours to take or leave.
 
-**ARCH-12** · MAY · A project defines a domain-specific language only when an app needs one, with a versioned grammar.\
+**ARCH-12** · MAY · A project may define a domain-specific language only when an app needs one, with a versioned grammar.\
 *Why:* A versioned grammar lets files written today parse under a later release (DATA-02). · *Checked in review.*
 
-**A11Y-09** · MAY · Apps offer a Vim-like modal keyboard mode for power users.\
+**A11Y-09** · MAY · Apps may offer a Vim-like modal keyboard mode for power users.\
 *Why:* Modal editing lets keyboard-centric users work without reaching for the pointer. · *Checked in review.*
 
-**QA-12** · MAY · Small security- or data-critical pure functions (CRDT merge invariants, FSRS arithmetic, parser bounds) carry Kani proofs run in CI.\
+**QA-12** · MAY · Small security- or data-critical pure functions, such as CRDT merge invariants, scheduler arithmetic or parser bounds, may carry Kani proofs run in CI.\
 *Why:* Kani proves a bound for every input where tests sample a few. · *Enforced by CI.*
 
-**GOV-20** · MAY · A public goals board lists approved, postponed and declined initiatives, each with completion criteria and a named owner. Once the community is large enough, contributors may rank suite-wide goals every two years.\
+**GOV-20** · MAY · The project may keep a public goals board listing approved, postponed and declined initiatives, each with completion criteria and a named owner. Once the community is large enough, contributors may rank suite-wide goals every two years.\
 *Why:* A public board shows what was declined, not only what was done. · *Checked in review.*
 
 
 ## Terms used here
 
 - **ADR:** an architecture decision record in `docs/adr/` (DOC-04).
+- **Asset register:** the list of the organization's assets, such as domains, trademarks, signing keys, registry names, store and developer accounts, the forge organization and hosted services, with each one's holders or recovery path (LIFE-02).
+- **Data manifest:** the machine-readable list of every endpoint and data flow that each app keeps (PRIV-07).
 - **The forge:** the service hosting the repositories, their pull requests and CI. GitHub today; the rules don't depend on it.
 - **Hosted service:** any server the organization runs that holds other people's personal information.
 - **Maintainer:** a person named in GOVERNANCE.md with merge rights on a project.
@@ -212,4 +214,4 @@ These MAY rules are yours to take or leave.
 - **The suite:** every app and shared crate the organization publishes.
 - **The template:** the project template every repository starts from, which carries this document, the CI workflows, the checklists and the lint configuration.
 - **Tier 1:** a platform tested in CI that blocks releases (PLAT-01).
-- **User content:** anything the user creates or imports: notes, cards, files, settings and the metadata around them.
+- **User content:** anything the user creates or imports, such as notes, cards, recordings, files and settings, and the metadata around them.

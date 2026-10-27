@@ -7,7 +7,7 @@
 [[rule]]
 id = "AIF-01"
 level = "MUST"
-statement = "AI features are optional, off by default and run on the device by default. Models are downloaded only at the user's request, from a named source with checksum and license shown, and are declared in the PRIV-07 manifest. Only models whose license and training-data provenance are documented and compatible are used."
+statement = "AI features are optional, off by default and run on the device by default. Models are downloaded only at the user's request, from a named source with checksum and license shown, and are declared in the data manifest. Only models whose license and training-data provenance are documented and compatible are used."
 rationale = "A model download is a network flow and a license; both need consent and a record."
 verification = "Review checklist: manifest entry; CI: default settings test"
 check = "Review"
@@ -16,19 +16,21 @@ who = "you"
 moments = ["ai-feature"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; glossary term replaces a rule ID."]
 
 [[rule]]
 id = "AIF-02"
 level = "MUST"
 statement = "Sending user content to a remote model needs a per-feature opt-in that names the provider and what is sent. Users choose the provider, including a local runtime or their own endpoint, and nothing goes to a default third party."
-rationale = "Users must know who reads their notes before anyone does."
-verification = "Review checklist: consent screen reviewed; PRIV-07 manifest"
+rationale = "Users must know who reads their content before anyone does."
+verification = "Review checklist: consent screen reviewed; data manifest entry"
 check = "Review"
 trigger = "always"
 who = "you"
 moments = ["ai-feature"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: rationale and verification rewritten; wording no longer names one app, and glossary term replaces a rule ID."]
 
 [[rule]]
 id = "AIF-03"
@@ -58,11 +60,12 @@ status = "active"
 [[rule]]
 id = "AIF-05"
 level = "SHOULD"
-statement = "AI output is labeled as AI-generated and never changes user content without explicit acceptance; generated cards, for example, enter a review queue."
-rationale = "In a learning app, a wrong card silently accepted harms retention."
+statement = "AI output is labeled as AI-generated and never changes user content without explicit acceptance: generated content, such as cards, waits for the user to accept it."
+rationale = "AI output accepted silently becomes the user's own content, errors included, as when a wrong card gets memorized."
 verification = "Review checklist: acceptance step for generated content"
 check = "Review"
 trigger = "ai-feature"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and rationale rewritten; wording no longer names one app."]

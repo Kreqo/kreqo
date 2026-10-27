@@ -105,19 +105,20 @@ status = "active"
 [[rule]]
 id = "DATA-09"
 level = "SHOULD"
-statement = "Apps import data from the leading alternatives; for the learning app, Anki decks and Obsidian vaults."
+statement = "Apps import data from the leading alternatives in their category, and each app's README names those alternatives."
 rationale = "Users switch only when their existing data comes with them."
-verification = "Release checklist: import test log against sample decks and vaults"
+verification = "Release checklist: import test log against sample data from each named alternative"
 check = "Release"
 trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and verification rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "DATA-10"
 level = "MUST"
-statement = "Sync is end-to-end encrypted with keys held only on user devices, and metadata such as file and deck names is in scope. Transport is always TLS, including on self-hosted servers. Operators never hold decryption keys and keep server metadata minimal and short-lived."
+statement = "Sync is end-to-end encrypted with keys held only on user devices, and metadata such as file names and titles is in scope. Transport is always TLS, including on self-hosted servers. Operators never hold decryption keys and keep server metadata minimal and short-lived."
 rationale = "A server that cannot read the data cannot leak it or be compelled to disclose it."
 verification = "Review checklist: key material never leaves the device; TLS enforced; server metadata schema reviewed"
 check = "Review"
@@ -125,11 +126,12 @@ trigger = "sync"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "DATA-11"
 level = "MUST"
-statement = "User content and learning history (notes, cards, review logs, scheduler parameters) live in documented open files that other tools can read. Any database or index is a cache that can be rebuilt from those files."
+statement = "User content, and the records an app keeps of the user's work and the parameters it fits to them, such as review logs and scheduler parameters, live in documented open files that other tools can read. Any database or index is a cache that can be rebuilt from those files."
 rationale = "Files other tools can read outlive the app; a database only the app reads does not."
 verification = "Review checklist: every data type has a file representation; rebuild-from-files test present"
 check = "Review"
@@ -138,6 +140,7 @@ who = "you"
 moments = ["format"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "DATA-12"
@@ -202,14 +205,15 @@ status = "active"
 [[rule]]
 id = "DATA-17"
 level = "MUST"
-statement = "Changing a default never changes the behavior of existing user data or settings. New defaults apply to new vaults and profiles, or ship with a migration (DATA-02) and a release-note entry."
+statement = "Changing a default never changes the behavior of existing user data or settings. New defaults apply only to new collections, such as vaults, and new profiles, or ship with a migration (DATA-02) and a release-note entry."
 rationale = "A silently changed default is a behavior change the user never chose."
-verification = "Review checklist: default changes marked new-profile-only or paired with a migration and release note"
+verification = "Review checklist: default changes apply only to new collections and new profiles, or come with a migration and release note"
 check = "Review"
 trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and verification rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "DATA-18"

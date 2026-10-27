@@ -118,7 +118,7 @@ status = "active"
 [[rule]]
 id = "I18N-10"
 level = "MUST"
-statement = "Product, app and glossary terms are Fluent terms, never literal text inside messages. \"Kreqo\" is never translated, and an app's plain word is translated only as BRAND-02 allows; a transliteration may be added. The glossary (UX-06) is mirrored to Weblate's glossary with terminology flags, and its consistency check is on."
+statement = "Product, app and glossary terms are Fluent terms, never literal text inside messages, and product and app names are translated only as BRAND-02 allows. The glossary (UX-06) is mirrored to Weblate's glossary with terminology flags, and its consistency check is on."
 rationale = "A term defined once stays consistent in every message and language, and Weblate flags deviations."
 verification = "CI: Fluent term lint; Weblate consistency check"
 check = "CI"
@@ -126,18 +126,20 @@ trigger = "first-release"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; restated requirement removed."]
 
 [[rule]]
 id = "I18N-11"
 level = "SHOULD"
-statement = "Sentences are never built from fragments or across several controls. Layouts tolerate text 50% longer than English, and the pseudo-localized build (I18N-03) expands strings to match. Access keys are translated together with their labels."
+statement = "Sentences are never built from fragments or across several controls. Layouts tolerate text 50% longer than English. Access keys are translated together with their labels."
 rationale = "Word order differs between languages, and translations run longer than English."
-verification = "CI: pseudo-locale expansion at 50%; Review checklist: no concatenated strings"
+verification = "CI: no clipped text in the pseudo-locale screenshots at 50% expansion; Review checklist: no concatenated strings"
 check = "CI"
 trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and verification rewritten; restated requirement removed."]
 
 [[rule]]
 id = "I18N-12"

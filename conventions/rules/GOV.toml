@@ -21,7 +21,7 @@ history = ["2026-10-23 solo-first edit: waits for the trigger 'open-to-contribut
 [[rule]]
 id = "GOV-02"
 level = "MUST"
-statement = "The author of a change owns its intent, specification, tests and consequences, and can explain what it does and why, whether or not AI wrote the code; for an agent's change, the author is the person who directed it. Every change passes CI and review (CI-03). While there is one maintainer, changes to risk-tier paths get a line-level AI review and the founder's sign-off on intent; other changes get the AI review plus the automated gates. Each project lists its risk-tier paths in a machine-readable risk file that the review tooling enforces."
+statement = "The author of a change owns its intent, specification, tests and consequences, and can explain what it does and why, whether or not AI wrote the code; for an agent's change, the author is the person who directed it. While there is one maintainer, changes to risk-tier paths get a line-level AI review and other changes the AI review, on top of the automated gates every change passes (CI-02). Each project lists its risk-tier paths in a machine-readable risk file that the review tooling enforces."
 rationale = "Reading every line of AI-written code doesn't scale; owning intent and gating risk does."
 verification = "Review checklist: author statement of intent; risk file enforced through the sign-off label (CI-03)"
 check = "Review"
@@ -30,11 +30,11 @@ who = "you"
 moments = ["risky-change"]
 added = "0.1.0"
 status = "active"
-history = ["2026-10-23 solo-first edit: statement rewritten; verification rewritten; its original version returns at the trigger 'second-maintainer'."]
+history = ["2026-10-23 solo-first edit: statement rewritten; verification rewritten; its original version returns at the trigger 'second-maintainer'.", "2026-10-26 second rule batch: statement and later version's statement rewritten; restated text removed, and the sign-off on intent moved to CI-03."]
 
 [[rule.later]]
 trigger = "second-maintainer"
-statement = "The author of a change owns its intent, specification, tests and consequences, and can explain what it does and why, whether or not AI wrote the code. Every change passes CI and human review. Changes to risk-tier paths (`unsafe`, cryptography, data formats and migrations, sync, security-sensitive code, the plugin boundary, the public API of shared crates) get line-level human review; other changes get intent-level review plus the automated gates. Each project lists its risk-tier paths in a machine-readable risk file that the review tooling enforces; once CI-15 applies, that file is CODEOWNERS."
+statement = "The author of a change owns its intent, specification, tests and consequences, and can explain what it does and why, whether or not AI wrote the code. Changes to risk-tier paths get line-level human review and other changes intent-level review, on top of the automated gates every change passes (CI-02). Each project lists its risk-tier paths in a machine-readable risk file that the review tooling enforces; once CI-15 applies, that file is CODEOWNERS."
 rationale = "Reading every line of AI-written code doesn't scale; owning intent and gating risk does."
 verification = "Review checklist: author statement of intent; risk file enforced by required reviewers"
 check = "Review"
@@ -42,7 +42,7 @@ check = "Review"
 [[rule]]
 id = "GOV-03"
 level = "MUST"
-statement = "AI assistance is disclosed. Every commit in which AI produced anything beyond single-line completion carries the `Co-Authored-By:` trailer naming the model, as emitted by the tooling, and the squash commit keeps every such trailer from the branch (CI-13). The pull request says how AI was used, what it produced, what the human verified, and the human creative input (design, selection, editing). Disclosure covers code, docs, RFCs, ADRs, issues and review comments."
+statement = "AI assistance is disclosed. Every commit in which AI produced anything beyond single-line completion carries the `Co-Authored-By:` trailer naming the model, as emitted by the tooling, and the squash commit keeps every such trailer from the branch. The pull request says how AI was used, what it produced, what the human verified, and the human creative input (design, selection, editing). Disclosure covers code, docs, RFCs, ADRs, issues and review comments."
 rationale = "Disclosure tells reviewers where to look and records human authorship for the copyright record."
 verification = "CI: squash commit carries the branch's trailers; Review checklist: disclosure block present"
 check = "Review"
@@ -50,6 +50,7 @@ trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; glossary term replaces a rule ID."]
 
 [[rule]]
 id = "GOV-04"
@@ -107,7 +108,7 @@ status = "active"
 [[rule]]
 id = "GOV-08"
 level = "MUST"
-statement = "Contributions are accepted under the unmodified Developer Certificate of Origin 1.1, without a CLA. The human author signs off once, in the pull request, and the sign-off lands in the squash commit (CI-13); an agent never adds a sign-off. Sign-offs use a known identity: a name the contributor is publicly known by, used consistently, with a working email. Anonymous contributions are not accepted. People with release, signing, publishing or escrow access (LIFE-02) are personally known to the founder or another maintainer."
+statement = "Contributions are accepted under the unmodified Developer Certificate of Origin 1.1, without a CLA. The human author signs off once, in the pull request, and the sign-off lands in the squash commit; an agent never adds a sign-off. Sign-offs use a known identity: a name the contributor is publicly known by, used consistently, with a working email. Anonymous contributions are not accepted. People with release, signing, publishing or escrow access (LIFE-02) are personally known to the founder or another maintainer."
 rationale = "The DCO needs a reachable, consistent identity; a legal name can't be verified without collecting ID."
 verification = "CI: sign-off check on the squash commit"
 check = "CI"
@@ -115,7 +116,7 @@ trigger = "open-to-contributions"
 who = "tool"
 added = "0.1.0"
 status = "active"
-history = ["2026-10-23 solo-first edit: waits for the trigger 'open-to-contributions' (was 'always')."]
+history = ["2026-10-23 solo-first edit: waits for the trigger 'open-to-contributions' (was 'always').", "2026-10-26 second rule batch: statement rewritten; glossary term replaces a rule ID."]
 
 [[rule]]
 id = "GOV-09"
@@ -175,7 +176,7 @@ history = ["2026-10-23 solo-first edit: waits for the trigger 'open-to-contribut
 [[rule]]
 id = "GOV-13"
 level = "MUST"
-statement = "Issue templates per type, with blank issues disabled. Bug reports give version, platform, steps, expected and actual results, and a minimal sample vault or deck, one problem per report; feature ideas go to discussion or RFC. Triage uses documented statuses, severities and labels (area, kind, difficulty, impact, AI-assisted; `unsafe` changes get a qualified reviewer), ranks data loss and crashes highest, and keeps a list of reports that aren't bugs, each with a canned answer. Reports waiting on the reporter close after 14 days of silence. New issues get a first response within a documented time. Details: CONTRIBUTING.md."
+statement = "Issue templates per type, with blank issues disabled. Bug reports give version, platform, steps, expected and actual results, and the smallest sample data that reproduces the problem, one problem per report; feature ideas go to discussion or RFC. Triage uses documented statuses, severities and labels (area, kind, difficulty, impact, AI-assisted; `unsafe` changes get a qualified reviewer), ranks data loss and crashes highest, and keeps a list of reports that aren't bugs, each with a canned answer. Reports waiting on the reporter close after 14 days of silence. New issues get a first response within a documented time. Details: CONTRIBUTING.md."
 rationale = "Structured reports and canned answers are what let one maintainer triage at all."
 verification = "CI: issue templates present; Periodic audit of triage statuses"
 check = "Review"
@@ -183,6 +184,7 @@ trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "GOV-14"
@@ -196,11 +198,11 @@ who = "you"
 moments = ["speaking"]
 added = "0.1.0"
 status = "active"
-history = ["2026-10-23 solo-first edit: statement rewritten; rationale rewritten; verification rewritten; its original version returns at the trigger 'open-to-contributions'."]
+history = ["2026-10-23 solo-first edit: statement rewritten; rationale rewritten; verification rewritten; its original version returns at the trigger 'open-to-contributions'.", "2026-10-26 second rule batch: later version's statement rewritten; glossary term replaces a rule ID."]
 
 [[rule.later]]
 trigger = "open-to-contributions"
-statement = "Text written for people (issues, PR titles and descriptions, reviews, RFCs, chat) is written by its human author. AI may translate or proofread, with disclosure, and quoted tool output is marked as such. Unedited AI output is never posted to a person. User documentation drafted with AI ships only after human revision, with disclosure (GOV-03). Branch commit messages are outside this rule, because the squash commit that lands carries the human-written PR title and description (CI-13)."
+statement = "Text written for people (issues, PR titles and descriptions, reviews, RFCs, chat) is written by its human author. AI may translate or proofread, with disclosure, and quoted tool output is marked as such. Unedited AI output is never posted to a person. User documentation drafted with AI ships only after human revision, with disclosure (GOV-03). Branch commit messages are outside this rule, because the squash commit that lands carries the human-written PR title and description."
 rationale = "People want to talk to people; every peer studied restricts AI-written text to humans."
 verification = "Review checklist: human-written title, description and replies; documentation disclosure"
 check = "Review"
@@ -274,7 +276,7 @@ history = ["2026-10-23 solo-first edit: waits for the trigger 'open-to-contribut
 [[rule]]
 id = "GOV-20"
 level = "MAY"
-statement = "A public goals board lists approved, postponed and declined initiatives, each with completion criteria and a named owner. Once the community is large enough, contributors may rank suite-wide goals every two years."
+statement = "The project may keep a public goals board listing approved, postponed and declined initiatives, each with completion criteria and a named owner. Once the community is large enough, contributors may rank suite-wide goals every two years."
 rationale = "A public board shows what was declined, not only what was done."
 verification = "Review checklist"
 check = "Review"
@@ -283,6 +285,7 @@ who = "you"
 moments = ["feature"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; its option says \"may\"."]
 
 [[rule]]
 id = "GOV-21"
@@ -300,8 +303,8 @@ history = ["2026-10-23 solo-first edit: waits for the trigger 'open-to-contribut
 
 [[rule]]
 id = "GOV-22"
-level = "MUST NOT"
-statement = "The organization ships model-generated logos, brand assets, illustrations, animation, music, sound design, voices or demo content. This rule covers what the organization ships, not what users generate in the apps (AIF)."
+level = "MUST"
+statement = "The organization never ships model-generated logos, brand assets, illustrations, animation, music, sound design, voices or demo content. This rule covers what the organization ships, not what users generate in the apps (AIF)."
 rationale = "Art is valued as human expression, and the models were trained on artists' work without their consent."
 verification = "Review checklist: media provenance declared in REUSE metadata"
 check = "Review"
@@ -310,11 +313,12 @@ who = "you"
 moments = ["media"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: level and statement rewritten; negative level replaced."]
 
 [[rule]]
 id = "GOV-23"
 level = "MAY"
-statement = "Once the organization exists, contributor-members, non-code contributors included, elect a leadership body of 3–7 people; votes on a public list close after 7 days, and members who miss three consecutive votes are removed. Details: statutes."
+statement = "Once the organization exists, contributor-members, non-code contributors included, may elect a leadership body of 3–7 people; votes on a public list close after 7 days, and members who miss three consecutive votes are removed. Details: statutes."
 rationale = "An elected body gives contributors a say once there is an organization to run."
 verification = "Review checklist"
 check = "Review"
@@ -323,6 +327,7 @@ who = "you"
 moments = ["contributors"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; its option says \"may\"."]
 
 [[rule]]
 id = "GOV-24"
@@ -339,8 +344,8 @@ status = "active"
 
 [[rule]]
 id = "GOV-25"
-level = "SHOULD NOT"
-statement = "The organization ships model-generated functional media, such as UI icons or placeholder images. Any that ships is revised by a human, disclosed per file in REUSE metadata and license-checked."
+level = "SHOULD"
+statement = "The organization doesn't ship model-generated functional media, such as UI icons or placeholder images. Any that ships is revised by a human, disclosed per file in REUSE metadata and license-checked."
 rationale = "Functional media expresses less, but its training data raises the same consent and license questions."
 verification = "Review checklist: provenance, disclosure and license check per file"
 check = "Review"
@@ -348,6 +353,7 @@ trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: level and statement rewritten; negative level replaced."]
 
 [[rule]]
 id = "GOV-26"

@@ -47,7 +47,7 @@ status = "active"
 [[rule]]
 id = "LEGAL-04"
 level = "MUST"
-statement = "The trademark policy lists uses allowed without asking (*made with Kreqo*, plugins and decks *for Kreqo*, tutorials, non-profit events), offers a community badge, reserves the logo, and defines an extension namespace such as `kreqo-ext-`. Third-party product names never begin with Kreqo, forks rebrand, the plugin directory refuses listings that misuse the marks, and the marks pass to the next maintainers if the project is abandoned."
+statement = "The trademark policy lists uses allowed without asking (*made with Kreqo*, plugins and content *for Kreqo*, tutorials, non-profit events), offers a community badge, reserves the logo, and defines an extension namespace such as `kreqo-ext-`. Third-party product names never begin with Kreqo, forks rebrand, the plugin directory refuses listings that misuse the marks, and the marks pass to the next maintainers if the project is abandoned."
 rationale = "Listed permitted uses stop the community asking for every badge or tutorial."
 verification = "Release checklist: trademark policy published"
 check = "Release"
@@ -56,31 +56,34 @@ who = "you"
 moments = ["legal"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "LEGAL-05"
 level = "MUST"
 statement = "Personal data handling complies with Quebec's Act respecting the protection of personal information in the private sector as modernized by Law 25, with PIPEDA (or its successor once in force) for interprovincial and international flows and the GDPR for EU users. Hosted services offered to people in the EU designate an EU representative (GDPR Art. 27) before launch, unless an ADR documents why the exemption applies."
 rationale = "Law 25 reaches any enterprise handling Quebec residents' data; a sync service is not occasional processing under the GDPR."
-verification = "Release checklist: privacy notice names the laws; EU representative recorded before hosted service"
+verification = "Release checklist: privacy notice names the laws; EU representative recorded before a hosted service launches"
 check = "Release"
 trigger = "first-release"
 who = "you"
 moments = ["legal"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: verification rewritten; old phase name replaced."]
 
 [[rule]]
 id = "LEGAL-06"
 level = "MUST"
 statement = "Products offered in the EU meet the European Accessibility Act through A11Y-04. The Act binds only listed products and consumer services, such as e-commerce by enterprises above microenterprise size; A11Y-04 applies everywhere regardless."
-rationale = "One EN 301 549 test pass serves the EU and Canada, which adopted it unchanged."
+rationale = "The European Accessibility Act relies on EN 301 549, which A11Y-04 already audits against."
 verification = "Release checklist: A11Y-04 audit"
 check = "Release"
 trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: rationale rewritten; the claim that one test pass serves the EU and Canada is gone."]
 
 [[rule]]
 id = "LEGAL-07"
@@ -111,8 +114,8 @@ history = ["2026-10-24 open question closed: CC BY 4.0, which an ADR will record
 
 [[rule]]
 id = "LEGAL-09"
-level = "MUST NOT"
-statement = "An AI system is named as author or co-author in copyright notices, AUTHORS files or copyright registrations. Commit trailers (GOV-03) are not author fields."
+level = "MUST"
+statement = "No AI system is named as author or co-author in copyright notices, AUTHORS files or copyright registrations. Commit trailers (GOV-03) are not author fields."
 rationale = "Whether an AI can be an author is before Canadian courts; a notice naming one invites the dispute."
 verification = "Review checklist: no AI in notices or AUTHORS"
 check = "Review"
@@ -120,6 +123,7 @@ trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: level and statement rewritten; negative level replaced."]
 
 [[rule]]
 id = "LEGAL-10"
@@ -137,14 +141,15 @@ status = "active"
 [[rule]]
 id = "LEGAL-11"
 level = "MUST"
-statement = "Code copied from elsewhere, including AI output that reproduces it, keeps its license and attribution and is compatible with the target artifact; Anki is AGPL-3.0-or-later, so its code never enters permissive crates. Contributors never copy from, or consult, source-available or proprietary implementations of formats the suite imports; interoperability is built from public specifications and sample files."
-rationale = "A copied snippet carries its license into the crate, and a tainted import breaks clean-room interoperability."
+statement = "Code copied from elsewhere, including AI output that reproduces it, keeps its license and attribution and is compatible with the target artifact. Contributors never copy from, or consult, source-available or proprietary implementations of formats the suite imports; interoperability is built from public specifications and sample files."
+rationale = "A copied snippet carries its license into the crate, as Anki's AGPL-3.0-or-later code would into a permissive one ([its license](https://github.com/ankitects/anki/blob/main/LICENSE), as of 2026-10-16), and a tainted import breaks clean-room interoperability."
 verification = "Review checklist: provenance of new code (GOV-17)"
 check = "Review"
 trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and rationale rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "LEGAL-12"
@@ -162,7 +167,7 @@ status = "active"
 [[rule]]
 id = "LEGAL-13"
 level = "MUST"
-statement = "The license FAQ states that user content (notes, decks, recordings) belongs to the user and is not covered by the app license."
+statement = "The license FAQ states that user content belongs to the user and is not covered by the app license."
 rationale = "Users read a copyleft app license as reaching their own files unless told otherwise."
 verification = "Release checklist: license FAQ published"
 check = "Release"
@@ -170,6 +175,7 @@ trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "LEGAL-14"

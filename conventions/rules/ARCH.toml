@@ -142,7 +142,7 @@ status = "active"
 [[rule]]
 id = "ARCH-12"
 level = "MAY"
-statement = "A project defines a domain-specific language only when an app needs one, with a versioned grammar."
+statement = "A project may define a domain-specific language only when an app needs one, with a versioned grammar."
 rationale = "A versioned grammar lets files written today parse under a later release (DATA-02)."
 verification = "Review checklist: grammar versioned and documented"
 check = "Review"
@@ -150,6 +150,7 @@ trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; its option says \"may\"."]
 
 [[rule]]
 id = "ARCH-13"

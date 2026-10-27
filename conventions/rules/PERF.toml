@@ -57,14 +57,15 @@ status = "active"
 [[rule]]
 id = "PERF-05"
 level = "SHOULD"
-statement = "Apps stay responsive with 100,000 items (notes, cards, files), verified by a scale test."
+statement = "Apps stay responsive with the amount of user content their README names, verified by a scale test."
 rationale = "Collections grow for years, and a scale test finds linear-time paths early."
-verification = "CI: scale test at 100,000 items"
+verification = "CI: scale test at the amount the README names"
 check = "CI"
 trigger = "first-release"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and verification rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "PERF-06"

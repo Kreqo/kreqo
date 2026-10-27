@@ -11,7 +11,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 | Before the first Android release | `android_release` | 2 | 1 | 0 |
 | Before the first App Store release | `app_store_release` | 1 | 1 | 0 |
 | Before opening to outside contributions | `open_to_contributions` | 13 | 12 | 1 |
-| Before a second maintainer joins | `maintainers >= 2` | 1 | 0 | 3 |
+| Once a second maintainer joins | `maintainers >= 2` | 1 | 0 | 3 |
 | Before 1.0 | `preparing_1_0` | 15 | 2 | 0 |
 | Before the plugin boundary is designed (EXT-04) | `plugin_design` | 1 | 1 | 0 |
 | Before sync ships | `sync` | 1 | 0 | 0 |
@@ -58,8 +58,8 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 **PLAT-09** · MUST · Windows and macOS builds are code-signed, macOS builds are notarized, and CI verifies both.\
 *Why:* The Microsoft Store requires signing, and Gatekeeper blocks unnotarized macOS binaries. · *Enforced by CI.*
 
-**PLAT-18** · MUST · Minimum OS versions per platform follow a written policy (for example, supported while the vendor supports them), rise only at the start of a release cycle, and meet each store's current target (Play requires API 36 for updates since 31 August 2026).\
-*Why:* Stores refuse updates below their target level, and a mid-cycle rise strands users without notice. · *Checked in review.*
+**PLAT-18** · MUST · Minimum OS versions per platform follow a written policy (for example, supported while the vendor supports them) and rise only at the start of a release cycle. Builds target the API or SDK level each store currently requires.\
+*Why:* Stores refuse updates built for an older target level, and a mid-cycle rise in minimums strands users without notice. As of 2026-10-16, [Google Play](https://developer.android.com/google/play/requirements/target-sdk) requires updates to target API 36, apart from some device types such as Wear OS. · *Checked in review.*
 
 **DOC-14** · SHOULD · A public roadmap states current priorities per area and what the project will and will not do over the next year, without promised feature dates.\
 *Why:* Priorities without dates tell contributors where help lands and avoid deadlines that slip. · *Checked in review.*
@@ -73,7 +73,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 **REL-13** · MUST · Every release has curated, plain-language notes for users, shipped in the AppStream release entry and kept separate from the generated changelog (REL-03), which is an input, never the notes. They cover what changed and the upgrade impact; a compatibility section (breaking changes, migrations, dropped platforms); every fixed vulnerability with its advisory or CVE ID; and any change to data collection or contacted servers. A cumulative compatibility page is kept.\
 *Why:* Users decide whether to upgrade from the notes; a commit list doesn't tell them. · *Checked before each release.*
 
-**LEGAL-04** · MUST · The trademark policy lists uses allowed without asking (*made with Kreqo*, plugins and decks *for Kreqo*, tutorials, non-profit events), offers a community badge, reserves the logo, and defines an extension namespace such as `kreqo-ext-`. Third-party product names never begin with Kreqo, forks rebrand, the plugin directory refuses listings that misuse the marks, and the marks pass to the next maintainers if the project is abandoned.\
+**LEGAL-04** · MUST · The trademark policy lists uses allowed without asking (*made with Kreqo*, plugins and content *for Kreqo*, tutorials, non-profit events), offers a community badge, reserves the logo, and defines an extension namespace such as `kreqo-ext-`. Third-party product names never begin with Kreqo, forks rebrand, the plugin directory refuses listings that misuse the marks, and the marks pass to the next maintainers if the project is abandoned.\
 *Why:* Listed permitted uses stop the community asking for every badge or tutorial. · *Checked before each release.*
 
 **LEGAL-05** · MUST · Personal data handling complies with Quebec's Act respecting the protection of personal information in the private sector as modernized by Law 25, with PIPEDA (or its successor once in force) for interprovincial and international flows and the GDPR for EU users. Hosted services offered to people in the EU designate an EU representative (GDPR Art. 27) before launch, unless an ADR documents why the exemption applies.\
@@ -99,7 +99,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 - **DATA-06** · MUST · No feature depends on the organization's servers to keep working; sync servers are self-hostable. *(AI review)*
 - **DATA-07** · MUST · Users can export all their data in a documented, open format at any time. *(tooling)*
 - **DATA-08** · MUST · Autosave is on by default. *(AI review)*
-- **DATA-09** · SHOULD · Apps import data from the leading alternatives; for the learning app, Anki decks and Obsidian vaults. *(AI review)*
+- **DATA-09** · SHOULD · Apps import data from the leading alternatives in their category, and each app's README names those alternatives. *(AI review)*
 - **DATA-12** · MUST · Adjacent releases (N and N−1) interoperate over sync and plugin APIs. *(tooling)*
 - **DATA-13** · MUST · The sync protocol is versioned. *(tooling)*
 - **DATA-14** · MUST · Derived data (search indexes, embeddings, thumbnails, caches) gets its source's protection: encrypted where the source is, deleted with it, kept out of logs, and never synced unencrypted. *(AI review)*
@@ -110,16 +110,16 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 - **SEC-08** · SHOULD · New dependencies are audited or covered by trusted audits (cargo-vet); fewer, well-maintained crates are preferred. *(tooling)*
 - **SEC-09** · SHOULD · Builds are reproducible: the same source and toolchain yield bit-identical artifacts. *(tooling)*
 - **SEC-13** · MUST · A written vulnerability response process follows the OpenSSF runbook: intake, triage, private fix on a private branch or mirror that runs CI, release, advisory, disclosure. *(AI review)*
-- **SEC-14** · MUST · Every fixed vulnerability gets four things: a RustSec advisory for affected published crates, filed after the fix is public (RustSec handles no embargoes); an advisory page on kreqo.org with OSV JSON; a CVE ID for medium or higher severity, requested from MITRE; and an entry in the release notes (REL-13). *(AI review)*
+- **SEC-14** · MUST · Every fixed vulnerability gets four things: a RustSec advisory for affected published crates, filed after the fix is public; an advisory page on kreqo.org with OSV JSON; a CVE ID for medium or higher severity, requested from MITRE; and an entry in the release notes (REL-13). *(AI review)*
 - **SEC-15** · MUST · An incident playbook covers a compromised maintainer account, a leaked signing key or token, a compromised forge or runner, a malicious dependency and a malicious release. *(AI review)*
 - **SEC-17** · MUST · CI secrets live only in the forge's secret store or an external KMS, scoped per environment and job, unavailable to pull-request workflows, and rotated on a schedule and whenever a maintainer leaves. *(AI review)*
 - **SEC-18** · MUST · Each app has a security assessment and threat model: attack surface, trust boundaries, mitigations, and why common weaknesses are countered. *(AI review)*
-- **SEC-19** · MUST · Crates with `unsafe` or FFI run their tests and fuzz targets under AddressSanitizer, under Miri where it can execute, and under `cargo careful`, in scheduled CI on a pinned nightly. *(tooling)*
+- **SEC-19** · MUST · Crates with `unsafe` or FFI run their tests and fuzz targets under AddressSanitizer, under Miri for tests that don't call native code, and under `cargo careful`, in scheduled CI on a pinned nightly. *(tooling)*
 - **SEC-21** · SHOULD · Each project holds an OpenSSF Best Practices badge: Passing by first release, Silver by 1.0. *(AI review)*
 - **SEC-22** · SHOULD · Embargoed pre-notification goes only to downstream packagers who ship the suite (Flathub, nixpkgs, distributions), 1 to 7 days before disclosure. *(AI review)*
 - **SEC-23** · SHOULD · Release binaries keep the toolchain's default hardening, and overflow checks stay on in security-critical crates. *(tooling)*
 - **PRIV-04** · MUST · Crash reports stay local until the user previews and approves what is sent; reporting a bug takes one action. *(AI review)*
-- **PRIV-05** · MUST · The privacy notice is generated from the PRIV-07 manifest, versioned and dated in the repository with a changelog, and published in English and French. *(AI review)*
+- **PRIV-05** · MUST · The privacy notice is generated from the data manifest, versioned and dated in the repository with a changelog, and published in English and French. *(AI review)*
 - **A11Y-04** · MUST · Web content meets [WCAG 2.2](https://www.w3.org/TR/WCAG22/) AA. *(AI review)*
 - **A11Y-06** · MUST · Text follows the system scale up to 200% without losing content or function. *(AI review)*
 - **A11Y-07** · MUST · Apps follow system settings for dark mode, high contrast and reduced motion. *(AI review)*
@@ -132,7 +132,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 - **I18N-07** · SHOULD · Strings carry context comments for translators. *(AI review)*
 - **I18N-08** · MUST · Translations are managed on Weblate (proposed), which commits them back to the repository. *(tooling)*
 - **I18N-09** · MUST · French is a release-blocking locale. *(tooling)*
-- **I18N-10** · MUST · Product, app and glossary terms are Fluent terms, never literal text inside messages. "Kreqo" is never translated, and an app's plain word is translated only as BRAND-02 allows; a transliteration may be added. *(tooling)*
+- **I18N-10** · MUST · Product, app and glossary terms are Fluent terms, never literal text inside messages, and product and app names are translated only as BRAND-02 allows. *(tooling)*
 - **UX-09** · MUST · Behavior follows each platform's conventions: shortcuts (Cmd or Ctrl), text editing, scrolling and window controls (UX-16). *(AI review)*
 - **UX-10** · MUST · On mobile, navigation follows platform idioms: back gestures, swipe-back, safe areas and share sheets. *(AI review)*
 - **UX-11** · MUST · Every app has a command palette that reaches every action and shows each action's current shortcut (UX-16). *(AI review)*
@@ -147,7 +147,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 - **UX-23** · MUST · Every control has a tooltip: its name, a one-to-three-line imperative description that neither restates the name nor states default values, its shortcut, and for a disabled control the reason (A11Y-01). *(AI review)*
 - **UX-26** · SHOULD · Errors a user or developer can hit carry a stable code with a documentation page, linked from the message (UX-07). *(AI review)*
 - **PERF-04** · MUST · Benchmarks run in CI; a regression past the budget, or past 5% by default, fails the build. *(tooling)*
-- **PERF-05** · SHOULD · Apps stay responsive with 100,000 items (notes, cards, files), verified by a scale test. *(tooling)*
+- **PERF-05** · SHOULD · Apps stay responsive with the amount of user content their README names, verified by a scale test. *(tooling)*
 - **PLAT-05** · MUST · Apps integrate with each platform: system file dialogs, notifications, standard data directories, and on Linux the XDG portals and their settings (dark mode, accent, contrast). *(AI review)*
 - **PLAT-06** · MUST · Linux builds ship on Flathub, then nixpkgs, then other distro packages; other platforms use winget, Homebrew, F-Droid and the app stores. *(AI review)*
 - **PLAT-07** · MUST · Flathub submissions disclose AI-generated parts and their extent, compiled from `Co-Authored-By` trailers (GOV-03). *(AI review)*
@@ -155,7 +155,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 - **PLAT-10** · SHOULD · No channel is a single point of failure: every app also has a direct download, and Linux apps ship on at least two package channels. *(AI review)*
 - **PLAT-11** · MUST · Every app ships AppStream MetaInfo and a `.desktop` file that pass `appstreamcli validate`, `flatpak-builder-lint` and `desktop-file-validate` with zero warnings, containing: an SPDX license, developer id, OARS 1.1 rating, homepage, bugtracker and vcs-browser URLs, light and dark brand colors (from the BRAND tokens), captioned screenshots taken at a tag, supported inputs, minimum display size, and a release entry with notes for every release. *(tooling)*
 - **PLAT-13** · MUST · Sandboxes follow least privilege: a portal is used wherever one exists. *(AI review)*
-- **PLAT-14** · MUST · Store listings for every channel are generated from one metadata source per app plus the PRIV-07 manifest. *(tooling)*
+- **PLAT-14** · MUST · Store listings for every channel are generated from one metadata source per app plus the data manifest, and so are privacy labels such as Apple privacy details, Play Data safety and the Microsoft privacy URL. *(tooling)*
 - **PLAT-15** · MUST · Every app qualifies for F-Droid's main repository with no anti-feature labels, and works fully without installing proprietary software beyond the operating system. *(AI review)*
 - **PLAT-19** · MUST · Every release is published at an immutable, versioned HTTPS URL on organization-controlled hosting, with no redirects and with SHA-256 checksums. *(tooling)*
 - **PLAT-20** · MUST · Flatpak runtimes and platform SDKs stay off end-of-life versions. *(AI review)*
@@ -163,7 +163,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 - **PLAT-22** · SHOULD · A release goes live on the website and every channel at the same time with identical binaries, and the release gate verifies that the previous version updates to the new one. *(AI review)*
 - **QA-06** · SHOULD · UIs have end-to-end tests and snapshot tests against visual regressions. *(tooling)*
 - **QA-07** · SHOULD · Coverage is reported on every pull request; core crates stay above 80% line coverage. *(tooling)*
-- **QA-10** · SHOULD · Every release candidate runs against a corpus of real-world inputs (public Markdown vaults, Anki decks, plugins), and every regression is triaged before release. *(AI review)*
+- **QA-10** · SHOULD · Every release candidate runs against a corpus of real-world inputs, such as plugins and public files in the formats the app reads, and every regression is triaged before release. *(AI review)*
 - **QA-11** · SHOULD · Custom synchronization (atomics, lock-free queues, audio-thread handoff, sync-engine concurrency) is tested with loom or shuttle. *(tooling)*
 - **QA-13** · SHOULD · Before each release, the template's pedantic and restriction lint pass runs, and each finding is fixed or carries an `expect` with a reason. *(AI review)*
 - **DOC-05** · MUST · User documentation follows Diátaxis: tutorials, how-to guides, reference and explanation. *(AI review)*
@@ -184,7 +184,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 - **CI-21** · SHOULD · Release tags are signed (SSH or gitsign) and verified in CI before anything is built from them. *(tooling)*
 - **GOV-13** · MUST · Issue templates per type, with blank issues disabled. *(AI review)*
 - **LEGAL-06** · MUST · Products offered in the EU meet the European Accessibility Act through A11Y-04. *(AI review)*
-- **LEGAL-13** · MUST · The license FAQ states that user content (notes, decks, recordings) belongs to the user and is not covered by the app license. *(AI review)*
+- **LEGAL-13** · MUST · The license FAQ states that user content belongs to the user and is not covered by the app license. *(AI review)*
 - **WEB-01** · MUST · Websites are static or server-rendered with semantic HTML, and their content works without JavaScript. *(tooling)*
 - **WEB-02** · MUST · Pages pass automated accessibility checks in CI, on top of the audit in A11Y-04. *(tooling)*
 - **WEB-03** · MUST · Pages have titles, descriptions, Open Graph metadata, a sitemap, and hreflang links for localized pages. *(tooling)*
@@ -195,7 +195,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 - **WEB-08** · MUST · kreqo.org is fully bilingual, English and French on equal terms, including the privacy notice, terms and any purchase flow, with French as the baseline. *(tooling)*
 - **WEB-09** · MUST · Websites, the forge and download hosts use HTTPS only and send hardened security headers (HSTS, CSP, frame-ancestors, nosniff). *(tooling)*
 - **LIFE-04** · MUST · A project with no release, merged change or maintainer reply for 12 months is stalled. *(AI review)*
-- **LIFE-06** · MUST · If an app, a hosted service or the organization winds down, users get public notice (at least one month for app channels, the Flathub minimum; 6 months for hosted services), a final release that can export everything, self-hosting instructions, permanently published source, and an end-of-life flag on every store. *(AI review)*
+- **LIFE-06** · MUST · If an app, a hosted service or the organization winds down, users get public notice (at least one month for app channels; 6 months for hosted services), a final release that can export everything, self-hosting instructions, permanently published source, and an end-of-life flag on every store. *(AI review)*
 
 
 ## Before the first Android release
@@ -204,8 +204,8 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 
 ### Needs you (1)
 
-**PLAT-17** · MUST · An ADR decides the response to Android developer verification (register or not, how F-Droid users install and update, how package names are protected), and is revisited when Google's global rollout starts in 2027.\
-*Why:* Verification decides whether F-Droid users can install the app at all, and package names can be claimed by others. · *Checked in review.*
+**PLAT-17** · MUST · An ADR decides the response to Android developer verification (register or not, how F-Droid users install and update, how package names are protected), and is revisited when Google's global rollout starts.\
+*Why:* Verification decides how F-Droid users can install the app, and package names can be claimed by others. As of 2026-10-26, [Google](https://android-developers.googleblog.com/2026/06/android-developer-verification.html) planned the global rollout for 2027; where verification had started, unregistered apps could still be installed with adb or an advanced flow. · *Checked in review.*
 
 ### Checked for you (1)
 
@@ -270,28 +270,28 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 
 ### Rules that change
 
-**GOV-14** becomes: Text written for people (issues, PR titles and descriptions, reviews, RFCs, chat) is written by its human author. AI may translate or proofread, with disclosure, and quoted tool output is marked as such. Unedited AI output is never posted to a person. User documentation drafted with AI ships only after human revision, with disclosure (GOV-03). Branch commit messages are outside this rule, because the squash commit that lands carries the human-written PR title and description (CI-13).
+**GOV-14** becomes: Text written for people (issues, PR titles and descriptions, reviews, RFCs, chat) is written by its human author. AI may translate or proofread, with disclosure, and quoted tool output is marked as such. Unedited AI output is never posted to a person. User documentation drafted with AI ships only after human revision, with disclosure (GOV-03). Branch commit messages are outside this rule, because the squash commit that lands carries the human-written PR title and description.
 
 ### Reminders
 
 - **LEGAL-01:** Draft the section 7 additional permissions with counsel before the first outside contribution.
 
 
-## Before a second maintainer joins
+## Once a second maintainer joins
 
 *Condition:* `maintainers >= 2`
 
 ### Checked for you (1)
 
-- **CI-15** · MUST · A CODEOWNERS file covers every path, including the risk-tier paths (GOV-02). *(tooling)*
+- **CI-15** · MUST · A CODEOWNERS file covers every path, including the risk-tier paths. *(tooling)*
 
 ### Rules that change
 
-**CI-03** becomes: Every change has a human reviewer other than its author; AI tools never count as reviewers (CI-18). Changes written by an AI agent are reviewed by a maintainer who didn't direct the agent, and risk-tier paths follow CI-15.
+**CI-03** becomes: Every change has a human reviewer other than its author. Changes written by an AI agent are reviewed by a maintainer who didn't direct the agent, and risk-tier paths follow CI-15.
 
 **CI-18** becomes: AI review bots run from a separate, clearly labeled bot account, never count as an approval, and block a PR only when a human endorses their comment.
 
-**GOV-02** becomes: The author of a change owns its intent, specification, tests and consequences, and can explain what it does and why, whether or not AI wrote the code. Every change passes CI and human review. Changes to risk-tier paths (`unsafe`, cryptography, data formats and migrations, sync, security-sensitive code, the plugin boundary, the public API of shared crates) get line-level human review; other changes get intent-level review plus the automated gates. Each project lists its risk-tier paths in a machine-readable risk file that the review tooling enforces; once CI-15 applies, that file is CODEOWNERS.
+**GOV-02** becomes: The author of a change owns its intent, specification, tests and consequences, and can explain what it does and why, whether or not AI wrote the code. Changes to risk-tier paths get line-level human review and other changes intent-level review, on top of the automated gates every change passes (CI-02). Each project lists its risk-tier paths in a machine-readable risk file that the review tooling enforces; once CI-15 applies, that file is CODEOWNERS.
 
 
 ## Before 1.0
@@ -319,7 +319,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 - **QA-08** · SHOULD · Mutation testing (cargo-mutants) runs on a schedule for core crates. *(tooling)*
 - **REL-07** · MUST · Deprecated features live for at least one minor release, with a migration path, before removal. *(AI review)*
 - **REL-08** · SHOULD · Apps ship stable, beta and nightly channels. *(AI review)*
-- **REL-16** · MUST · Breaking changes to formats, the sync protocol and the plugin API are batched into announced major releases, tracked publicly at least one cycle ahead and approved by RFC with a compatibility section, and each ships an automatic migrator. *(AI review)*
+- **REL-16** · MUST · Breaking changes to formats, the sync protocol and the plugin API are batched into announced major releases, tracked publicly at least one cycle ahead and approved by RFC with a compatibility section; those to the sync protocol and the plugin API ship an automatic migrator. *(AI review)*
 - **CI-20** · SHOULD · One account system spans the forge, forum, translation platform and plugin directory. *(AI review)*
 
 
@@ -340,7 +340,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 
 ### Checked for you (1)
 
-- **DATA-10** · MUST · Sync is end-to-end encrypted with keys held only on user devices, and metadata such as file and deck names is in scope. *(AI review)*
+- **DATA-10** · MUST · Sync is end-to-end encrypted with keys held only on user devices, and metadata such as file names and titles is in scope. *(AI review)*
 
 
 ## Before end-to-end encrypted sync is called stable
@@ -359,7 +359,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 
 ### Checked for you (1)
 
-- **EXT-08** · SHOULD · Content the organization hosts for sharing (decks, themes, plugins) declares a license, is original or openly licensed, discloses AI generation and third-party network use, and falls under the code of conduct. *(AI review)*
+- **EXT-08** · SHOULD · Content the organization hosts for sharing, such as decks, presets, themes and plugins, declares a license, is original or openly licensed, discloses AI generation and third-party network use, and falls under the code of conduct. *(AI review)*
 
 
 ## With the first AI feature
@@ -369,7 +369,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 ### Checked for you (2)
 
 - **AIF-04** · MUST · One suite-wide switch blocks all current and future AI features, with their prompts and promotion, and stays set across updates. *(AI review)*
-- **AIF-05** · SHOULD · AI output is labeled as AI-generated and never changes user content without explicit acceptance; generated cards, for example, enter a review queue. *(AI review)*
+- **AIF-05** · SHOULD · AI output is labeled as AI-generated and never changes user content without explicit acceptance: generated content, such as cards, waits for the user to accept it. *(AI review)*
 
 
 ## Before any telemetry
@@ -401,8 +401,8 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 **PRIV-11** · MUST · Personal-information incidents are logged in a register kept at least 24 months. Affected users and regulators (the OPC, the CAI, EU authorities) are notified when the applicable risk threshold is met, and the response plan is published (SEC-15).\
 *Why:* PIPEDA requires a 24-month breach record and notification when a breach poses a real risk of significant harm. · *Checked before each release.*
 
-**PRIV-12** · SHOULD · Hosted services publish how they handle legal requests, and a yearly transparency report as far as the law allows. Both are worded to stay accurate under secrecy duties such as those Bill C-22 would attach to some orders.\
-*Why:* Bill C-22 would impose secrecy on some orders, so a report cannot promise to disclose what it may not. · *Checked before each release.*
+**PRIV-12** · SHOULD · Hosted services publish how they handle legal requests, and a yearly transparency report as far as the law allows. Both are worded to stay accurate under any secrecy duty an order may carry.\
+*Why:* An order can come with a duty of secrecy, so a report cannot promise to disclose what it may not. As of 2026-10-16, [Bill C-22](https://www.parl.ca/legisinfo/en/bill/45-1/c-22), before Parliament, would attach one to some orders. · *Checked before each release.*
 
 ### Checked for you (2)
 
@@ -468,7 +468,7 @@ These 180 rules don't apply yet. Each waits for a trigger: set the matching fact
 
 ### Needs you (1)
 
-**GOV-23** · MAY · Once the organization exists, contributor-members, non-code contributors included, elect a leadership body of 3–7 people; votes on a public list close after 7 days, and members who miss three consecutive votes are removed. Details: statutes.\
+**GOV-23** · MAY · Once the organization exists, contributor-members, non-code contributors included, may elect a leadership body of 3–7 people; votes on a public list close after 7 days, and members who miss three consecutive votes are removed. Details: statutes.\
 *Why:* An elected body gives contributors a say once there is an organization to run. · *Checked in review.*
 
 

@@ -31,7 +31,7 @@ status = "active"
 [[rule]]
 id = "CI-03"
 level = "MUST"
-statement = "Every change is reviewed by a reviewer other than its author before it merges. While there is one maintainer, an independent AI review counts: one run by a session or tool that didn't write the change, attached to the pull request. Changes on the sign-off list also need the founder's sign-off: anything that needs an ADR, risk-tier paths (GOV-02), licensing, user data formats and migrations, releases, and anything published in the project's name. The founder's hand-written changes get the same AI review."
+statement = "Every change is reviewed by a reviewer other than its author before it merges. While there is one maintainer, an independent AI review counts: one run by a session or tool that didn't write the change, attached to the pull request. Changes on the sign-off list also need the founder's sign-off on their intent: anything that needs an ADR, risk-tier paths, licensing, user data formats and migrations, releases, and anything published in the project's name. The founder's hand-written changes get the same AI review."
 rationale = "A second look catches what the author can't see; with one maintainer, an independent AI review is the second look available."
 verification = "CI: an AI review report on every pull request; the founder's sign-off label on sign-off-list changes"
 check = "CI"
@@ -40,11 +40,11 @@ who = "you"
 moments = ["risky-change"]
 added = "0.1.0"
 status = "active"
-history = ["2026-10-23 solo-first edit: statement rewritten; rationale rewritten; verification rewritten; check rewritten; an adapted version of the original, shown below, replaces it at the trigger 'second-maintainer'."]
+history = ["2026-10-23 solo-first edit: statement rewritten; rationale rewritten; verification rewritten; check rewritten; an adapted version of the original, shown below, replaces it at the trigger 'second-maintainer'.", "2026-10-26 second rule batch: statement and later version's statement rewritten; restated text removed, and the founder's sign-off is on intent, moved from GOV-02."]
 
 [[rule.later]]
 trigger = "second-maintainer"
-statement = "Every change has a human reviewer other than its author; AI tools never count as reviewers (CI-18). Changes written by an AI agent are reviewed by a maintainer who didn't direct the agent, and risk-tier paths follow CI-15."
+statement = "Every change has a human reviewer other than its author. Changes written by an AI agent are reviewed by a maintainer who didn't direct the agent, and risk-tier paths follow CI-15."
 rationale = "A second human catches what the author can't see; a bot approval is not that."
 verification = "Settings audit: required review"
 check = "Settings"
@@ -150,7 +150,7 @@ status = "active"
 [[rule]]
 id = "CI-12"
 level = "MUST"
-statement = "Every PR uses the template: problem and linked issue or RFC; solution and alternatives; how it was tested, including platforms tested and not tested; risks and compatibility impact; docs updated or not needed; how AI was used (GOV-03); before/after screenshots for UI changes. The description becomes the squash-commit body, and CI checks that the sections are filled in. Details: CONTRIBUTING.md and the template."
+statement = "Every PR uses the template: problem and linked issue or RFC; solution and alternatives; how it was tested, including platforms tested and not tested; risks and compatibility impact; docs updated or not needed; how AI was used (GOV-03); before/after screenshots for UI changes. CI checks that the sections are filled in. Details: CONTRIBUTING.md and the template."
 rationale = "A reviewer reads the description first; a filled template is the review's input and the commit's record."
 verification = "PR template section check"
 check = "CI"
@@ -158,11 +158,12 @@ trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; restated requirement removed."]
 
 [[rule]]
 id = "CI-13"
 level = "MUST"
-statement = "Each PR covers one topic: refactors and cleanups never mix with behavior changes. PRs are squash-merged only, with the forge's squash message set to the PR title and description (CI-12, REL-03), so branch commits stay scaffolding and every commit on the default branch builds and passes CI."
+statement = "Each PR covers one topic: refactors and cleanups never mix with behavior changes. PRs are squash-merged only, with the forge's squash message set to the PR title as subject and the PR description as body, so branch commits stay scaffolding and every commit on the default branch builds and passes CI."
 rationale = "One commit per PR keeps history readable, bisectable and human-written, whatever wrote the branch commits."
 verification = "Settings audit: squash merge is the only merge method, with the title-and-description message; Review checklist: single topic"
 check = "Settings"
@@ -170,6 +171,7 @@ trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; the squash commit is defined here once."]
 
 [[rule]]
 id = "CI-14"
@@ -186,7 +188,7 @@ status = "active"
 [[rule]]
 id = "CI-15"
 level = "MUST"
-statement = "A CODEOWNERS file covers every path, including the risk-tier paths (GOV-02). Merging needs approval from an owner of each touched area, and approvals scale with risk: one for trivial changes, two qualified reviewers for normal ones, and the area owner or project lead for contested ones, recorded with a PR label. The merger is never the sole approver of their own PR."
+statement = "A CODEOWNERS file covers every path, including the risk-tier paths. Merging needs approval from an owner of each touched area, and approvals scale with risk: one for trivial changes, two qualified reviewers for normal ones, and the area owner or project lead for contested ones, recorded with a PR label. The merger is never the sole approver of their own PR."
 rationale = "Owners know their area's invariants, and the forge enforces their approval only when every path has one."
 verification = "Settings audit: owner approval required; Review checklist: risk label"
 check = "Settings"
@@ -194,6 +196,7 @@ trigger = "second-maintainer"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; glossary term replaces a rule ID."]
 
 [[rule]]
 id = "CI-16"
@@ -222,7 +225,7 @@ status = "active"
 [[rule]]
 id = "CI-18"
 level = "MUST"
-statement = "AI reviews run from a separate, clearly labeled bot identity and name the model that ran them. While there is one maintainer, an independent AI review counts as the review CI-03 requires, and a finding it marks as blocking holds the merge until it is fixed or the founder dismisses it with a reason."
+statement = "AI reviews run from a separate, clearly labeled bot identity and name the model that ran them. While there is one maintainer, a finding the independent AI review (CI-03) marks as blocking holds the merge until it is fixed or the founder dismisses it with a reason."
 rationale = "A labeled bot keeps the record honest about who reviewed what; with one maintainer, its findings are the second opinion."
 verification = "Settings audit: bot identity labeled; CI: blocking findings fixed or dismissed with a reason"
 check = "Settings"
@@ -230,7 +233,7 @@ trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
-history = ["2026-10-23 solo-first edit: statement rewritten; rationale rewritten; verification rewritten; its original version returns at the trigger 'second-maintainer'."]
+history = ["2026-10-23 solo-first edit: statement rewritten; rationale rewritten; verification rewritten; its original version returns at the trigger 'second-maintainer'.", "2026-10-26 second rule batch: statement rewritten; restated requirement removed."]
 
 [[rule.later]]
 trigger = "second-maintainer"

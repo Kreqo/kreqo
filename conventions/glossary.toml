@@ -12,8 +12,16 @@ term = "AI-assisted change"
 definition = "a change in which any code, text or asset was produced or substantially edited by an AI tool."
 
 [[term]]
+term = "Asset register"
+definition = "the list of the organization's assets, such as domains, trademarks, signing keys, registry names, store and developer accounts, the forge organization and hosted services, with each one's holders or recovery path (LIFE-02)."
+
+[[term]]
+term = "Data manifest"
+definition = "the machine-readable list of every endpoint and data flow that each app keeps (PRIV-07)."
+
+[[term]]
 term = "Deviation"
-definition = "a recorded, time-limited departure from a SHOULD or SHOULD NOT (DOC-06)."
+definition = "a recorded, time-limited departure from a SHOULD (DOC-06)."
 
 [[term]]
 term = "The forge"
@@ -68,6 +76,10 @@ term = "Significant change"
 definition = "a new app, a new public interface, a new dependency on a C library, a license change, a change to this document, or anything a maintainer asks to see as an RFC."
 
 [[term]]
+term = "Squash commit"
+definition = "the single commit a pull request lands as on the default branch, with the pull request's title as its subject and its description as its body (CI-13)."
+
+[[term]]
 term = "The suite"
 definition = "every app and shared crate the organization publishes."
 
@@ -81,4 +93,4 @@ definition = "a platform tested in CI that blocks releases (PLAT-01)."
 
 [[term]]
 term = "User content"
-definition = "anything the user creates or imports: notes, cards, files, settings and the metadata around them."
+definition = "anything the user creates or imports, such as notes, cards, recordings, files and settings, and the metadata around them."

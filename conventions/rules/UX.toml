@@ -30,8 +30,8 @@ status = "active"
 
 [[rule]]
 id = "UX-03"
-level = "MUST NOT"
-statement = "Apps ship a toolkit's default theme or a platform-native widget style, or ship on Linux before an ADR has decided client-side versus system window decorations, the Flathub presentation question (BRAND-04 covers icon styles)."
+level = "MUST"
+statement = "Apps never ship a toolkit's default theme or a platform-native widget style, and never ship on Linux before an ADR has decided client-side versus system window decorations, the Flathub presentation question (BRAND-04 covers icon styles)."
 rationale = "The suite's own look is a deliberate departure from GNOME and KDE styling; Flathub promotion depends on the decorations choice."
 verification = "Review checklist: no default theme; decorations ADR linked"
 check = "Review"
@@ -41,6 +41,7 @@ moments = ["new-app"]
 open = { question = "Window decorations on Linux: client-side or system", leaning = "" }
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: level and statement rewritten; negative level replaced."]
 
 [[rule]]
 id = "UX-04"
@@ -57,8 +58,8 @@ status = "active"
 
 [[rule]]
 id = "UX-05"
-level = "MUST NOT"
-statement = "Apps use dark patterns: streaks that punish missed days, fake urgency, nagging or hidden cancelation."
+level = "MUST"
+statement = "Apps never use dark patterns, such as streaks that punish missed days, fake urgency, nagging or hidden cancelation."
 rationale = "Manipulation of attention breaks Principle 4, and Flathub rejects manipulative patterns."
 verification = "Review checklist: no dark patterns"
 check = "Review"
@@ -66,6 +67,7 @@ trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: level and statement rewritten; negative level replaced, and its dark patterns are examples."]
 
 [[rule]]
 id = "UX-06"
@@ -194,7 +196,7 @@ status = "active"
 [[rule]]
 id = "UX-16"
 level = "MUST"
-statement = "Shortcuts come from one suite keymap defined as data and mapped to each platform's standard table. App shortcuts never reuse a standard shortcut for another action and never use a system modifier (Super or Meta; Control on macOS). Every shortcut can be remapped with conflict detection, and the command palette (UX-11) shows each action's current shortcut."
+statement = "Shortcuts come from one suite keymap defined as data and mapped to each platform's standard table. App shortcuts never reuse a standard shortcut for another action and never use a system modifier (Super or Meta; Control on macOS). Every shortcut can be remapped with conflict detection."
 rationale = "A keymap as data can be checked for conflicts and mapped per platform by tooling."
 verification = "CI: keymap conflict and reserved-shortcut check"
 check = "CI"
@@ -202,11 +204,12 @@ trigger = "first-release"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; restated requirement removed."]
 
 [[rule]]
 id = "UX-17"
 level = "MUST"
-statement = "Apps notify only about events the user asked to hear about, or that need action while the app is in the background; never for promotion, re-engagement or streak pressure. Every notification type can be turned off in the app, stale notifications are withdrawn, and no information appears only in a notification. Review reminders are opt-in and scheduled by the user. Details: interface guidelines."
+statement = "Apps notify only about events the user asked to hear about, or that need action while the app is in the background; never for promotion, re-engagement or streak pressure. Every notification type can be turned off in the app, stale notifications are withdrawn, and no information appears only in a notification. Reminders, such as review reminders, are opt-in and scheduled by the user. Details: interface guidelines."
 rationale = "Unasked notifications manipulate attention (Principle 4) and get apps muted."
 verification = "Review checklist: every notification type opt-out; none promotional"
 check = "Review"
@@ -214,6 +217,7 @@ trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "UX-18"
@@ -302,8 +306,8 @@ status = "active"
 
 [[rule]]
 id = "UX-25"
-level = "MUST NOT"
-statement = "Apps carry third-party advertising or promote cryptocurrencies or related services."
+level = "MUST"
+statement = "Apps carry no third-party advertising and never promote cryptocurrencies or related services."
 rationale = "Blue Angel DE-UZ 215 excludes advertising, and promotion breaks Principle 4."
 verification = "Review checklist: no ads or cryptocurrency promotion"
 check = "Review"
@@ -311,6 +315,7 @@ trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: level and statement rewritten; negative level replaced."]
 
 [[rule]]
 id = "UX-26"

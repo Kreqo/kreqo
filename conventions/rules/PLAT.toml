@@ -92,14 +92,15 @@ status = "active"
 [[rule]]
 id = "PLAT-08"
 level = "MUST"
-statement = "Apps installed by a package manager or a store (Flathub, F-Droid, App Store, Play, Microsoft Store) never self-update. Direct-download builds ask at install or first run whether to install updates automatically, never install anything without that consent, and use signed update metadata. The update check is a declared endpoint (PRIV-07), and no build downloads code that changes the app's functionality."
+statement = "Apps installed by a package manager or a store (Flathub, F-Droid, App Store, Play, Microsoft Store) never self-update. Direct-download builds ask at install or first run whether to install updates automatically, never install anything without that consent, and use signed update metadata. The update check is an endpoint declared in the data manifest, and no build downloads code that changes the app's functionality."
 rationale = "Background updates installed without asking fall under CASL s. 8; consent at install or first run satisfies it."
-verification = "Review checklist: update consent, signed metadata, PRIV-07 endpoint"
+verification = "Review checklist: update consent, signed metadata, data manifest entry for the update check"
 check = "Review"
 trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and verification rewritten; glossary term replaces a rule ID."]
 
 [[rule]]
 id = "PLAT-09"
@@ -154,7 +155,7 @@ status = "active"
 [[rule]]
 id = "PLAT-13"
 level = "MUST"
-statement = "Sandboxes follow least privilege: a portal is used wherever one exists. Default Flatpak permissions are `wayland`, `fallback-x11` and `dri`, plus `network` only for apps with sync or sharing. `home`, `host*`, `session-bus`, `system-bus` and `device=all` need an ADR, and a manifest comment justifies every permission. The same applies to Android permissions, Apple entitlements and MSIX capabilities. The docs explain opening an Obsidian vault outside the sandbox (document portal with persistent access)."
+statement = "Sandboxes follow least privilege: a portal is used wherever one exists. Default Flatpak permissions are `wayland`, `fallback-x11` and `dri`, plus `network` only for apps with sync or sharing. `home`, `host*`, `session-bus`, `system-bus` and `device=all` need an ADR, and a manifest comment justifies every permission. The same applies to Android permissions, Apple entitlements and MSIX capabilities. The docs explain how to open user content stored outside the sandbox (document portal with persistent access)."
 rationale = "Flathub reviews every broad permission; a justified manifest answers the reviewer and the user."
 verification = "Review checklist: every manifest permission justified"
 check = "Review"
@@ -162,18 +163,20 @@ trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; wording no longer names one app."]
 
 [[rule]]
 id = "PLAT-14"
 level = "MUST"
-statement = "Store listings for every channel are generated from one metadata source per app plus the PRIV-07 manifest. Listings, screenshots and privacy labels change in the same release as the app; nothing is hidden or undocumented; release notes always say what changed, never only that bugs were fixed."
+statement = "Store listings for every channel are generated from one metadata source per app plus the data manifest, and so are privacy labels such as Apple privacy details, Play Data safety and the Microsoft privacy URL. Listings, screenshots and privacy labels change in the same release as the app; nothing is hidden or undocumented; release notes always say what changed, never only that bugs were fixed."
 rationale = "One source keeps every store's listing identical; Flathub rejects \"bug fixes\" as a release note."
-verification = "CI: listings generated from the metadata source; release-notes lint"
+verification = "CI: listings and privacy labels generated from the metadata source and the data manifest; release-notes lint"
 check = "CI"
 trigger = "first-release"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and verification rewritten; received the store privacy labels from PRIV-07, and glossary term replaces a rule ID."]
 
 [[rule]]
 id = "PLAT-15"
@@ -202,8 +205,8 @@ status = "active"
 [[rule]]
 id = "PLAT-17"
 level = "MUST"
-statement = "An ADR decides the response to Android developer verification (register or not, how F-Droid users install and update, how package names are protected), and is revisited when Google's global rollout starts in 2027."
-rationale = "Verification decides whether F-Droid users can install the app at all, and package names can be claimed by others."
+statement = "An ADR decides the response to Android developer verification (register or not, how F-Droid users install and update, how package names are protected), and is revisited when Google's global rollout starts."
+rationale = "Verification decides how F-Droid users can install the app, and package names can be claimed by others. As of 2026-10-26, [Google](https://android-developers.googleblog.com/2026/06/android-developer-verification.html) planned the global rollout for 2027; where verification had started, unregistered apps could still be installed with adb or an advanced flow."
 verification = "Review checklist: ADR present and dated"
 check = "Review"
 trigger = "android"
@@ -211,19 +214,21 @@ who = "you"
 moments = ["legal"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and rationale rewritten; outside fact moved to the rationale."]
 
 [[rule]]
 id = "PLAT-18"
 level = "MUST"
-statement = "Minimum OS versions per platform follow a written policy (for example, supported while the vendor supports them), rise only at the start of a release cycle, and meet each store's current target (Play requires API 36 for updates since 31 August 2026)."
-rationale = "Stores refuse updates below their target level, and a mid-cycle rise strands users without notice."
-verification = "Review checklist: minimums match the policy and store targets"
+statement = "Minimum OS versions per platform follow a written policy (for example, supported while the vendor supports them) and rise only at the start of a release cycle. Builds target the API or SDK level each store currently requires."
+rationale = "Stores refuse updates built for an older target level, and a mid-cycle rise in minimums strands users without notice. As of 2026-10-16, [Google Play](https://developer.android.com/google/play/requirements/target-sdk) requires updates to target API 36, apart from some device types such as Wear OS."
+verification = "Review checklist: minimums match the policy; builds target each store's current level"
 check = "Review"
 trigger = "first-release"
 who = "you"
 moments = ["release"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement, rationale and verification rewritten; outside fact moved to the rationale, and minimums are kept apart from the level each store requires."]
 
 [[rule]]
 id = "PLAT-19"

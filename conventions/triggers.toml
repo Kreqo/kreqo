@@ -37,7 +37,7 @@ order = 4
 
 [[trigger]]
 id = "second-maintainer"
-title = "Before a second maintainer joins"
+title = "Once a second maintainer joins"
 when = "maintainers >= 2"
 order = 5
 

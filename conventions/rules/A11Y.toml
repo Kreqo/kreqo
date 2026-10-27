@@ -43,14 +43,15 @@ status = "active"
 [[rule]]
 id = "A11Y-04"
 level = "MUST"
-statement = "Web content meets [WCAG 2.2](https://www.w3.org/TR/WCAG22/) AA. Apps meet the latest EN 301 549, including its clauses for non-web software; Canada adopted it unchanged as CAN/ASC-EN 301 549:2024, so one test pass serves the EU and Canada."
-rationale = "One standard sits behind the European Accessibility Act and Canada's ICT standard, so one test pass covers both."
+statement = "Web content meets [WCAG 2.2](https://www.w3.org/TR/WCAG22/) AA. Apps meet the latest EN 301 549, including its clauses for non-web software."
+rationale = "EN 301 549 sits behind both the European Accessibility Act and Canada's ICT standard. As of 2026-10-26, its latest edition is [V4.1.1](https://www.etsi.org/deliver/etsi_en/301500_301599/301549/04.01.01_60/) of September 2026, while Canada's [CAN/ASC-EN 301 549:2024](https://accessible.canada.ca/creating-accessibility-standards/summary-can-asc-en-301-5492024-accessibility-requirements-ict-products-and-services-en-301-5492021-idt) adopts the 2021 edition unchanged, so a report for a Canadian customer may need that edition."
 verification = "Release checklist: EN 301 549 test report"
 check = "Release"
 trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and rationale rewritten; outside fact moved to the rationale, and the claim that one test pass covers the EU and Canada is gone."]
 
 [[rule]]
 id = "A11Y-05"
@@ -104,7 +105,7 @@ status = "active"
 [[rule]]
 id = "A11Y-09"
 level = "MAY"
-statement = "Apps offer a Vim-like modal keyboard mode for power users."
+statement = "Apps may offer a Vim-like modal keyboard mode for power users."
 rationale = "Modal editing lets keyboard-centric users work without reaching for the pointer."
 verification = "Review checklist: mode and its shortcuts documented (A11Y-02)"
 check = "Review"
@@ -112,6 +113,7 @@ trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; its option says \"may\"."]
 
 [[rule]]
 id = "A11Y-10"

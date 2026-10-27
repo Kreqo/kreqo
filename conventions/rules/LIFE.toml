@@ -70,7 +70,7 @@ status = "active"
 [[rule]]
 id = "LIFE-06"
 level = "MUST"
-statement = "If an app, a hosted service or the organization winds down, users get public notice (at least one month for app channels, the Flathub minimum; 6 months for hosted services), a final release that can export everything, self-hosting instructions, permanently published source, and an end-of-life flag on every store."
+statement = "If an app, a hosted service or the organization winds down, users get public notice (at least one month for app channels; 6 months for hosted services), a final release that can export everything, self-hosting instructions, permanently published source, and an end-of-life flag on every store."
 rationale = "Users who trusted the suite with their data must be able to leave with it."
 verification = "Release checklist: wind-down plan on file"
 check = "Release"
@@ -78,6 +78,7 @@ trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; wrong Flathub attribution removed."]
 
 [[rule]]
 id = "LIFE-07"

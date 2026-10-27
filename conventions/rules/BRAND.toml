@@ -7,7 +7,7 @@
 [[rule]]
 id = "BRAND-01"
 level = "MUST"
-statement = "Each app has one registered accent hue (BRAND-05). Lightness and chroma are fixed suite-wide for each accent role (text, fill, focus ring) in each theme (light, dark, increased contrast). CI checks WCAG contrast for every registered hue in every role and theme (A11Y-03). An ADR chooses one of: (a) the muted chroma every hue can share in sRGB; (b) fixed lightness with each hue at its own maximum chroma up to a cap; (c) accents defined in Display P3 with gamut mapping to sRGB as fallback. Starting points: L ≈ 0.50–0.55 for fills and text in the light theme and L ≈ 0.65–0.75 for accent text in the dark theme; yellows and oranges are reviewed visually. The AppStream light and dark brand colors (PLAT-11) are generated from these tokens."
+statement = "Each app has one registered accent hue (BRAND-05). Lightness and chroma are fixed suite-wide for each accent role (text, fill, focus ring) in each theme (light, dark, increased contrast). An ADR chooses one of: (a) the muted chroma every hue can share in sRGB; (b) fixed lightness with each hue at its own maximum chroma up to a cap; (c) accents defined in Display P3 with gamut mapping to sRGB as fallback. Starting points: L ≈ 0.50–0.55 for fills and text in the light theme and L ≈ 0.65–0.75 for accent text in the dark theme; yellows and oranges are reviewed visually. The AppStream light and dark brand colors (PLAT-11) are generated from these tokens."
 rationale = "No single lightness passes 4.5:1 on both white and black, and contrast varies about 12% across hues."
 verification = "CI: contrast test over tokens per hue, role and theme; accent ADR recorded"
 check = "CI"
@@ -17,11 +17,12 @@ moments = ["setup"]
 open = { question = "Accent colors: muted shared chroma, uneven chroma under a cap, or Display P3 with sRGB fallback", leaning = "" }
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; restated requirement removed."]
 
 [[rule]]
 id = "BRAND-02"
 level = "MUST"
-statement = "Each app is named \"Kreqo\" followed by one plain, descriptive word, such as Kreqo Notes, under 15 characters in total. The word is chosen to read the same in English and French where possible; otherwise it is translated like any other string, while \"Kreqo\" never is (I18N-10). Before use, the word is checked against existing apps in the same category."
+statement = "Each app is named \"Kreqo\" followed by one plain, descriptive word, such as Kreqo Notes, under 15 characters in total. The word is chosen to read the same in English and French where possible; otherwise it is translated like any other string. \"Kreqo\" itself is never translated, and a transliteration of the app's name may be added. Before use, the word is checked against existing apps in the same category."
 rationale = "One trademark covers every app, and Quebec requires descriptive words in a trademark to appear in French on products."
 verification = "Review checklist: name form, length, French form and existing-app search"
 check = "Review"
@@ -30,6 +31,7 @@ who = "you"
 moments = ["new-app"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; received the transliteration permission from I18N-10, which now points here."]
 
 [[rule]]
 id = "BRAND-03"

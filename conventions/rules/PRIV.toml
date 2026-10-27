@@ -9,17 +9,18 @@ id = "PRIV-01"
 level = "MUST"
 statement = "Telemetry and analytics are off by default and run only after explicit opt-in. Telemetry means any measurement that leaves the device: analytics, attribution, experiments, usage pings, diagnostics. Data kept only on the device and visible to the user is not telemetry."
 rationale = "A definition that covers attribution and experiments closes the loophole Firefox's PPA relied on."
-verification = "Review checklist: no measurement leaves the device without opt-in; PRIV-07 manifest entry"
+verification = "Review checklist: no measurement leaves the device without opt-in; data manifest entry"
 check = "Review"
 trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: verification rewritten; glossary term replaces a rule ID."]
 
 [[rule]]
 id = "PRIV-02"
-level = "MUST NOT"
-statement = "Logs, crash reports, bug reports and diagnostic bundles contain secrets, or note, card or file content, titles or paths, unless the user adds them in the preview (PRIV-04)."
+level = "MUST"
+statement = "Unless the user adds them in the preview (PRIV-04), logs, crash reports, bug reports and diagnostic bundles contain no secrets the app holds and no content, titles or paths of the user's documents, such as notes, cards or recordings."
 rationale = "A title or file path identifies what a user is working on as surely as its content."
 verification = "Review checklist: redaction of content, titles and paths in logs and bundles"
 check = "Review"
@@ -27,23 +28,25 @@ trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: level and statement rewritten; wording no longer names one app, its negative level is replaced, and its preview exception covers secrets the app holds."]
 
 [[rule]]
 id = "PRIV-03"
 level = "MUST"
 statement = "Apps contact only servers the user chose. A chosen server means the user turned on the feature or started the action, and the host is named in the UI and in the privacy notice. Nothing is contacted because the app launched. On-demand downloads (dictionaries, models, fonts, the plugin directory) follow the same rule, and lookups send the minimum, not library contents."
 rationale = "A connection on launch is an F-Droid anti-feature; a named host is what the user actually consented to."
-verification = "Review checklist: every host in the PRIV-07 manifest with its triggering action; nothing on launch"
+verification = "Review checklist: every host in the data manifest with its triggering action; nothing on launch"
 check = "Review"
 trigger = "always"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: verification rewritten; glossary term replaces a rule ID."]
 
 [[rule]]
 id = "PRIV-04"
 level = "MUST"
-statement = "Crash reports stay local until the user previews and approves what is sent; reporting a bug takes one action. If a standing option to send every crash report automatically is ever offered, it is opt-in, revocable in one step from settings, and still sends no user content (PRIV-02)."
+statement = "Crash reports stay local until the user previews and approves what is sent; reporting a bug takes one action. If a standing option to send every crash report automatically is ever offered, it is opt-in, revocable in one step from settings, and sends no user content."
 rationale = "The preview is the only way a user knows what a report holds; a standing consent needs an equally easy exit."
 verification = "Review checklist: preview before send; one-step revocation of any standing consent"
 check = "Review"
@@ -51,11 +54,12 @@ trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; its limit no longer points to PRIV-02, whose scope is narrower."]
 
 [[rule]]
 id = "PRIV-05"
 level = "MUST"
-statement = "The privacy notice is generated from the PRIV-07 manifest, versioned and dated in the repository with a changelog, and published in English and French. It claims no more than actual practice and covers what is collected, every server contacted, retention, deletion, how to withdraw consent, and the person in charge of privacy (the founder until an entity exists) with contact details. Every app and store listing links it, even when nothing is collected. Changes that widen collection are announced at least 30 days ahead. No terms grant the organization a license over user content beyond running a service the user chose."
+statement = "The privacy notice is generated from the data manifest, versioned and dated in the repository with a changelog, and published in English and French. It claims no more than actual practice and covers what is collected, every server contacted, retention, deletion, how to withdraw consent, and the person in charge of privacy (the founder until an entity exists) with contact details. Every app and store listing links it, even when nothing is collected. Changes that widen collection are announced at least 30 days ahead. No terms grant the organization a license over user content beyond running a service the user chose."
 rationale = "Law 25 requires a named person in charge of privacy with published contact details, and store review requires a linked notice."
 verification = "Release checklist: notice generated from the manifest, dated, in both languages, linked from each listing"
 check = "Release"
@@ -63,6 +67,7 @@ trigger = "first-release"
 who = "ai"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; glossary term replaces a rule ID."]
 
 [[rule]]
 id = "PRIV-06"
@@ -79,7 +84,7 @@ status = "active"
 [[rule]]
 id = "PRIV-07"
 level = "MUST"
-statement = "Each app keeps a machine-readable data manifest of every endpoint and data flow: data sent, purpose, sensitivity category, default state, retention and review link (PRIV-08). CI fails when code, or an integration test run in a network sandbox, contacts an undeclared host; this gate applies from first release. The privacy notice (PRIV-05) and the store privacy labels (Apple privacy details, Play Data safety, Microsoft privacy URL) are generated from it."
+statement = "Each app keeps a machine-readable data manifest of every endpoint and data flow: data sent, purpose, sensitivity category, default state, retention and review link (PRIV-08). CI fails when code, or an integration test run in a network sandbox, contacts an undeclared host; this gate applies from first release."
 rationale = "A manifest that generates the notice and labels, as Glean's metrics.yaml does, keeps them from drifting from the code."
 verification = "CI: manifest schema check; network-sandbox integration test fails on an undeclared host"
 check = "CI"
@@ -87,6 +92,7 @@ trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement rewritten; restated requirement removed."]
 
 [[rule]]
 id = "PRIV-08"
@@ -103,8 +109,8 @@ status = "active"
 
 [[rule]]
 id = "PRIV-09"
-level = "MUST NOT"
-statement = "An app includes a third-party analytics, advertising, attribution, tracking or crash-reporting SDK. Permit, by ADR: an open-source client for a self-hostable, organization-run endpoint, sending only after the user's PRIV-04 approval."
+level = "MUST"
+statement = "An app includes no third-party analytics, advertising, attribution, tracking or crash-reporting SDK. Permit, by ADR: an open-source client for a self-hostable, organization-run endpoint, sending only after the user's PRIV-04 approval."
 rationale = "F-Droid lists tracking SDKs as anti-features, and Audacity's analytics pull request showed what users make of them."
 verification = "CI: cargo-deny ban list"
 check = "CI"
@@ -112,6 +118,7 @@ trigger = "always"
 who = "tool"
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: level and statement rewritten; negative level replaced."]
 
 [[rule]]
 id = "PRIV-10"
@@ -141,8 +148,8 @@ status = "active"
 [[rule]]
 id = "PRIV-12"
 level = "SHOULD"
-statement = "Hosted services publish how they handle legal requests, and a yearly transparency report as far as the law allows. Both are worded to stay accurate under secrecy duties such as those Bill C-22 would attach to some orders."
-rationale = "Bill C-22 would impose secrecy on some orders, so a report cannot promise to disclose what it may not."
+statement = "Hosted services publish how they handle legal requests, and a yearly transparency report as far as the law allows. Both are worded to stay accurate under any secrecy duty an order may carry."
+rationale = "An order can come with a duty of secrecy, so a report cannot promise to disclose what it may not. As of 2026-10-16, [Bill C-22](https://www.parl.ca/legisinfo/en/bill/45-1/c-22), before Parliament, would attach one to some orders."
 verification = "Release checklist: legal-request policy published; latest yearly report linked"
 check = "Release"
 trigger = "hosted-service"
@@ -150,6 +157,7 @@ who = "you"
 moments = ["legal"]
 added = "0.1.0"
 status = "active"
+history = ["2026-10-26 second rule batch: statement and rationale rewritten; outside fact moved to the rationale."]
 
 [[rule]]
 id = "PRIV-13"
