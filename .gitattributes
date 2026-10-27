@@ -1,7 +1,9 @@
 # SPDX-FileCopyrightText: Kreqo contributors
 # SPDX-License-Identifier: MIT OR Apache-2.0
 
-# The views of the rules keep LF line endings in every checkout, Windows
-# included, so that `cargo xtask check rules` compares them byte for byte
-# with what the rules data generates (ARCH-06).
+# The views of the rules, and the golden views of xtask's tests, keep LF
+# line endings in every checkout, Windows included, so that `cargo xtask
+# check rules` and the tests compare them byte for byte with what the rules
+# data generates (ARCH-06, QA-09).
 conventions/views/*.md text eol=lf
+xtask/testdata/rules/views/**/*.md text eol=lf

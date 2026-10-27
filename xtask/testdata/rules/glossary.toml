@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# Test data for the rules engine's golden views (QA-09): NOW.md lists only
+# the terms it uses, and "Team" only once the team's rules apply.
+
+[[term]]
+term = "Sign-off"
+definition = "the founder's approval, which no view here mentions."
+
+[[term]]
+term = "Team"
+definition = "two maintainers or more."
+
+[[term]]
+term = "The forge"
+definition = "the service that hosts the code."

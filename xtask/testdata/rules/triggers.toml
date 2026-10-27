@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# Test data for the rules engine's golden views (QA-09): out of order, with
+# two tied at order 2, which keep the file's order.
+
+[[trigger]]
+id = "release"
+title = "Before the release"
+when = "released"
+order = 2
+
+[[trigger]]
+id = "always"
+title = "From the first commit"
+when = "true"
+order = 0
+
+[[trigger]]
+id = "team"
+title = "Once there's a team"
+when = "maintainers >= 2"
+order = 1
+
+[[trigger]]
+id = "funds"
+title = "Before accepting funds"
+when = "not public or released"
+order = 2
+
+[[trigger]]
+id = "never"
+title = "A trigger that no rule names"
+when = "maintainers >= 9"
+order = 3

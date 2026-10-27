@@ -1,0 +1,111 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# Test data for the rules engine's golden views (QA-09): the rules are out
+# of order in their file.
+
+[[rule]]
+id = "CI-03"
+level = "MUST"
+statement = "CI-03's statement."
+rationale = "CI-03's rationale."
+verification = "Review: CI-03"
+check = "CI"
+trigger = "always"
+who = "you"
+moments = ["money", "setup"]
+added = "0.1.0"
+status = "active"
+
+[rule.open]
+question = "Which forge hosts the code"
+leaning = "The current one"
+
+[[rule.later]]
+trigger = "team"
+statement = "CI-03 once there's a team."
+rationale = "A team reviews it."
+check = "Settings"
+
+[[rule]]
+id = "CI-01"
+level = "MUST"
+statement = "CI-01's statement."
+rationale = "CI-01's rationale."
+verification = "CI: CI-01"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-02"
+level = "SHOULD"
+statement = "CI-02's statement."
+rationale = "CI-02's rationale."
+verification = "Release checklist: CI-02"
+check = "Release"
+trigger = "always"
+who = "you"
+moments = ["release"]
+added = "0.1.0"
+status = "active"
+
+[rule.open]
+question = "When releases happen"
+leaning = ""
+
+[[rule]]
+id = "CI-04"
+level = "SHOULD"
+statement = "CI-04 starts with a team! `Then` code."
+rationale = "CI-04's rationale."
+verification = "CI: CI-04"
+check = "CI"
+trigger = "team"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-05"
+level = "MUST"
+statement = "CI-05 waits for funds? [A link](https://example.org) follows."
+rationale = "CI-05's rationale."
+verification = "Review checklist: CI-05"
+check = "Periodic"
+trigger = "funds"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-06"
+level = "SHOULD"
+statement = "CI-06 needs you once there's a team."
+rationale = "CI-06's rationale."
+verification = "Review: CI-06"
+check = "Review"
+trigger = "team"
+who = "you"
+moments = ["feature"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "CI-10"
+level = "MAY"
+statement = "CI-10 may be taken once funds come in."
+rationale = "An option for later."
+verification = "Review"
+check = "Review"
+trigger = "funds"
+who = "you"
+moments = ["money"]
+added = "0.1.0"
+status = "active"
+
+[rule.open]
+question = "Whether to take it"
+leaning = ""

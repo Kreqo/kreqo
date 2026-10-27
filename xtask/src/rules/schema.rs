@@ -3,8 +3,9 @@
 
 //! The rules data as Rust types, one for each kind of file in
 //! `conventions/`. Every type refuses a field it doesn't know, so that a
-//! misspelled field fails, naming its line, instead of being skipped.
-//! `state.toml` holds facts of any name, so `rules.rs` reads it.
+//! misspelled field fails, naming its line, instead of being skipped. The
+//! facts in `state.toml` have names of their own choosing, so the file is
+//! a table of [`Fact`]s, which `rules.rs` reads in the file's order.
 
 use std::fmt;
 
@@ -17,13 +18,17 @@ pub struct Rule {
     /// Its area's prefix and a number, such as `A11Y-03`.
     pub id: String,
     pub level: Level,
+    /// What holds under the rule, in Markdown.
     pub statement: String,
+    /// Why the rule exists, in Markdown.
     pub rationale: String,
     /// How compliance is shown.
     pub verification: String,
+    /// Where the rule is checked.
     pub check: Check,
     /// The trigger from which the rule applies.
     pub trigger: String,
+    /// Who checks the rule.
     pub who: Who,
     /// When a rule that needs the founder comes up.
     #[serde(default)]
@@ -125,6 +130,8 @@ pub enum Status {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Open {
+    /// The decision to make, without a final period or question mark, which
+    /// the views add.
     pub question: String,
     /// The answer favored so far, or nothing when there's none yet.
     pub leaning: String,
@@ -135,10 +142,15 @@ pub struct Open {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Later {
+    /// The trigger from which this version applies.
     pub trigger: String,
+    /// The statement that replaces the rule's.
     pub statement: String,
+    /// The rationale that replaces the rule's, if it changes.
     pub rationale: Option<String>,
+    /// The verification that replaces the rule's, if it changes.
     pub verification: Option<String>,
+    /// Where the rule is checked from then on, if that changes.
     pub check: Option<Check>,
 }
 
@@ -146,7 +158,9 @@ pub struct Later {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Reminder {
+    /// The trigger under which LATER.md shows the note.
     pub trigger: String,
+    /// The note, in Markdown.
     pub note: String,
 }
 
@@ -154,14 +168,35 @@ pub struct Reminder {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RuleFile {
+    /// The area's rules, in any order.
     pub rule: Vec<Rule>,
+}
+
+/// A fact in `state.toml`: whether something is so, or how many there are.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
+#[serde(untagged, expecting = "a fact, which is true, false or a count")]
+pub enum Fact {
+    Holds(bool),
+    Count(u64),
+}
+
+impl fmt::Display for Fact {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Holds(value) => value.fmt(f),
+            Self::Count(count) => count.fmt(f),
+        }
+    }
 }
 
 /// A trigger: the condition from which the rules that name it apply.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Trigger {
+    /// Its name, which rules, later versions and reminders give as their
+    /// trigger.
     pub id: String,
+    /// How the views name it.
     pub title: String,
     /// The condition on the facts in `state.toml`, as written.
     pub when: String,
@@ -173,6 +208,7 @@ pub struct Trigger {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TriggerFile {
+    /// The triggers, in any order.
     pub trigger: Vec<Trigger>,
 }
 
@@ -180,7 +216,9 @@ pub struct TriggerFile {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Moment {
+    /// Its name, which rules list among their moments.
     pub id: String,
+    /// Its heading in NOW.md.
     pub title: String,
     /// Its place in NOW.md.
     pub order: u32,
@@ -190,6 +228,7 @@ pub struct Moment {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MomentFile {
+    /// The moments, in any order.
     pub moment: Vec<Moment>,
 }
 
@@ -197,8 +236,11 @@ pub struct MomentFile {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Principle {
+    /// Its number in the list.
     pub number: u32,
+    /// Its name, a short sentence such as "Coherent.".
     pub name: String,
+    /// What it says.
     pub text: String,
 }
 
@@ -206,6 +248,7 @@ pub struct Principle {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PrincipleFile {
+    /// The principles, in the order NOW.md lists them.
     pub principle: Vec<Principle>,
 }
 
@@ -213,7 +256,10 @@ pub struct PrincipleFile {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Term {
+    /// The term, with a leading "The" where the text uses one, which NOW.md
+    /// doesn't need to find it.
     pub term: String,
+    /// What it means, as the rest of a sentence that starts with the term.
     pub definition: String,
 }
 
@@ -221,6 +267,7 @@ pub struct Term {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Glossary {
+    /// The terms, in the order NOW.md lists them.
     pub term: Vec<Term>,
 }
 
@@ -230,6 +277,7 @@ pub struct Glossary {
 pub struct Area {
     /// Its rules' prefix, such as `A11Y`.
     pub prefix: String,
+    /// Its heading in the views.
     pub title: String,
     /// The group of areas it belongs to.
     #[expect(dead_code, reason = "part of the schema, which no view shows yet")]
@@ -242,16 +290,18 @@ pub struct Area {
     pub notes: String,
 }
 
-/// `areas.toml`, which lists the areas in the conventions' order.
+/// `areas.toml`.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AreaFile {
+    /// The areas, in the conventions' order.
     pub area: Vec<Area>,
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::de::DeserializeOwned;
 
     const RULE: &str = "[[rule]]\nid = \"CI-01\"\nlevel = \"MUST\"\nstatement = \"S.\"\nrationale = \"R.\"\nverification = \"V\"\ncheck = \"CI\"\ntrigger = \"always\"\nwho = \"tool\"\nadded = \"0.1.0\"\nstatus = \"active\"\n";
 
@@ -293,6 +343,7 @@ mod tests {
             assert!(toml::from_str::<RuleFile>(&text).is_err(), "{text}");
         }
         for table in [
+            // A later version's level waits for the rule batch of issue #23.
             "[[rule.later]]\ntrigger = \"t\"\nstatement = \"S.\"\nlevel = \"MAY\"\n",
             "[[rule.later]]\ntrigger = \"t\"\nrationale = \"R.\"\n",
             "[[rule.reminder]]\ntrigger = \"t\"\nnote = \"N.\"\nwhen = \"t\"\n",
@@ -306,12 +357,93 @@ mod tests {
         assert!(
             toml::from_str::<TriggerFile>(&trigger.replace("order = 0", "order = -1")).is_err()
         );
-        assert!(toml::from_str::<TriggerFile>(&format!("{trigger}level = \"MUST\"\n")).is_err());
         let area = "[[area]]\nprefix = \"CI\"\ntitle = \"T\"\ngroup = \"G\"\nintro = \"I\"\nnotes = \"\"\n";
         assert!(toml::from_str::<AreaFile>(area).is_ok());
         assert!(toml::from_str::<AreaFile>(&area.replace("notes = \"\"\n", "")).is_err());
+    }
+
+    /// Fails unless `T` reads `valid` and refuses `unknown`, which adds a
+    /// field named `unknown`, for that field.
+    fn refuses_the_unknown_field<T: DeserializeOwned>(valid: &str, unknown: &str) {
+        assert!(toml::from_str::<T>(valid).is_ok(), "{valid}");
+        let error = toml::from_str::<T>(unknown)
+            .err()
+            .map(|error| error.to_string())
+            .unwrap_or_default();
         assert!(
-            toml::from_str::<Glossary>("[[terms]]\nterm = \"T\"\ndefinition = \"D\"\n").is_err()
+            error.contains("unknown field `unknown`"),
+            "{unknown}\n{error}"
         );
+    }
+
+    /// `refuses_the_unknown_field` for one type.
+    type Refuses = fn(&str, &str);
+
+    /// Every type refuses a field it doesn't know, at the top of each file
+    /// and in each kind of entry.
+    #[test]
+    fn every_type_refuses_an_unknown_field() {
+        let field = "unknown = 1\n";
+        let rule_tables = [
+            "[rule.open]\nquestion = \"Q\"\nleaning = \"\"\n",
+            "[[rule.later]]\ntrigger = \"t\"\nstatement = \"S.\"\n",
+            "[[rule.reminder]]\ntrigger = \"t\"\nnote = \"N.\"\n",
+        ];
+        refuses_the_unknown_field::<RuleFile>(RULE, &format!("{field}{RULE}"));
+        refuses_the_unknown_field::<RuleFile>(RULE, &format!("{RULE}{field}"));
+        for table in rule_tables {
+            let valid = format!("{RULE}{table}");
+            refuses_the_unknown_field::<RuleFile>(&valid, &format!("{valid}{field}"));
+        }
+        let files: [(&str, Refuses); 5] = [
+            (
+                "[[trigger]]\nid = \"t\"\ntitle = \"T\"\nwhen = \"true\"\norder = 0\n",
+                refuses_the_unknown_field::<TriggerFile>,
+            ),
+            (
+                "[[moment]]\nid = \"m\"\ntitle = \"M\"\norder = 0\n",
+                refuses_the_unknown_field::<MomentFile>,
+            ),
+            (
+                "[[principle]]\nnumber = 1\nname = \"N.\"\ntext = \"T.\"\n",
+                refuses_the_unknown_field::<PrincipleFile>,
+            ),
+            (
+                "[[term]]\nterm = \"T\"\ndefinition = \"d.\"\n",
+                refuses_the_unknown_field::<Glossary>,
+            ),
+            (
+                "[[area]]\nprefix = \"CI\"\ntitle = \"T\"\ngroup = \"G\"\nintro = \"I\"\nnotes = \"\"\n",
+                refuses_the_unknown_field::<AreaFile>,
+            ),
+        ];
+        for (valid, refuses) in files {
+            refuses(valid, &format!("{field}{valid}"));
+            refuses(valid, &format!("{valid}{field}"));
+        }
+    }
+
+    #[test]
+    fn reads_a_fact_as_true_false_or_a_count() -> anyhow::Result<()> {
+        let facts: std::collections::BTreeMap<String, Fact> =
+            toml::from_str("a = true\nb = false\nc = 2\n")?;
+        assert_eq!(
+            facts.into_values().collect::<Vec<_>>(),
+            [Fact::Holds(true), Fact::Holds(false), Fact::Count(2)]
+        );
+        for value in ["\"yes\"", "-1", "1.5", "[true]", "{ a = 1 }"] {
+            let Err(error) = toml::from_str::<std::collections::BTreeMap<String, Fact>>(&format!(
+                "fact = {value}\n"
+            )) else {
+                anyhow::bail!("`fact = {value}` passed");
+            };
+            let error = error.to_string();
+            assert!(
+                error.contains("a fact, which is true, false or a count")
+                    && error.contains("line 1"),
+                "{error}"
+            );
+        }
+        Ok(())
     }
 }

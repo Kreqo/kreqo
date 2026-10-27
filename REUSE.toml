@@ -12,8 +12,16 @@ SPDX-FileCopyrightText = "Kreqo contributors"
 SPDX-License-Identifier = "CC0-1.0"
 
 # Generated from the rules, which are CC BY 4.0, by `cargo xtask rules
-# generate`, which writes no headers into them.
+# generate`, which writes no headers into them yet: M3 settles that with its
+# other changes to the views.
 [[annotations]]
 path = "conventions/views/**"
 SPDX-FileCopyrightText = "Kreqo contributors"
 SPDX-License-Identifier = "CC-BY-4.0"
+
+# Generated from xtask's test data, which is MIT OR Apache-2.0, by the rules
+# engine's prototype, to pin what the views print (QA-09).
+[[annotations]]
+path = "xtask/testdata/rules/views/**"
+SPDX-FileCopyrightText = "Kreqo contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"

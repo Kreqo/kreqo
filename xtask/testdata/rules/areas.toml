@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# Test data for the rules engine's golden views (QA-09): QA comes before CI,
+# unlike their files, and UX has no rules.
+
+[[area]]
+prefix = "QA"
+title = "Quality"
+group = "Engineering"
+intro = "QA's rules."
+notes = ""
+
+[[area]]
+prefix = "UX"
+title = "Interface"
+group = "Design"
+intro = "An area without rules."
+notes = ""
+
+[[area]]
+prefix = "CI"
+title = "Repository and CI"
+group = "Engineering"
+intro = "CI's rules."
+notes = ""

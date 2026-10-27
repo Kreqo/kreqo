@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# Test data for the rules engine's golden views (QA-09): out of order, with
+# two tied at order 1, which keep the file's order.
+
+[[moment]]
+id = "release"
+title = "When you prepare a release"
+order = 2
+
+[[moment]]
+id = "setup"
+title = "When you set up"
+order = 0
+
+[[moment]]
+id = "feature"
+title = "When you design a feature"
+order = 1
+
+[[moment]]
+id = "money"
+title = "When money is involved"
+order = 1

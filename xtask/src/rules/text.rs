@@ -61,15 +61,20 @@ pub fn words(lines: &[String]) -> usize {
 /// leading "The ", anywhere between word boundaries.
 pub fn mentions(lowercased: &str, term: &str) -> bool {
     let term = term.strip_prefix("The ").unwrap_or(term).to_lowercase();
-    lowercased
-        .char_indices()
-        .map(|(at, _)| at)
-        .chain([lowercased.len()])
-        .any(|at| {
-            lowercased[at..].starts_with(&term)
-                && boundary(lowercased, at)
-                && boundary(lowercased, at + term.len())
-        })
+    let mut from = 0;
+    while let Some(found) = lowercased[from..].find(&term) {
+        let at = from + found;
+        if boundary(lowercased, at) && boundary(lowercased, at + term.len()) {
+            return true;
+        }
+        // The next try starts one character on, not past this occurrence,
+        // since a whole word may overlap one that isn't.
+        let Some(next) = lowercased[at..].chars().next() else {
+            return false;
+        };
+        from = at + next.len_utf8();
+    }
+    false
 }
 
 /// Whether `\b` matches at a byte offset of a text: a word character on one

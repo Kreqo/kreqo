@@ -7,9 +7,9 @@
 //! newlines, where a rule shown in full is one line that holds several, so
 //! that the views stay byte for byte the same.
 
-use super::schema::{Area, Later, Level, Moment, Reminder, Rule, Trigger, Who};
+use super::Rules;
+use super::schema::{Area, Fact, Later, Level, Moment, Reminder, Rule, Trigger, Who};
 use super::text::{first_sentence, is_space, mentions, words};
-use super::{Fact, Rules};
 
 /// The prototype's header, which names it until M3 changes the views' text
 /// (docs/decisions.md).
@@ -135,6 +135,8 @@ fn now(rules: &Rules, split: &Split<'_>) -> Vec<String> {
         }));
     }
     let mut moments: Vec<&Moment> = rules.moments.iter().collect();
+    // Stable, so that moments with the same order keep the file's, as in
+    // the prototype.
     moments.sort_by_key(|moment| moment.order);
     let first = moments.first().map(|moment| &moment.id);
     // The words to read now: everything before the first section of rules
@@ -260,6 +262,7 @@ fn later(rules: &Rules, split: &Split<'_>) -> Vec<String> {
     ];
     let mut sections = Vec::new();
     let mut triggers: Vec<&Trigger> = rules.triggers.iter().collect();
+    // Stable, so that triggers with the same order keep the file's.
     triggers.sort_by_key(|trigger| trigger.order);
     for trigger in triggers {
         if rules.holds(&trigger.id) {
