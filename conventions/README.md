@@ -7,10 +7,10 @@ SPDX-License-Identifier: CC-BY-4.0
 
 The TOML files are the source of truth; the views are generated from them. The `trigger`, `who` and `moments` values are a first pass that Dara hasn't reviewed yet.
 
-- `rules/*.toml`: the 316 rules, one file per area. Each rule has `trigger` (when it starts to apply), `who` (`tool`, `ai` or `you`), and for `you` rules, `moments` (when they come up). `[[rule.later]]` holds a version that replaces the rule at a later trigger; `[[rule.reminder]]` holds a note for one.
+- `rules/*.toml`: the 316 rules, one file per area; the engine reads the files that git tracks or would track, so a draft that git ignores stays out of the views. Each rule has `trigger` (when it starts to apply), `who` (`tool`, `ai` or `you`), and for `you` rules, `moments` (when they come up). `[[rule.later]]` holds a version that replaces the rule at a later trigger; `[[rule.reminder]]` holds a note for one.
 - `state.toml`: facts about Kreqo today. Change one, regenerate the views, and rules move between them.
 - `triggers.toml`, `moments.toml`, `principles.toml`, `glossary.toml`, `areas.toml`: the rest of the data.
-- `views/NOW.md`, `views/CHECKED.md` and `views/LATER.md`: generated, never edited by hand. A Python prototype kept outside the repository checks the data and writes them until M2 ports it to `cargo xtask`; the port's output must match these files exactly.
+- `views/NOW.md`, `views/CHECKED.md` and `views/LATER.md`: generated, never edited by hand. `cargo xtask rules generate` checks the data and writes them, and `cargo xtask check rules`, which CI runs, fails when they differ from what the data generates or when `views/` holds anything else. Every file but `state.toml`, whose facts take any name, refuses a field the engine doesn't know. Until M3 changes their text, the views still name `compile.py`, the Python prototype that wrote them before M2 ported it.
 - `CHANGES.md`: the solo-first edits made while converting the conventions to TOML, approved on 2026-10-24 (`docs/decisions.md`).
 
 ## Writing the rules

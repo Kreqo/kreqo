@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# Test data for the rules engine's golden views (QA-09).
+
+[[principle]]
+number = 1
+name = "Small."
+text = "Each case covers one path."
+
+[[principle]]
+number = 2
+name = "Pinned."
+text = "What the views print is checked byte for byte."

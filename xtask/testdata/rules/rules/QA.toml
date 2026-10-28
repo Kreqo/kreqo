@@ -1,0 +1,98 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# Test data for the rules engine's golden views (QA-09): the rules are out
+# of order in their file.
+
+[[rule]]
+id = "QA-02"
+level = "MUST"
+statement = "QA-02's statement. Its second sentence."
+rationale = "QA-02's rationale."
+verification = "CI: QA-02's job"
+check = "CI"
+trigger = "always"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+# Both later versions hold once there's a team, and each replaces only the
+# fields it names.
+[[rule.later]]
+trigger = "always"
+statement = "QA-02 from the first commit."
+verification = "CI: QA-02's job from the first commit"
+
+[[rule.later]]
+trigger = "team"
+statement = "QA-02 once there's a team. Its second sentence."
+
+# Its open decision is listed with the others, though it needs no one.
+[[rule]]
+id = "QA-01"
+level = "SHOULD"
+statement = """
+QA-01's statement, in a multi-line string.
+Its second line."""
+rationale = "QA-01's rationale."
+verification = "Review checklist: QA-01"
+check = "Review"
+trigger = "maintained"
+who = "ai"
+added = "0.1.0"
+status = "active"
+history = ["A change, which no view shows."]
+
+[rule.open]
+question = "Whether the AI review covers it"
+leaning = "It does"
+
+[[rule]]
+id = "QA-03"
+level = "MAY"
+statement = "QA-03 may be taken or left."
+rationale = "An option, which the changelog records."
+verification = "Review"
+check = "Review"
+trigger = "maintained"
+who = "you"
+moments = ["feature"]
+added = "0.1.0"
+status = "active"
+
+[[rule]]
+id = "QA-04"
+level = "MUST"
+statement = "QA-04 waits for the release, e.g. for its tooling. Then a second sentence."
+rationale = "QA-04's rationale."
+verification = "CI: QA-04"
+check = "CI"
+trigger = "release"
+who = "tool"
+added = "0.1.0"
+status = "active"
+
+# Holds once there's a team, while the rule still waits.
+[[rule.later]]
+trigger = "team"
+statement = "QA-04's version once there's a team. Its second sentence."
+
+[[rule]]
+id = "QA-05"
+level = "SHOULD"
+statement = "QA-05 waits for the release! `Code` follows."
+rationale = "QA-05's rationale."
+verification = "Review checklist: QA-05"
+check = "Review"
+trigger = "release"
+who = "ai"
+added = "0.1.0"
+status = "active"
+
+[[rule.reminder]]
+trigger = "release"
+note = "A reminder under a trigger that waits."
+
+[[rule.reminder]]
+trigger = "always"
+note = "A reminder under a trigger that holds, which no view shows."

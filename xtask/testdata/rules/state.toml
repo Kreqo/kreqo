@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: Kreqo contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+# Test data for the rules engine's golden views (QA-09). The facts are out
+# of their names' order, so NOW.md's summary shows the file's order.
+public = true
+maintainers = 1
+released = false

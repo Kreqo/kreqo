@@ -14,7 +14,7 @@ use std::process::Command;
 use anyhow::{Context, Result, bail};
 use clap::ValueEnum;
 
-use crate::{crates, deny, git, secrets, tools};
+use crate::{crates, deny, git, rules, secrets, tools};
 
 /// A step of `cargo xtask check`.
 #[derive(Clone, Copy, ValueEnum)]
@@ -29,6 +29,9 @@ pub enum Step {
     Docs,
     /// Each crate's project, license and lints (T2, LEGAL-01, QA-01).
     Crates,
+    /// The rules data, and its committed views, which must be what the data
+    /// generates (ARCH-06, principle 12).
+    Rules,
     /// cargo-deny: advisories, bans, licenses and sources (SEC-02, PRIV-09, LEGAL-03, ARCH-13).
     Deny,
     /// reuse lint (LEGAL-02).
@@ -51,6 +54,7 @@ impl Step {
             Self::Test => "test",
             Self::Docs => "docs",
             Self::Crates => "crates",
+            Self::Rules => "rules",
             Self::Deny => "deny",
             Self::Reuse => "reuse",
             Self::Secrets => "secrets",
@@ -103,9 +107,10 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
                 "warnings",
             ],
         ),
-        Step::Test => cargo(root, &["test", "--workspace", "--all-features", "--locked"]),
+        Step::Test => run_command(root, &mut tests()),
         Step::Docs => run_command(root, &mut docs()),
         Step::Crates => crates::check(root),
+        Step::Rules => rules::check(root),
         Step::Deny => {
             tools::require(root, &tools::CARGO_DENY)?;
             // Both run, so that a problem in deny.toml, such as an expired
@@ -164,11 +169,15 @@ fn run_step(root: &Path, step: Step) -> Result<()> {
     }
 }
 
+/// The workspace's tests.
+fn tests() -> Command {
+    test_command(&["test", "--workspace", "--all-features", "--locked"])
+}
+
 /// xtask's tests that a plain `cargo test` skips because they need the
 /// pinned tools, and only those, since `cargo test` runs the rest.
 fn tool_tests() -> Command {
-    let mut command = cargo_command();
-    command.args([
+    test_command(&[
         "test",
         "--package",
         "xtask",
@@ -176,7 +185,18 @@ fn tool_tests() -> Command {
         "--locked",
         "--",
         "--ignored",
-    ]);
+    ])
+}
+
+/// cargo with these arguments, as the test steps run it (QA-09): with git's
+/// settings from the environment cleared, so that the tests' git stays in
+/// their scratch checkouts when git starts the check, as `git rebase -x`
+/// does, and without UPDATE_GOLDEN_VIEWS, so that the check compares the
+/// golden views rather than rewriting them.
+fn test_command(args: &[&str]) -> Command {
+    let mut command = cargo_command();
+    command.args(args).env_remove(rules::UPDATE_GOLDEN_VIEWS);
+    git::isolate(&mut command);
     command
 }
 
@@ -466,6 +486,41 @@ mod tests {
         );
     }
 
+    /// The build job runs on each platform of its matrix the steps whose
+    /// outcome can depend on the platform: Clippy, the tests, and the rules,
+    /// whose views a Windows checkout's line endings could change (CI-04,
+    /// .gitattributes).
+    #[test]
+    fn ci_runs_the_platform_steps_on_every_platform() {
+        let workflow = include_str!("../../.github/workflows/ci.yml");
+        let build: Vec<&str> = workflow
+            .lines()
+            .skip_while(|line| *line != "  build:")
+            .skip(1)
+            .take_while(|line| line.is_empty() || line.starts_with("   "))
+            .map(str::trim)
+            .collect();
+        assert!(build.contains(&"runs-on: ${{ matrix.os }}"), "{build:?}");
+        let platforms = build
+            .iter()
+            .find_map(|line| line.strip_prefix("os: "))
+            .unwrap_or_default();
+        assert!(
+            ["ubuntu-", "windows-", "macos-"]
+                .iter()
+                .all(|platform| platforms.contains(platform)),
+            "{platforms}"
+        );
+        let steps: Vec<&str> = build
+            .iter()
+            .filter_map(|line| line.strip_prefix("run: cargo xtask check "))
+            .flat_map(str::split_whitespace)
+            .collect();
+        for step in ["clippy", "test", "rules"] {
+            assert!(steps.contains(&step), "the build job doesn't run {step}");
+        }
+    }
+
     /// The steps of each job in a workflow, each step as its lines.
     fn steps_by_job(workflow: &str) -> Vec<Vec<Vec<&str>>> {
         let mut jobs: Vec<Vec<Vec<&str>>> = Vec::new();
@@ -546,6 +601,26 @@ mod tests {
         let args: Vec<_> = tests.get_args().collect();
         assert!(args.starts_with(&[OsStr::new("test")]));
         assert!(args.ends_with(&[OsStr::new("--"), OsStr::new("--ignored")]));
+    }
+
+    /// Both test steps clear the settings that would point the tests' git
+    /// out of their scratch checkouts, and the one that would have the
+    /// golden views rewritten.
+    #[test]
+    fn runs_the_tests_with_their_own_settings() {
+        for command in [tests(), tool_tests()] {
+            let removed: BTreeSet<_> = command
+                .get_envs()
+                .filter(|(_, value)| value.is_none())
+                .map(|(key, _)| key.to_string_lossy().into_owned())
+                .collect();
+            let kept: Vec<_> = git::REDIRECTS
+                .iter()
+                .chain([&rules::UPDATE_GOLDEN_VIEWS])
+                .filter(|key| !removed.contains(**key))
+                .collect();
+            assert!(kept.is_empty(), "{} keeps {kept:?}", show(&command));
+        }
     }
 
     #[test]
