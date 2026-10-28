@@ -19,8 +19,9 @@ path = "conventions/views/**"
 SPDX-FileCopyrightText = "Kreqo contributors"
 SPDX-License-Identifier = "CC-BY-4.0"
 
-# Generated from xtask's test data, which is MIT OR Apache-2.0, by the rules
-# engine's prototype, to pin what the views print (QA-09).
+# The golden views of xtask's test data, which is MIT OR Apache-2.0: what
+# the rules engine writes from it, first written by its prototype for M2,
+# to pin what the views print (QA-09).
 [[annotations]]
 path = "xtask/testdata/rules/views/**"
 SPDX-FileCopyrightText = "Kreqo contributors"

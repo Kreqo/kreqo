@@ -27,6 +27,7 @@ verification = "CI: QA-02's job from the first commit"
 trigger = "team"
 statement = "QA-02 once there's a team. Its second sentence."
 
+# Its open decision is listed with the others, though it needs no one.
 [[rule]]
 id = "QA-01"
 level = "SHOULD"
@@ -36,20 +37,24 @@ Its second line."""
 rationale = "QA-01's rationale."
 verification = "Review checklist: QA-01"
 check = "Review"
-trigger = "always"
+trigger = "maintained"
 who = "ai"
 added = "0.1.0"
 status = "active"
 history = ["A change, which no view shows."]
 
+[rule.open]
+question = "Whether the AI review covers it"
+leaning = "It does"
+
 [[rule]]
 id = "QA-03"
 level = "MAY"
 statement = "QA-03 may be taken or left."
-rationale = "An option."
+rationale = "An option, which the changelog records."
 verification = "Review"
 check = "Review"
-trigger = "always"
+trigger = "maintained"
 who = "you"
 moments = ["feature"]
 added = "0.1.0"

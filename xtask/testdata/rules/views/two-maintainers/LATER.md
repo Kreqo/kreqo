@@ -9,6 +9,8 @@ These 4 rules don't apply yet. Each waits for a trigger: set the matching fact i
 |---|---|---|---|---|
 | Before the release | `released` | 2 | 0 | 0 |
 | Before accepting funds | `not public or released` | 2 | 1 | 0 |
+| Once the team is large | `maintainers >= 5` | 0 | 0 | 0 |
+| If the code goes private | `not public` | 0 | 0 | 1 |
 
 ## Before the release
 
@@ -30,10 +32,28 @@ These 4 rules don't apply yet. Each waits for a trigger: set the matching fact i
 
 ### Needs you (1)
 
-**CI-10** · MAY · CI-10 may be taken once funds come in.\
+**CI-10** · MAY · CI-10's version from the first commit.\
 *Why:* An option for later. · *Checked in review.*\
 *Open decision:* Whether to take it. Leaning: none yet.
 
 ### Checked for you (1)
 
 - **CI-05** · MUST · CI-05 waits for funds? *(AI review)*
+
+
+## Once the team is large
+
+*Condition:* `maintainers >= 5`
+
+### Reminders
+
+- **CI-06:** A reminder under a trigger that starts no rule.
+
+
+## If the code goes private
+
+*Condition:* `not public`
+
+### Rules that change
+
+**CI-01** becomes: CI-01 if the code goes private.

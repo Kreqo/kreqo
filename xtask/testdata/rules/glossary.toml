@@ -2,7 +2,12 @@
 # SPDX-License-Identifier: MIT OR Apache-2.0
 
 # Test data for the rules engine's golden views (QA-09): NOW.md lists only
-# the terms it uses, and "Team" only once the team's rules apply.
+# the terms it uses, "Team" only once the team's rules apply, and
+# "Changelog", which only an option mentions, only while the option does.
+
+[[term]]
+term = "Changelog"
+definition = "the record of what each release changes."
 
 [[term]]
 term = "Sign-off"

@@ -34,6 +34,11 @@ use views::Views;
 /// The views' folder, from the root.
 const VIEWS: &str = "conventions/views";
 
+/// The setting that has the golden views' test rewrite the goldens that
+/// differ. `cargo xtask check` clears it, so that a check only compares
+/// them (QA-09).
+pub const UPDATE_GOLDEN_VIEWS: &str = "UPDATE_GOLDEN_VIEWS";
+
 /// A `cargo xtask rules` command.
 #[derive(Subcommand)]
 pub enum Command {
@@ -78,8 +83,9 @@ pub fn check(root: &Path) -> Result<()> {
 }
 
 /// What's wrong with the committed views: each view that's missing or
-/// differs from what the data generates, and each other file in their
-/// folder, which nothing generates or checks.
+/// differs from what the data generates, and anything else in their
+/// folder that git tracks or would track, which nothing generates or
+/// checks, links whose targets are gone included.
 fn stale(root: &Path, views: &Views) -> Result<Vec<String>> {
     let mut problems = Vec::new();
     for (name, text) in views.files() {
@@ -107,7 +113,7 @@ fn stale(root: &Path, views: &Views) -> Result<Vec<String>> {
         .iter()
         .map(|(name, _)| Path::new(VIEWS).join(name))
         .collect();
-    for path in git::files(root, &[&format!(":(glob){VIEWS}/**")])? {
+    for path in git::entries(root, &[&format!(":(glob){VIEWS}/**")])? {
         if !generated.contains(&path) {
             problems.push(format!(
                 "{}: not a view that the rules data generates; remove it",
@@ -227,12 +233,11 @@ impl Rules {
             }
             match place(&self.areas, rule) {
                 // Two IDs for one place, such as CI-1 and CI-01, are one
-                // rule's ID written two ways.
+                // rule's ID written two ways. Each is named beside the first.
                 Ok(place) => {
-                    if let Some(other) = places.insert(place, id)
-                        && other != id
-                    {
-                        problems.push(format!("{id}: the same area and number as {other}"));
+                    let first = places.entry(place).or_insert(id);
+                    if *first != id {
+                        problems.push(format!("{id}: the same area and number as {first}"));
                     }
                 }
                 Err(problem) => problems.push(format!("{id}: {problem}")),
@@ -299,22 +304,24 @@ impl Rules {
     }
 }
 
-/// Reads a TOML file as its type. The parser sees LF line endings, as the
-/// prototype's did, so that a file checked out with CRLF, as git does on
-/// Windows, reads the same, multi-line strings included.
+/// Reads a TOML file as its type. The parser sees every line ending as LF,
+/// as the prototype's did through Python's universal newlines: CRLF, as
+/// git checks a file out on Windows, and a lone CR alike. So a file reads
+/// the same with any of them, multi-line strings included.
 fn read<T: DeserializeOwned>(path: &Path) -> Result<T> {
     let text =
         fs::read_to_string(path).with_context(|| format!("couldn't read {}", path.display()))?;
-    toml::from_str(&text.replace("\r\n", "\n"))
+    toml::from_str(&text.replace("\r\n", "\n").replace('\r', "\n"))
         .with_context(|| format!("{} is invalid", path.display()))
 }
 
-/// The rule files, from the root, by name: every `*.toml` file in
+/// The rule files, from the root, by name: every `*.toml` entry in
 /// `conventions/rules/` that git tracks or would track. The prototype read
 /// every one; a file that git ignores, such as a local draft, stays out of
-/// the views, which a commit would carry into public.
+/// the views, which a commit would carry into public. An entry that isn't
+/// a file, such as a link whose target is gone, fails to read.
 fn rule_files(root: &Path) -> Result<Vec<PathBuf>> {
-    git::files(root, &[":(glob)conventions/rules/*.toml"])
+    git::entries(root, &[":(glob)conventions/rules/*.toml"])
 }
 
 /// The facts of `state.toml`, in the file's order, which NOW.md's summary
@@ -348,17 +355,18 @@ fn is_number(text: &str) -> bool {
 }
 
 /// A rule's place in the conventions, its area's position and its number,
-/// or why its ID gives none.
+/// or why its ID gives none. An ID's form is checked before its prefix, so
+/// that a malformed ID says so whatever its prefix.
 fn place(areas: &[Area], rule: &Rule) -> Result<(usize, u64), String> {
     let malformed = || "an ID is an area's prefix, a hyphen and a number".to_owned();
     let (prefix, number) = rule.id.rsplit_once('-').ok_or_else(malformed)?;
+    if prefix.is_empty() || !is_number(number) {
+        return Err(malformed());
+    }
     let area = areas
         .iter()
         .position(|area| area.prefix == prefix)
         .ok_or_else(|| format!("no area has the prefix {prefix}"))?;
-    if !is_number(number) {
-        return Err(malformed());
-    }
     let number = number
         .parse()
         .map_err(|_| format!("{number} is too large for a rule's number"))?;
@@ -403,13 +411,29 @@ fn clause_holds(clause: &str, state: &[(String, Fact)]) -> Result<bool, String> 
     if clause == "true" {
         return Ok(true);
     }
+    if clause.split(text::is_space).any(|word| word == "and") {
+        return Err(format!(
+            "'{clause}' joins clauses with `and`, which conditions don't; a condition joins its clauses with `or`"
+        ));
+    }
     if let Some((name, number)) = count_clause(clause) {
         return match fact(name)? {
-            Fact::Count(count) => Ok(count >= number),
+            Fact::Count(count) => Ok(number.is_some_and(|number| count >= number)),
             Fact::Holds(_) => Err(format!(
                 "'{clause}' compares '{name}', which is true or false, not a count"
             )),
         };
+    }
+    // A comparison in the right form whose fact's name has another
+    // character, such as a hyphen.
+    if let Some((name, number)) = clause.split_once(" >= ")
+        && is_number(number)
+        && !name.is_empty()
+        && !name.contains(text::is_space)
+    {
+        return Err(format!(
+            "'{clause}' compares '{name}', but a condition compares only facts named in letters, digits and underscores"
+        ));
     }
     if clause.contains(['<', '>', '=']) {
         return Err(format!(
@@ -429,15 +453,14 @@ fn clause_holds(clause: &str, state: &[(String, Fact)]) -> Result<bool, String> 
 
 /// The fact and the number of a clause of the form `fact >= N`, which the
 /// prototype matched with `(\w+) >= (\d+)`, though only ASCII digits make
-/// a number here.
-fn count_clause(clause: &str) -> Option<(&str, u64)> {
+/// a number here. A number too large for a count has no value: no fact
+/// reaches it, as in the prototype, whose numbers have no limit.
+fn count_clause(clause: &str) -> Option<(&str, Option<u64>)> {
     let (name, number) = clause.split_once(" >= ")?;
     if name.is_empty() || !name.chars().all(text::is_word) || !is_number(number) {
         return None;
     }
-    // A number too large for a count is one that no fact reaches, as in the
-    // prototype, whose numbers have no limit.
-    Some((name, number.parse().unwrap_or(u64::MAX)))
+    Some((name, number.parse().ok()))
 }
 
 #[cfg(test)]
@@ -528,12 +551,7 @@ mod tests {
             fs::create_dir_all(path.parent().context("a file without a folder")?)?;
             fs::write(path, text)?;
         }
-        let status = std::process::Command::new("git")
-            .args(["init", "--quiet"])
-            .current_dir(scratch.path())
-            .status()
-            .context("couldn't run git")?;
-        ensure!(status.success(), "git init failed");
+        git::init(scratch.path())?;
         Ok(scratch)
     }
 
@@ -612,9 +630,13 @@ mod tests {
             "[[area]]\nprefix = \"CI\"\ntitle = \"Again\"\ngroup = \"\"\nintro = \"\"\nnotes = \"\"\n",
         );
         let rules = [
-            rule("CI-02", "trigger = \"always\"\nwho = \"tool\""),
             rule("CI-2", "trigger = \"always\"\nwho = \"tool\""),
+            rule("CI-002", "trigger = \"always\"\nwho = \"tool\""),
+            rule("CI-02", "trigger = \"always\"\nwho = \"tool\""),
             rule("XX-01", "trigger = \"always\"\nwho = \"tool\""),
+            // A malformed ID says so, whatever its prefix.
+            rule("XX-1a", "trigger = \"always\"\nwho = \"tool\""),
+            rule("-01", "trigger = \"always\"\nwho = \"tool\""),
             rule("QA-1a", "trigger = \"always\"\nwho = \"tool\""),
             rule("QA02", "trigger = \"always\"\nwho = \"tool\""),
             // The prototype's numbers have no limit, so a u64's do.
@@ -646,9 +668,12 @@ mod tests {
                 "trigger lost: unknown fact 'nothing'",
                 "trigger compares: 'open >= 2' compares 'open', which is true or false, not a count",
                 "trigger tests: 'not maintainers' tests 'maintainers', which is a count, not true or false",
-                "CI-02: duplicate ID",
                 "CI-2: the same area and number as CI-02",
+                "CI-002: the same area and number as CI-02",
+                "CI-02: duplicate ID",
                 "XX-01: no area has the prefix XX",
+                "XX-1a: an ID is an area's prefix, a hyphen and a number",
+                "-01: an ID is an area's prefix, a hyphen and a number",
                 "QA-1a: an ID is an area's prefix, a hyphen and a number",
                 "QA02: an ID is an area's prefix, a hyphen and a number",
                 "QA-18446744073709551616: 18446744073709551616 is too large for a rule's number",
@@ -685,16 +710,39 @@ mod tests {
         ] {
             assert_eq!(holds(when, &state), Ok(expected), "{when}");
         }
+        // The largest count reaches no number beyond it.
+        let largest = [("maintainers".to_owned(), Fact::Count(u64::MAX))];
+        assert_eq!(
+            holds("maintainers >= 18446744073709551615", &largest),
+            Ok(true)
+        );
+        assert_eq!(
+            holds("maintainers >= 18446744073709551616", &largest),
+            Ok(false)
+        );
         let comparison = |clause: &str| {
             format!(
                 "'{clause}' compares in a way that conditions don't; a comparison reads `fact >= N`"
             )
         };
+        let and = |clause: &str| {
+            format!(
+                "'{clause}' joins clauses with `and`, which conditions don't; a condition joins its clauses with `or`"
+            )
+        };
         for (when, problems) in [
             ("nobody", vec!["unknown fact 'nobody'".to_owned()]),
+            ("open and shipped", vec![and("open and shipped")]),
             (
-                "open and shipped",
-                vec!["unknown fact 'open and shipped'".to_owned()],
+                "open and maintainers >= 2",
+                vec![and("open and maintainers >= 2")],
+            ),
+            (
+                "team-size >= 2",
+                vec![
+                    "'team-size >= 2' compares 'team-size', but a condition compares only facts named in letters, digits and underscores"
+                        .to_owned(),
+                ],
             ),
             // A clause after one that holds is still read, and each bad
             // clause is reported.
@@ -758,20 +806,26 @@ mod tests {
     }
 
     /// A file checked out with CRLF line endings, as git does on Windows,
-    /// reads as it does with LF, multi-line strings included.
+    /// reads as it does with LF, multi-line strings included, and so do the
+    /// CR and the CR before a CRLF that the prototype read as line endings.
     #[test]
     fn reads_crlf_line_endings_as_lf() -> Result<()> {
         let scratch = Scratch::new()?;
         let path = scratch.path().join("moments.toml");
-        fs::write(
-            &path,
-            "[[moment]]\r\nid = \"setup\"\r\ntitle = \"\"\"\r\nWhen you\r\nset up\"\"\"\r\norder = 0\r\n",
-        )?;
-        let file: MomentFile = read(&path)?;
-        let [moment] = file.moment.as_slice() else {
-            bail!("expected one moment");
-        };
-        assert_eq!(moment.title, "When you\nset up");
+        for (ending, title) in [
+            ("\r\n", "When you\nset up"),
+            ("\r", "When you\nset up"),
+            ("\r\r\n", "\nWhen you\n\nset up"),
+        ] {
+            let text =
+                "[[moment]]\nid = \"setup\"\ntitle = \"\"\"\nWhen you\nset up\"\"\"\norder = 0\n";
+            fs::write(&path, text.replace('\n', ending))?;
+            let file: MomentFile = read(&path)?;
+            let [moment] = file.moment.as_slice() else {
+                bail!("expected one moment");
+            };
+            assert_eq!(moment.title, title, "{ending:?}");
+        }
         Ok(())
     }
 
@@ -791,15 +845,51 @@ mod tests {
                 .iter()
                 .any(|rule| rule.id == "QA-09")
         );
-        fs::write(
-            scratch.path().join(".git").join("info").join("exclude"),
-            "/conventions/rules/DRAFT.toml\n",
-        )?;
+        // The scratch repository has no templates, so no `info/` yet.
+        let info = scratch.path().join(".git").join("info");
+        fs::create_dir(&info)?;
+        fs::write(info.join("exclude"), "/conventions/rules/DRAFT.toml\n")?;
         assert!(
             Rules::load(scratch.path())?
                 .rules
                 .iter()
                 .all(|rule| rule.id != "QA-09")
+        );
+        Ok(())
+    }
+
+    /// A link whose target is gone fails, as a rule file and as a file in
+    /// the views' folder, rather than being passed by.
+    #[cfg(unix)]
+    #[test]
+    fn fails_on_links_whose_targets_are_gone() -> Result<()> {
+        use std::os::unix::fs::symlink;
+        let scratch = checkout(&data())?;
+        let root = scratch.path();
+        let rules = root.join("conventions").join("rules");
+        symlink("MOVED.toml", rules.join("GONE.toml"))?;
+        let Err(error) = Rules::load(root) else {
+            bail!("a rule file whose target is gone passed");
+        };
+        let error = format!("{error:#}");
+        assert!(
+            error.contains(&format!(
+                "couldn't read {}",
+                rules.join("GONE.toml").display()
+            )),
+            "{error}"
+        );
+        fs::remove_file(rules.join("GONE.toml"))?;
+        generate(root)?;
+        let old = root.join(VIEWS).join("OLD.md");
+        symlink("MOVED.md", &old)?;
+        let problems = stale(root, &views::render(&Rules::load(root)?))?;
+        assert_eq!(
+            problems,
+            [format!(
+                "{}: not a view that the rules data generates; remove it",
+                old.display()
+            )]
         );
         Ok(())
     }
@@ -883,23 +973,51 @@ mod tests {
         Ok(data)
     }
 
-    /// The views of xtask's test data, at one maintainer and at two, are
-    /// the ones the prototype wrote, byte for byte. The data takes the paths
-    /// that the conventions' own data doesn't take yet: later versions that
-    /// hold, one rule with two of them, a rule that waits while its later
-    /// version holds, moments and triggers out of order and tied, facts out
-    /// of their names' order, an area without rules and a multi-line
-    /// string, which a Windows checkout gives CRLF line endings. When the
-    /// views' text changes on purpose, `UPDATE_GOLDEN_VIEWS=1 cargo test`
-    /// rewrites `xtask/testdata/rules/views/`, and its diff shows the change.
+    /// The golden views' folder, from the root.
+    const GOLDENS: &str = "xtask/testdata/rules/views";
+
+    /// The views' file names.
+    const NAMES: [&str; 3] = ["NOW.md", "CHECKED.md", "LATER.md"];
+
+    /// The states that the golden views cover: each one's folder in
+    /// `GOLDENS`, and the line that stands in for the test data's
+    /// `maintainers = 1`.
+    const STATES: [(&str, &str); 3] = [
+        ("no-maintainers", "maintainers = 0"),
+        ("one-maintainer", "maintainers = 1"),
+        ("two-maintainers", "maintainers = 2"),
+    ];
+
+    /// The views of xtask's test data in each state are its golden views,
+    /// byte for byte. The prototype wrote the goldens for M2, and the data
+    /// takes paths that the conventions' own data doesn't take yet: later
+    /// versions that hold, one rule with two of them, waiting rules whose
+    /// later versions hold, sections left empty, moments and triggers out of
+    /// order and tied, triggers with only a reminder or a later version, an
+    /// open decision on a rule that needs no one, facts out of their names'
+    /// order, an area without rules and a multi-line string, which a Windows
+    /// checkout gives CRLF line endings. When the views' text changes on
+    /// purpose, `UPDATE_GOLDEN_VIEWS=1 cargo test` rewrites the goldens that
+    /// differ and fails, so that their diff shows the change and the next
+    /// run compares them.
     #[test]
-    fn writes_the_views_the_prototype_wrote_for_the_test_data() -> Result<()> {
-        let goldens = crate::workspace_root()?.join("xtask/testdata/rules/views");
-        let update = std::env::var_os("UPDATE_GOLDEN_VIEWS").is_some();
-        for (state, maintainers) in [
-            ("one-maintainer", "maintainers = 1"),
-            ("two-maintainers", "maintainers = 2"),
-        ] {
+    fn writes_the_golden_views_of_the_test_data() -> Result<()> {
+        let update = updates(std::env::var_os(UPDATE_GOLDEN_VIEWS).as_deref());
+        compare_goldens(&crate::workspace_root()?.join(GOLDENS), update)
+    }
+
+    /// Whether the setting asks for the goldens to be rewritten: only `1`
+    /// does, so that `0` or an empty value leaves them be.
+    fn updates(setting: Option<&std::ffi::OsStr>) -> bool {
+        setting.is_some_and(|value| value == "1")
+    }
+
+    /// Fails unless each state's views of the test data are the goldens in
+    /// the folder and the folder holds nothing else. When updating, it
+    /// rewrites the goldens that differ instead and fails, naming them.
+    fn compare_goldens(goldens: &Path, update: bool) -> Result<()> {
+        let mut rewritten = Vec::new();
+        for (state, maintainers) in STATES {
             let mut data = testdata()?;
             for (name, text) in &mut data {
                 if name == "state.toml" {
@@ -912,11 +1030,33 @@ mod tests {
             }
             let scratch = checkout(&data)?;
             let views = views::render(&Rules::load(scratch.path())?);
+            let folder = goldens.join(state);
             for (name, text) in views.files() {
-                let path = goldens.join(state).join(name);
+                let path = folder.join(name);
+                let golden = match fs::read(&path) {
+                    Ok(golden) => Some(golden),
+                    Err(error) if error.kind() == io::ErrorKind::NotFound => None,
+                    Err(error) => {
+                        return Err(error)
+                            .with_context(|| format!("couldn't read {}", path.display()));
+                    }
+                };
+                let line = match &golden {
+                    Some(golden) => first_difference(golden, text.as_bytes()),
+                    None => Some(1),
+                };
+                let Some(line) = line else {
+                    continue;
+                };
                 if update {
-                    fs::write(&path, text)?;
-                } else if let Some(line) = first_difference(&fs::read(&path)?, text.as_bytes()) {
+                    fs::create_dir_all(&folder)
+                        .with_context(|| format!("couldn't create {}", folder.display()))?;
+                    fs::write(&path, text)
+                        .with_context(|| format!("couldn't write {}", path.display()))?;
+                    rewritten.push(path.display().to_string());
+                } else if golden.is_none() {
+                    bail!("{} is missing", path.display());
+                } else {
                     bail!(
                         "{} differs from what the test data generates, from line {line}",
                         path.display()
@@ -924,6 +1064,189 @@ mod tests {
                 }
             }
         }
+        let strays = strays(goldens)?;
+        ensure!(
+            strays.is_empty(),
+            "not a golden view of any state; remove it: {}",
+            strays.join(", ")
+        );
+        ensure!(
+            rewritten.is_empty(),
+            "rewrote {}; review the diff, then run the tests again",
+            rewritten.join(", ")
+        );
+        Ok(())
+    }
+
+    /// Only `UPDATE_GOLDEN_VIEWS=1` rewrites the goldens. An update writes
+    /// the ones that differ or are missing, creating their folders, and
+    /// fails, so that only a run that compares them can pass.
+    #[test]
+    fn rewrites_the_golden_views_only_when_asked() -> Result<()> {
+        let updates_on = |text: &str| updates(Some(std::ffi::OsStr::new(text)));
+        assert!(updates_on("1"));
+        assert!(!updates_on("0") && !updates_on("") && !updates_on("yes") && !updates(None));
+        let scratch = Scratch::new()?;
+        let goldens = scratch.path();
+        let now = |state: &str| goldens.join(state).join("NOW.md");
+        let failure = |update| match compare_goldens(goldens, update) {
+            Ok(()) => bail!("compare_goldens passed"),
+            Err(error) => Ok(format!("{error:#}")),
+        };
+        let missing = failure(false)?;
+        assert_eq!(
+            missing,
+            format!("{} is missing", now("no-maintainers").display())
+        );
+        let rewrote = failure(true)?;
+        assert!(
+            rewrote.starts_with(&format!("rewrote {}, ", now("no-maintainers").display()))
+                && rewrote.ends_with("; review the diff, then run the tests again"),
+            "{rewrote}"
+        );
+        compare_goldens(goldens, false)?;
+        compare_goldens(goldens, true)?;
+        let stray = goldens.join("one-maintainer").join("OLD.md");
+        fs::write(&stray, "An old view.\n")?;
+        assert_eq!(
+            failure(false)?,
+            format!(
+                "not a golden view of any state; remove it: {}",
+                stray.display()
+            )
+        );
+        fs::remove_file(&stray)?;
+        fs::write(now("one-maintainer"), "Changed.\n")?;
+        assert_eq!(
+            failure(false)?,
+            format!(
+                "{} differs from what the test data generates, from line 1",
+                now("one-maintainer").display()
+            )
+        );
+        Ok(())
+    }
+
+    /// Moments and triggers that share an order keep their files' order, as
+    /// the prototype's stable sorts kept them. An unstable sort keeps a list
+    /// shorter than 21 in order anyway, so these lists are longer, with the
+    /// ties apart in the files and their IDs against the files' order.
+    #[test]
+    fn keeps_ties_in_the_files_order() -> Result<()> {
+        let count = 40;
+        let mut data = data();
+        let (mut moments, mut triggers, mut rules) = (String::new(), String::new(), String::new());
+        for index in 0..count {
+            let order = index % 2;
+            let moment = format!("m{:02}", count - index);
+            let trigger = format!("t{:02}", count - index);
+            moments += &format!(
+                "[[moment]]\nid = \"{moment}\"\ntitle = \"Tie {moment}\"\norder = {order}\n\n"
+            );
+            triggers += &format!(
+                "[[trigger]]\nid = \"{trigger}\"\ntitle = \"Tie {trigger}\"\nwhen = \"maintainers >= 9\"\norder = {order}\n\n"
+            );
+            rules += &rule(
+                &format!("QA-{}", 100 + index),
+                &format!("trigger = \"always\"\nwho = \"you\"\nmoments = [\"{moment}\"]"),
+            );
+            rules += &rule(
+                &format!("QA-{}", 200 + index),
+                &format!("trigger = \"{trigger}\"\nwho = \"tool\""),
+            );
+        }
+        append(&mut data, "moments.toml", &moments);
+        append(&mut data, "triggers.toml", &triggers);
+        append(&mut data, "rules/QA.toml", &rules);
+        let Ok(rules) = load(&data)? else {
+            bail!("the data has problems");
+        };
+        let views = views::render(&rules);
+        let [(_, now), _, (_, later)] = views.files();
+        let in_order = |prefix: &str| -> Vec<String> {
+            let ties = |order| {
+                (0..count)
+                    .filter(move |index| index % 2 == order)
+                    .map(move |index| format!("{prefix}{:02}", count - index))
+            };
+            ties(0).chain(ties(1)).collect()
+        };
+        let shown = |text: &str, start: &str, prefix: &str| -> Vec<String> {
+            text.lines()
+                .filter_map(|line| line.strip_prefix(start))
+                .filter_map(|rest| rest.get(..prefix.len() + 2))
+                .filter(|id| id.starts_with(prefix))
+                .map(str::to_owned)
+                .collect()
+        };
+        assert_eq!(shown(now, "## Tie ", "m"), in_order("m"));
+        assert_eq!(shown(later, "| Tie ", "t"), in_order("t"));
+        Ok(())
+    }
+
+    /// Everything in the golden views' folder but each state's views, links
+    /// whose targets are gone included.
+    fn strays(goldens: &Path) -> Result<Vec<String>> {
+        let entries = |folder: &Path| -> Result<Vec<(PathBuf, bool)>> {
+            let mut entries = Vec::new();
+            let listed = fs::read_dir(folder)
+                .with_context(|| format!("couldn't read {}", folder.display()))?;
+            for entry in listed {
+                let entry = entry?;
+                entries.push((entry.path(), entry.file_type()?.is_dir()));
+            }
+            entries.sort();
+            Ok(entries)
+        };
+        let mut strays = Vec::new();
+        for (path, is_folder) in entries(goldens)? {
+            let is_state = STATES
+                .iter()
+                .any(|(state, _)| path.file_name().is_some_and(|name| name == *state));
+            if !(is_folder && is_state) {
+                strays.push(path.display().to_string());
+                continue;
+            }
+            for (view, is_folder) in entries(&path)? {
+                let is_view = NAMES
+                    .iter()
+                    .any(|name| view.file_name().is_some_and(|file| file == *name));
+                if is_folder || !is_view {
+                    strays.push(view.display().to_string());
+                }
+            }
+        }
+        Ok(strays)
+    }
+
+    /// A file in the golden views' folder that no state's views name fails,
+    /// as in `conventions/views/`.
+    #[test]
+    fn finds_what_isnt_a_golden_view() -> Result<()> {
+        let scratch = Scratch::new()?;
+        let goldens = scratch.path();
+        fs::create_dir_all(goldens.join("one-maintainer").join("sub"))?;
+        fs::create_dir(goldens.join("gone"))?;
+        for name in NAMES {
+            fs::write(goldens.join("one-maintainer").join(name), "")?;
+        }
+        fs::write(goldens.join("one-maintainer").join("OLD.md"), "")?;
+        fs::write(goldens.join("NOW.md"), "")?;
+        let shown = |path: &[&str]| {
+            path.iter()
+                .fold(goldens.to_path_buf(), |path, part| path.join(part))
+                .display()
+                .to_string()
+        };
+        assert_eq!(
+            strays(goldens)?,
+            [
+                shown(&["NOW.md"]),
+                shown(&["gone"]),
+                shown(&["one-maintainer", "OLD.md"]),
+                shown(&["one-maintainer", "sub"]),
+            ]
+        );
         Ok(())
     }
 
@@ -933,14 +1256,9 @@ mod tests {
     #[test]
     fn keeps_the_views_line_endings_in_every_checkout() -> Result<()> {
         let root = crate::workspace_root()?;
-        let names = ["NOW.md", "CHECKED.md", "LATER.md"];
-        let mut paths: Vec<String> = names.iter().map(|name| format!("{VIEWS}/{name}")).collect();
-        for state in ["one-maintainer", "two-maintainers"] {
-            paths.extend(
-                names
-                    .iter()
-                    .map(|name| format!("xtask/testdata/rules/views/{state}/{name}")),
-            );
+        let mut paths: Vec<String> = NAMES.iter().map(|name| format!("{VIEWS}/{name}")).collect();
+        for (state, _) in STATES {
+            paths.extend(NAMES.iter().map(|name| format!("{GOLDENS}/{state}/{name}")));
         }
         for path in paths {
             let output = std::process::Command::new("git")

@@ -7,7 +7,7 @@ Generated for this state: public = true; maintainers = 1; every other fact is fa
 
 Of 12 rules, 6 apply now. Tooling enforces 2 and AI review checks 1; both are listed in CHECKED.md. The 2 below need you, and 1 are options. The other 6 wait for a trigger (LATER.md).
 
-Read the principles, the open decisions and the first section now, about 79 words. Read each later section when its moment comes.
+Read the principles, the open decisions and the first section now, about 58 words. Read each later section when its moment comes.
 
 ## Principles
 
@@ -20,15 +20,9 @@ When a case isn't covered, decide by these.
 
 | Rule | Decision | Leaning |
 |---|---|---|
+| QA-01 | Whether the AI review covers it | It does |
 | CI-02 | When releases happen | — |
 | CI-03 | Which forge hosts the code | The current one |
-
-## When you set up
-
-**CI-03** · MUST · CI-03's statement.\
-*Why:* CI-03's rationale. · *Enforced by CI.*\
-*Open decision:* Which forge hosts the code. Leaning: The current one.
-
 
 ## When money is involved
 
@@ -49,9 +43,10 @@ When a case isn't covered, decide by these.
 These MAY rules are yours to take or leave.
 
 **QA-03** · MAY · QA-03 may be taken or left.\
-*Why:* An option. · *Checked in review.*
+*Why:* An option, which the changelog records. · *Checked in review.*
 
 
 ## Terms used here
 
+- **Changelog:** the record of what each release changes.
 - **The forge:** the service that hosts the code.

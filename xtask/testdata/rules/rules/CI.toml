@@ -4,6 +4,7 @@
 # Test data for the rules engine's golden views (QA-09): the rules are out
 # of order in their file.
 
+# Not in the first moment, which has a rule only once there's a team.
 [[rule]]
 id = "CI-03"
 level = "MUST"
@@ -11,9 +12,9 @@ statement = "CI-03's statement."
 rationale = "CI-03's rationale."
 verification = "Review: CI-03"
 check = "CI"
-trigger = "always"
+trigger = "maintained"
 who = "you"
-moments = ["money", "setup"]
+moments = ["money"]
 added = "0.1.0"
 status = "active"
 
@@ -39,6 +40,11 @@ who = "tool"
 added = "0.1.0"
 status = "active"
 
+# The only change at a trigger that starts no rule.
+[[rule.later]]
+trigger = "private"
+statement = "CI-01 if the code goes private."
+
 [[rule]]
 id = "CI-02"
 level = "SHOULD"
@@ -46,7 +52,7 @@ statement = "CI-02's statement."
 rationale = "CI-02's rationale."
 verification = "Release checklist: CI-02"
 check = "Release"
-trigger = "always"
+trigger = "maintained"
 who = "you"
 moments = ["release"]
 added = "0.1.0"
@@ -89,10 +95,15 @@ verification = "Review: CI-06"
 check = "Review"
 trigger = "team"
 who = "you"
-moments = ["feature"]
+moments = ["feature", "setup"]
 added = "0.1.0"
 status = "active"
 
+[[rule.reminder]]
+trigger = "large"
+note = "A reminder under a trigger that starts no rule."
+
+# Waits for funds, while its later version holds from the first commit.
 [[rule]]
 id = "CI-10"
 level = "MAY"
@@ -109,3 +120,7 @@ status = "active"
 [rule.open]
 question = "Whether to take it"
 leaning = ""
+
+[[rule.later]]
+trigger = "always"
+statement = "CI-10's version from the first commit."

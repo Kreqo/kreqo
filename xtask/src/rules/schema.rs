@@ -17,6 +17,7 @@ use serde::Deserialize;
 pub struct Rule {
     /// Its area's prefix and a number, such as `A11Y-03`.
     pub id: String,
+    /// How strongly the rule binds: MUST, SHOULD or MAY.
     pub level: Level,
     /// What holds under the rule, in Markdown.
     pub statement: String,
@@ -38,6 +39,7 @@ pub struct Rule {
     /// The version of the conventions that added the rule.
     #[expect(dead_code, reason = "part of the schema, which no view shows yet")]
     pub added: String,
+    /// Whether the rule is in force.
     #[expect(dead_code, reason = "part of the schema, which no view shows yet")]
     pub status: Status,
     /// What changed in the rule, one entry per change.
@@ -208,7 +210,8 @@ pub struct Trigger {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TriggerFile {
-    /// The triggers, in any order.
+    /// The triggers. LATER.md lists them by `order`, and two with the same
+    /// order in this list's order.
     pub trigger: Vec<Trigger>,
 }
 
@@ -228,7 +231,8 @@ pub struct Moment {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MomentFile {
-    /// The moments, in any order.
+    /// The moments. NOW.md lists them by `order`, and two with the same
+    /// order in this list's order.
     pub moment: Vec<Moment>,
 }
 

@@ -2,13 +2,14 @@
 # SPDX-License-Identifier: MIT OR Apache-2.0
 
 # Test data for the rules engine's golden views (QA-09): out of order, with
-# two tied at order 2, which keep the file's order.
+# two tied at order 3, which keep the file's order. Two triggers start no
+# rule: one has only a reminder and one only a later version.
 
 [[trigger]]
 id = "release"
 title = "Before the release"
 when = "released"
-order = 2
+order = 3
 
 [[trigger]]
 id = "always"
@@ -20,16 +21,34 @@ order = 0
 id = "team"
 title = "Once there's a team"
 when = "maintainers >= 2"
+order = 2
+
+[[trigger]]
+id = "maintained"
+title = "Once someone maintains it"
+when = "maintainers >= 1"
 order = 1
 
 [[trigger]]
 id = "funds"
 title = "Before accepting funds"
 when = "not public or released"
-order = 2
+order = 3
 
 [[trigger]]
 id = "never"
 title = "A trigger that no rule names"
 when = "maintainers >= 9"
-order = 3
+order = 4
+
+[[trigger]]
+id = "large"
+title = "Once the team is large"
+when = "maintainers >= 5"
+order = 5
+
+[[trigger]]
+id = "private"
+title = "If the code goes private"
+when = "not public"
+order = 6

@@ -7,7 +7,7 @@ Generated for this state: public = true; maintainers = 2; every other fact is fa
 
 Of 12 rules, 8 apply now. Tooling enforces 3 and AI review checks 1; both are listed in CHECKED.md. The 3 below need you, and 1 are options. The other 4 wait for a trigger (LATER.md).
 
-Read the principles, the open decisions and the first section now, about 84 words. Read each later section when its moment comes.
+Read the principles, the open decisions and the first section now, about 83 words. Read each later section when its moment comes.
 
 ## Principles
 
@@ -20,17 +20,11 @@ When a case isn't covered, decide by these.
 
 | Rule | Decision | Leaning |
 |---|---|---|
+| QA-01 | Whether the AI review covers it | It does |
 | CI-02 | When releases happen | — |
 | CI-03 | Which forge hosts the code | The current one |
 
 ## When you set up
-
-**CI-03** · MUST · CI-03 once there's a team.\
-*Why:* A team reviews it. · *Enforced by forge settings.*\
-*Open decision:* Which forge hosts the code. Leaning: The current one.
-
-
-## When you design a feature
 
 **CI-06** · SHOULD · CI-06 needs you once there's a team.\
 *Why:* CI-06's rationale. · *Checked in review.*
@@ -41,6 +35,12 @@ When a case isn't covered, decide by these.
 **CI-03** · MUST · CI-03 once there's a team.\
 *Why:* A team reviews it. · *Enforced by forge settings.*\
 *Open decision:* Which forge hosts the code. Leaning: The current one.
+
+
+## When you design a feature
+
+**CI-06** · SHOULD · CI-06 needs you once there's a team.\
+*Why:* CI-06's rationale. · *Checked in review.*
 
 
 ## When you prepare a release
@@ -55,10 +55,11 @@ When a case isn't covered, decide by these.
 These MAY rules are yours to take or leave.
 
 **QA-03** · MAY · QA-03 may be taken or left.\
-*Why:* An option. · *Checked in review.*
+*Why:* An option, which the changelog records. · *Checked in review.*
 
 
 ## Terms used here
 
+- **Changelog:** the record of what each release changes.
 - **Team:** two maintainers or more.
 - **The forge:** the service that hosts the code.

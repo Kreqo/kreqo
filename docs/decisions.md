@@ -131,7 +131,7 @@ The root workspace, `cargo xtask` with `check`, `hooks` and `pre-commit`, the pi
 
 ### Files name Kreqo contributors as copyright holders
 
-Every file that can carry a header reads `SPDX-FileCopyrightText: Kreqo contributors` and names its license, so no name is added file by file, and history records who wrote what; no AI is named (LEGAL-09). Code, configuration and workflows are MIT OR Apache-2.0; the conventions, the documentation and CLAUDE.md are CC BY 4.0. REUSE.toml covers the two generated cases: Cargo.lock (CC0-1.0) and the views of the rules (CC BY 4.0). Dependencies of MIT OR Apache-2.0 crates may use MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, Zlib, Unicode-3.0, CC0-1.0, Unlicense, BSL-1.0 and MPL-2.0.
+Every file that can carry a header reads `SPDX-FileCopyrightText: Kreqo contributors` and names its license, so no name is added file by file, and history records who wrote what; no AI is named (LEGAL-09). Code, configuration and workflows are MIT OR Apache-2.0; the conventions, the documentation and CLAUDE.md are CC BY 4.0. REUSE.toml covers the generated files, such as Cargo.lock (CC0-1.0) and the views of the rules (CC BY 4.0). Dependencies of MIT OR Apache-2.0 crates may use MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, Zlib, Unicode-3.0, CC0-1.0, Unlicense, BSL-1.0 and MPL-2.0.
 
 - **Rules:** LEGAL-02, LEGAL-03, LEGAL-08, LEGAL-09.
 
@@ -422,6 +422,26 @@ CI showed on M2's pull request that the port writes the views byte for byte as t
 - **Rule files:** the engine reads the files in `conventions/rules/` that git tracks or would track, so a file that git ignores, such as a local draft, stays out of the views.
 - **Conditions:** each bad clause of a condition is reported, and a clause that compares in a form conditions don't take, such as `maintainers > 1`, gets a message of its own.
 - **IDs and files:** two IDs for one place, such as CI-1 beside CI-01, fail, and so does a file in `conventions/views/` that the engine doesn't write.
-- **Golden views:** `cargo xtask check rules` now compares the engine with its own output, so golden views of xtask's test data, which the prototype wrote at one maintainer and at two, pin what the views print on the paths that today's data doesn't take.
+- **Golden views:** `cargo xtask check rules` now compares the engine with its own output, so golden views of xtask's test data, which the prototype wrote at one maintainer and at two, pin what the views print on paths that today's data doesn't take.
+
+- **Rules:** ARCH-06, QA-09.
+
+## 2026-10-28: the follow-up check of PR #24
+
+Dara asked for every finding of the follow-up check to be fixed before the merge. Its findings and how each was handled are in the pull request.
+
+### The golden views are MIT OR Apache-2.0
+
+REUSE.toml licenses the golden views of xtask's test data as it licenses the test data they're written from, MIT OR Apache-2.0; the rest of their text comes from the engine's code. Dara signed off on the test data's licensing in PR #24's description (CI-03).
+
+- **Rules:** LEGAL-02, LEGAL-08, CI-03.
+
+### What the engine holds to, after the follow-up check
+
+- **The tests' git:** a test's scratch repository is created with git's settings from the environment cleared, so `git init` never reaches the repository whose GIT_DIR git exports under `git rebase -x` in a linked worktree, and `cargo xtask check` runs the tests with those settings cleared.
+- **Golden views:** the prototype wrote them in three states, no maintainer, one and two, from test data that leaves sections empty, ties moments against their IDs' order and has triggers with only a reminder or a later version. Only `UPDATE_GOLDEN_VIEWS=1` rewrites them, a run that rewrites one fails, and `cargo xtask check` never rewrites them. A test with forty tied moments and triggers pins the stable sorts.
+- **Line endings:** a lone CR, and a CR before a CRLF, read as line endings, as Python's universal newlines read them.
+- **Diagnostics:** an ID written two ways is named beside the first one, a malformed ID says so whatever its prefix, and a condition that joins clauses with `and`, or compares a fact whose name has a hyphen, gets a message of its own.
+- **Links whose targets are gone:** a rule file or a file in `conventions/views/` that git lists but can't be read fails rather than being passed by.
 
 - **Rules:** ARCH-06, QA-09.
