@@ -445,3 +445,7 @@ REUSE.toml licenses the golden views of xtask's test data as it licenses the tes
 - **Links whose targets are gone:** a rule file or a file in `conventions/views/` that git lists but can't be read fails rather than being passed by.
 
 - **Rules:** ARCH-06, QA-09.
+
+### What the follow-up check left for later
+
+- **Per-project facts:** the engine works out the triggers once, against the one `state.toml`; once M3 moves project facts into each project's metadata, it works them out for each scope ([#26](https://github.com/Kreqo/kreqo/issues/26)).
